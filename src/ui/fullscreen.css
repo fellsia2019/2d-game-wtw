@@ -1,0 +1,281 @@
+/* One viewport, one arena. HTML controls float on the same Phaser battlefield. */
+html,body,#app{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{min-width:0;min-height:0;padding:0}
+.game-shell{
+  --edge:clamp(12px,1.6vw,32px);--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+  --hud-top:106px;--hud-height:78px;--dock-bottom:28px;--dock-height:153px;
+  position:fixed;inset:0;width:100%;height:100vh;height:100dvh;max-width:none;margin:0;padding:0;overflow:hidden;isolation:isolate;
+}
+.game-shell .battle-panel{display:contents;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible}
+.game-shell .arena-wrap{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:0;z-index:0}
+.game-shell .arena{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.game-shell .arena-vignette{box-shadow:inset 0 110px 110px -55px #071b28c9,inset 0 -150px 130px -70px #071b28c9}
+.game-shell .masthead{position:absolute;z-index:3;top:var(--safe-top);left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));height:60px;gap:16px}
+.game-shell .brand-seal{width:35px;height:41px;font-size:24px;background:#263e3ac9}
+.game-shell .brand b{font-size:21px;text-shadow:0 2px 8px #061922}
+.game-shell .brand div>span{font-size:16px;letter-spacing:2px;color:#c1ceb7}
+.game-shell .campaign{margin-left:auto;margin-right:auto}
+.game-shell .tools{flex-shrink:0;gap:8px}
+.game-shell .icon-button{min-width:88px;min-height:44px;padding:9px 12px;background:#172e34e8;border-color:#a2ac8366;font-size:16px;box-shadow:0 3px 10px #0002}
+.game-shell .battle-heading{position:absolute;z-index:2;top:calc(var(--safe-top) + 62px);left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));height:36px;padding:0;border:0;background:none;gap:12px}
+.game-shell .battle-heading>div:first-child{display:flex;align-items:center;gap:15px;min-width:0}
+.game-shell .battle-heading h1{font-size:23px;margin:0;text-shadow:0 2px 8px #081b25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-shell .battle-heading .eyebrow{font-size:16px;white-space:nowrap;color:#ecd496}
+.game-shell .timer{padding:6px 10px;border-radius:4px;background:#142d35bb;flex-shrink:0}
+.game-shell .hud{position:absolute;z-index:2;top:calc(var(--safe-top) + var(--hud-top));left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));height:var(--hud-height);grid-template-columns:1fr minmax(170px,.75fr) 1fr;gap:clamp(12px,3vw,70px);padding:0;border:0;background:none}
+.game-shell .fortress-stat,.game-shell .supply-stat{min-width:0;padding:11px 16px;background:#122e35d9;border:1px solid #879a7766;border-radius:6px;box-shadow:0 5px 20px #0002}
+.game-shell .fortress-stat>span{font-size:16px;margin-bottom:3px}.game-shell .fortress-stat strong{font-size:20px;line-height:23px}
+.game-shell .supply-stat>span b{display:inline;margin-left:12px}.game-shell .supply-stat>strong{font-size:26px;line-height:26px}
+.game-shell .meter{height:5px;margin-top:7px}
+.game-shell .arena-label{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 12px);left:max(var(--edge),env(safe-area-inset-left));font-size:16px;opacity:.85}
+.game-shell .threat{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 12px);right:max(var(--edge),env(safe-area-inset-right));left:auto;max-width:55%;padding:7px 11px;border-radius:4px;background:#182d35bd;text-align:right;line-height:1.4}
+.game-shell .threat span{display:inline;font-size:16px;margin-right:10px}.game-shell .threat b{font-size:16px}
+.game-shell .boss-warning{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 59px);right:max(var(--edge),env(safe-area-inset-right));left:auto;max-width:70%;font-size:16px}
+.game-shell .recruitment{position:absolute;z-index:3;left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));bottom:calc(var(--safe-bottom) + var(--dock-bottom));margin:0}
+.game-shell .section-title{margin:0 0 7px;min-height:24px;text-shadow:0 2px 6px #071a23}
+.game-shell .section-title h2{font-size:21px}.game-shell .section-title>span{color:#c8d3bd;font-size:16px}
+.game-shell .recruit-row{display:flex;gap:10px;min-width:0}
+.game-shell .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0}
+.game-shell .unit-card{display:flex;height:122px;min-height:0;padding:10px 11px 10px 3px;border-color:#8cb298aa;background:linear-gradient(135deg,#2c4943f2,#152f32f0);box-shadow:0 8px 26px #0005;min-width:0}
+.game-shell .unit-card:disabled{background:linear-gradient(135deg,#283e3bea,#162c30f0)}
+.game-shell .portrait{width:32%;height:auto;margin:0;align-self:stretch}.game-shell .portrait img{width:120%;height:auto;max-width:112px;max-height:112px}
+.game-shell .card-copy{padding:0 0 0 3px}.game-shell .card-copy h3{font-size:clamp(16px,1.25vw,21px);margin:4px 0 5px}
+.game-shell .card-copy p{font-size:16px;min-height:28px;line-height:1.4}.game-shell .role{font-size:16px;line-height:1.35;max-height:22px}
+.game-shell .card-bottom{margin-top:8px;gap:6px}.game-shell .price{font-size:17px}.game-shell .availability{font-size:16px}
+.game-shell .wagon{height:122px;min-height:0;width:150px;margin:0;flex-direction:column;gap:5px;padding:8px;background:linear-gradient(135deg,#4a4b36f2,#26382eee);box-shadow:0 8px 26px #0005}
+.game-shell .wagon>b{font-size:16px}.game-shell .wagon>span:not(.wagon-icon){display:block;font-size:16px}.game-shell .wagon>strong{font-size:16px}.game-shell .wagon>small{font-size:16px}.game-shell .wagon-icon{font-size:22px}
+.game-shell .battle-status{position:absolute;z-index:2;left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));bottom:calc(var(--safe-bottom) + var(--dock-bottom) + var(--dock-height) + 10px);min-height:34px;gap:12px;padding:8px 12px;border:1px solid #71836b55;border-radius:5px;background:#122c32d4;color:#d0d9c2;font-size:16px;line-height:1.35}
+.game-shell .battle-status>span:first-child{min-width:0}.game-shell .army{font-size:16px;white-space:nowrap}
+.game-shell .game-footer{position:absolute;z-index:2;left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));bottom:calc(var(--safe-bottom) + 6px);height:15px;padding:0;font-size:16px;color:#bdd0ba;text-shadow:0 1px 3px #061a25;gap:18px}
+.game-shell .game-footer>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.game-shell .game-footer>span:last-child{max-width:60%}
+.scrim{overflow:hidden;padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));height:100vh;height:100dvh}
+.modal{max-height:100%;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y}
+.modal button{min-height:44px}.modal .menu-art{max-width:100%;overflow:hidden}.modal .primary,.modal .secondary{min-width:min(260px,100%);max-width:100%}
+@media(max-width:1100px){
+ .game-shell{--edge:14px}.game-shell .unit-card,.game-shell .wagon{height:100px}
+ .game-shell .unit-card{padding:8px 8px 8px 2px}.game-shell .portrait{width:31%}.game-shell .portrait img{max-height:85px;max-width:85px}
+ .game-shell .card-copy h3{font-size:16px}.game-shell .card-copy p{display:none}.game-shell .card-bottom{margin-top:8px}.game-shell .availability{font-size:16px}
+ .game-shell .wagon{width:125px}.game-shell .wagon>b{font-size:16px}.game-shell .role{font-size:16px}.game-shell .section-title>span{font-size:16px}
+}
+@media(max-width:900px) and (orientation:portrait){
+ .game-shell{--edge:10px;--hud-top:82px;--hud-height:64px;--dock-bottom:10px}
+ .game-shell .masthead{height:46px;gap:6px}.game-shell .brand{display:none}.game-shell .campaign{display:block;margin:0 auto 0 0;text-align:left}.game-shell .chapter{font-size:16px;letter-spacing:1px}.game-shell .route{margin-top:6px}.game-shell .route span{width:13px;margin:0 5px}.game-shell .route i{width:5px;height:5px}
+ .game-shell .tools{gap:6px}.game-shell .icon-button{min-width:81px;min-height:44px;font-size:16px;padding:8px}
+ .game-shell .battle-heading{top:calc(var(--safe-top) + 48px);height:27px}.game-shell .battle-heading>div:first-child{gap:8px}.game-shell .battle-heading h1{font-size:19px}.game-shell .battle-heading .eyebrow{display:none}.game-shell .timer{font-size:16px;padding:5px 8px}
+ .game-shell .hud{grid-template-columns:1fr 1.05fr 1fr;gap:6px}.game-shell .fortress-stat,.game-shell .supply-stat{padding:8px 9px;border-radius:5px}.game-shell .fortress-stat>span{font-size:16px;margin:0 0 5px}.game-shell .fortress-stat strong{font-size:16px;line-height:18px}
+ .game-shell .supply-stat>span{font-size:16px;letter-spacing:0}.game-shell .supply-stat>span b{margin-left:4px;font-size:16px}.game-shell .supply-stat>strong{font-size:21px;line-height:22px}.game-shell .supply-stat small{font-size:16px;margin-left:3px}.game-shell .meter{height:4px;margin-top:5px}
+ .game-shell .arena-label{display:none}.game-shell .threat{top:calc(var(--safe-top) + 154px);left:var(--edge);right:var(--edge);max-width:none;text-align:center;padding:5px 8px;font-size:16px}.game-shell .threat span{display:none}.game-shell .threat b{font-size:16px;line-height:1.35}
+ .game-shell .boss-warning{top:calc(var(--safe-top) + 198px);left:var(--edge);right:var(--edge);max-width:none;padding:7px 9px;font-size:16px;text-align:center}
+ .game-shell .section-title{min-height:18px;margin-bottom:5px}.game-shell .section-title h2{font-size:16px}.game-shell .section-title>span{font-size:16px}.game-shell .keyboard-hint{display:none}
+ .game-shell .recruit-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}.game-shell .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .game-shell .unit-card{height:68px;padding:5px 8px 5px 1px}.game-shell .portrait{width:28%}.game-shell .portrait img{max-height:61px;max-width:64px}.game-shell .card-key{display:none}
+ .game-shell .card-copy h3{font-size:16px;margin:2px 0}.game-shell .role{font-size:16px;max-height:10px}.game-shell .card-bottom{margin-top:4px}.game-shell .price{font-size:16px}.game-shell .availability{font-size:16px}
+ .game-shell .wagon{width:100%;height:44px;min-height:44px;flex-direction:row;gap:10px;padding:6px 10px}.game-shell .wagon-icon{font-size:21px}.game-shell .wagon>b{font-size:16px}.game-shell .wagon>span:not(.wagon-icon){font-size:16px}.game-shell .wagon>strong{font-size:16px}.game-shell .wagon>small{font-size:16px}
+ .game-shell .battle-status{min-height:32px;padding:6px 9px;font-size:16px;gap:8px;bottom:calc(var(--safe-bottom) + var(--dock-bottom) + var(--dock-height) + 6px)}.game-shell .army{font-size:16px}.game-shell .army b{margin-left:3px}
+ .game-shell .game-footer{display:none}
+}
+@media(max-width:370px) and (orientation:portrait){
+ .game-shell{--edge:8px}.game-shell .fortress-stat,.game-shell .supply-stat{padding-left:6px;padding-right:6px}.game-shell .fortress-stat>span{font-size:16px}.game-shell .supply-stat>span b{font-size:16px;margin-left:3px}.game-shell .supply-stat small{font-size:16px}.game-shell .card-copy h3{font-size:16px}.game-shell .wagon>span:not(.wagon-icon){display:none}.game-shell .wagon{justify-content:space-between;gap:6px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .game-shell{--hud-top:74px;--hud-height:58px}.game-shell .battle-heading{top:calc(var(--safe-top) + 44px);height:24px}.game-shell .battle-heading h1{font-size:17px}.game-shell .fortress-stat,.game-shell .supply-stat{padding-top:5px;padding-bottom:5px}.game-shell .threat{top:calc(var(--safe-top) + 138px)}.game-shell .boss-warning{top:calc(var(--safe-top) + 175px)}.game-shell .unit-card{height:56px}.game-shell .portrait img{max-height:51px}.game-shell .role{display:none}.game-shell .section-title{display:none}.game-shell .battle-status{font-size:16px}
+}
+@media(max-height:600px) and (orientation:landscape){
+ .game-shell{--edge:12px;--hud-top:52px;--hud-height:51px;--dock-bottom:8px}
+ .game-shell .masthead{height:44px;justify-content:flex-end}.game-shell .brand,.game-shell .campaign{display:none}.game-shell .tools{gap:6px}.game-shell .icon-button{min-height:44px;min-width:80px;font-size:16px;padding:8px}
+ .game-shell .battle-heading{top:var(--safe-top);height:44px;right:calc(max(var(--edge),env(safe-area-inset-right)) + 184px)}.game-shell .battle-heading h1{font-size:19px}.game-shell .battle-heading .eyebrow{font-size:16px}.game-shell .battle-heading>div:first-child{gap:9px}.game-shell .timer{font-size:16px;padding:4px 7px}
+ .game-shell .hud{grid-template-columns:1fr .8fr 1fr;gap:16px}.game-shell .fortress-stat,.game-shell .supply-stat{padding:5px 12px}.game-shell .fortress-stat>span{font-size:16px;display:inline;margin-right:10px}.game-shell .fortress-stat strong{font-size:16px;line-height:20px}.game-shell .supply-stat>span{font-size:16px;float:left;line-height:20px}.game-shell .supply-stat>span b{font-size:16px;margin-left:5px}.game-shell .supply-stat>strong{font-size:20px;line-height:20px}.game-shell .supply-stat small{font-size:16px}.game-shell .meter{height:4px;margin-top:5px;clear:both}
+ .game-shell .arena-label{display:none}.game-shell .threat{top:calc(var(--safe-top) + 108px);left:var(--edge);right:auto;max-width:70%;padding:4px 8px;text-align:left}.game-shell .threat span{display:none}.game-shell .threat b{font-size:16px}.game-shell .boss-warning{top:calc(var(--safe-top) + 108px);max-width:45%;padding:5px 8px;font-size:16px}
+ .game-shell .section-title,.game-shell .game-footer{display:none}.game-shell .cards{gap:6px}.game-shell .recruit-row{gap:6px}.game-shell .unit-card,.game-shell .wagon{height:72px}.game-shell .unit-card{padding:5px 7px 5px 1px}.game-shell .portrait{width:29%}.game-shell .portrait img{max-height:66px;max-width:66px}.game-shell .card-key,.game-shell .role,.game-shell .card-copy p{display:none}.game-shell .card-copy h3{font-size:16px;margin:0 0 6px}.game-shell .card-bottom{margin:0;flex-wrap:wrap;gap:3px}.game-shell .price{font-size:16px}.game-shell .availability{font-size:16px}.game-shell .wagon{width:116px;gap:3px;padding:5px}.game-shell .wagon-icon{display:none}.game-shell .wagon>b{font-size:16px}.game-shell .wagon>strong{font-size:16px}.game-shell .wagon>span:not(.wagon-icon),.game-shell .wagon>small{font-size:16px}
+ .game-shell .battle-status{min-height:27px;padding:5px 8px;font-size:16px;bottom:calc(var(--safe-bottom) + var(--dock-bottom) + var(--dock-height) + 5px)}.game-shell .army{font-size:16px}
+}
+@media(max-height:390px) and (orientation:landscape){
+ .game-shell{--hud-top:46px;--hud-height:44px;--edge:8px}.game-shell .hud{gap:10px}.game-shell .fortress-stat,.game-shell .supply-stat{padding:3px 8px}.game-shell .fortress-stat>span{font-size:16px;margin-right:6px}.game-shell .fortress-stat strong{font-size:16px}.game-shell .supply-stat>span{float:none;display:inline}.game-shell .supply-stat>span b{margin-left:4px}.game-shell .supply-stat>strong{display:inline;font-size:17px;margin-left:6px}.game-shell .meter{margin-top:4px}.game-shell .threat{top:calc(var(--safe-top) + 94px);max-width:64%}.game-shell .boss-warning{top:calc(var(--safe-top) + 94px);max-width:45%}.game-shell .unit-card,.game-shell .wagon{height:61px}.game-shell .portrait img{max-height:55px}.game-shell .card-copy h3{font-size:16px}.game-shell .battle-heading .eyebrow{display:none}
+}
+.game-shell .boss-warning{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 12px)}
+.game-shell .threat[hidden]{display:none}
+@media(max-width:700px) and (orientation:landscape){
+ .game-shell .portrait{display:none}.game-shell .unit-card{padding-left:7px;padding-right:7px}.game-shell .wagon{width:100px}.game-shell .card-copy h3{font-size:16px}.game-shell .card-bottom{justify-content:space-between}.game-shell .availability{font-size:16px}
+}
+@media(max-width:900px) and (orientation:portrait){
+ .game-shell .threat,.game-shell .boss-warning{left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right))}
+}
+@media(max-height:600px) and (orientation:landscape){
+ .game-shell .threat{left:max(var(--edge),env(safe-area-inset-left))}
+}
+/* Battle typography: keep decisions, remove repeated labels and fine print. */
+.game-shell .brand div>span,.game-shell .battle-heading .eyebrow,.game-shell .arena-label,.game-shell .game-footer,.game-shell .section-title,.game-shell .role,.game-shell .card-copy p,.game-shell .card-key,.game-shell .threat>span,.game-shell .route{display:none}
+.game-shell{--dock-bottom:14px;--hud-height:86px}
+.game-shell .brand b{font-size:25px}.game-shell .chapter{font-size:16px;letter-spacing:1px}
+.game-shell .icon-button{font-size:16px;min-height:44px;min-width:106px}
+.game-shell .battle-heading h1{font-size:27px}.game-shell .timer{font-size:17px}
+.game-shell .fortress-stat>span{font-size:16px}.game-shell .fortress-stat strong{font-size:25px;line-height:29px}
+.game-shell .supply-stat>span,.game-shell .supply-stat>span b{font-size:16px;letter-spacing:0}.game-shell .supply-stat>strong{font-size:30px;line-height:32px}.game-shell .supply-stat small{font-size:16px}
+.game-shell .threat,.game-shell .boss-warning{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 8px);font-size:16px;line-height:1.35;padding:8px 12px;max-width:75%}.game-shell .threat b{font-size:16px;line-height:1.35}
+.game-shell .battle-status{font-size:16px;min-height:38px}.game-shell .army{font-size:16px}.game-shell .battle-status>span:first-child:empty{display:none}.game-shell .army{margin-left:auto}
+.game-shell .card-copy h3{font-size:23px;line-height:1.15;white-space:normal;overflow-wrap:normal;margin:0 0 12px}.game-shell .price{font-size:22px}.game-shell .availability{font-size:16px;white-space:nowrap}.game-shell .card-bottom{flex-wrap:wrap;gap:4px 10px}
+.game-shell .wagon{width:164px;gap:5px}.game-shell .wagon-icon{display:none}.game-shell .wagon>b{font-size:22px}.game-shell .wagon>span:not(.wagon-icon),.game-shell .wagon>small{font-size:16px}.game-shell .wagon>strong{font-size:20px}
+@media(max-width:1200px){
+ .game-shell .portrait{width:25%}.game-shell .card-copy h3{font-size:18px}.game-shell .price{font-size:19px}.game-shell .availability{font-size:16px}.game-shell .wagon{width:125px}.game-shell .wagon>b{font-size:19px}
+}
+@media(max-width:900px) and (orientation:portrait){
+ .game-shell{--hud-height:74px;--dock-bottom:10px}
+ .game-shell .chapter{font-size:16px;letter-spacing:0}.game-shell .icon-button{font-size:16px;min-width:88px;padding:7px}.game-shell .battle-heading h1{font-size:20px}.game-shell .timer{font-size:16px;padding:4px 6px}
+ .game-shell .hud{gap:6px;grid-template-columns:1fr 1fr 1fr}.game-shell .fortress-stat,.game-shell .supply-stat{padding:7px 5px}.game-shell .fortress-stat>span{font-size:16px;margin-bottom:4px}.game-shell .fortress-stat strong{font-size:17px;line-height:22px}.game-shell .supply-label{display:none}.game-shell .supply-stat>span b{font-size:16px;margin:0}.game-shell .supply-stat>strong{font-size:22px;line-height:24px}.game-shell .supply-stat small{font-size:16px;margin-left:2px}
+ .game-shell .threat,.game-shell .boss-warning{max-width:none;font-size:16px;line-height:1.25;padding:5px 8px}.game-shell .threat b{font-size:16px;line-height:1.25}
+ .game-shell .unit-card{height:70px}.game-shell .card-copy h3{font-size:17px;margin:0 0 6px}.game-shell .price{font-size:17px}.game-shell .availability{font-size:16px}.game-shell .card-bottom{margin:0;gap:3px 6px}.game-shell .portrait{width:24%}
+ .game-shell .wagon{width:100%;height:44px;gap:10px;padding:5px 8px}.game-shell .wagon>b{font-size:17px}.game-shell .wagon>span:not(.wagon-icon){display:block;font-size:16px}.game-shell .wagon>strong{font-size:17px}.game-shell .wagon>small{font-size:16px}
+ .game-shell .battle-status,.game-shell .army{font-size:16px}.game-shell .battle-status{min-height:30px;padding:5px 7px;gap:8px}
+}
+@media(max-width:420px) and (orientation:portrait){
+ .game-shell .portrait{display:none}.game-shell .unit-card{padding:5px 8px}.game-shell .card-copy h3{font-size:17px}.game-shell .fortress-stat strong{font-size:16px}.game-shell .supply-stat>strong{font-size:20px}.game-shell .wagon{gap:7px;justify-content:space-between}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .game-shell{--hud-height:66px}.game-shell .unit-card{height:56px}.game-shell .card-copy h3{font-size:16px;margin-bottom:3px}.game-shell .fortress-stat,.game-shell .supply-stat{padding-top:4px;padding-bottom:4px}.game-shell .threat,.game-shell .threat b,.game-shell .boss-warning{font-size:16px}
+}
+@media(max-height:600px) and (orientation:landscape){
+ .game-shell{--hud-height:52px;--dock-bottom:8px}.game-shell .icon-button{font-size:16px;min-width:88px;padding:7px}.game-shell .battle-heading{right:calc(max(var(--edge),env(safe-area-inset-right)) + 196px)}.game-shell .battle-heading h1{font-size:20px}.game-shell .timer{font-size:16px}
+ .game-shell .hud{grid-template-columns:1fr 1fr 1fr;gap:8px}.game-shell .fortress-stat,.game-shell .supply-stat{padding:4px 7px}.game-shell .fortress-stat>span{font-size:16px;margin-right:6px}.game-shell .fortress-stat strong{font-size:17px;line-height:21px}.game-shell .supply-label{display:none}.game-shell .supply-stat>span{float:none;display:inline}.game-shell .supply-stat>span b{font-size:16px;margin:0}.game-shell .supply-stat>strong{display:inline;font-size:20px;line-height:23px;margin-left:5px}.game-shell .supply-stat small{font-size:16px;margin-left:2px}
+ .game-shell .threat,.game-shell .boss-warning{max-width:none;left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));font-size:16px;line-height:1.25;padding:4px 8px;top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 6px)}.game-shell .threat b{font-size:16px;line-height:1.25}
+ .game-shell .portrait{display:none}.game-shell .unit-card{height:70px;padding:5px 7px}.game-shell .card-copy{padding:0}.game-shell .card-copy h3{font-size:16px;margin:0 0 4px}.game-shell .price{font-size:16px}.game-shell .availability{font-size:16px}.game-shell .card-bottom{gap:2px 4px;margin:0}
+ .game-shell .wagon{width:105px;height:70px;padding:4px;gap:1px}.game-shell .wagon>b{font-size:16px}.game-shell .wagon>span:not(.wagon-icon),.game-shell .wagon>small{font-size:16px}.game-shell .wagon>strong{font-size:16px}.game-shell .wagon>small{display:none}
+ .game-shell .battle-status,.game-shell .army{font-size:16px}.game-shell .battle-status{min-height:28px;padding:4px 7px;gap:8px}
+}
+@media(max-height:390px) and (orientation:landscape){
+ .game-shell{--hud-height:48px}.game-shell .unit-card,.game-shell .wagon{height:64px}.game-shell .fortress-stat>span{font-size:16px}.game-shell .fortress-stat strong{font-size:16px}.game-shell .card-copy h3{font-size:16px}.game-shell .supply-stat>strong{font-size:18px}.game-shell .meter{margin-top:3px}
+}
+.game-shell .unit-name-compact{display:none}
+@media(max-width:700px) and (orientation:landscape){
+ .game-shell .unit-name-full{display:none}.game-shell .unit-name-compact{display:inline}
+}
+/* One tactical cue per hire card; detailed descriptions remain in the book. */
+.game-shell .role{display:block;font-size:16px;line-height:1.2;max-height:none;letter-spacing:0;text-transform:none;color:#d0ddc8;margin-bottom:5px;overflow-wrap:normal}
+@media(max-width:1200px){.game-shell .role{font-size:16px}}
+@media(max-width:900px) and (orientation:portrait){
+ .game-shell .unit-card{height:88px}.game-shell .role{font-size:16px;line-height:1.15;margin-bottom:3px}.game-shell .portrait{display:none}.game-shell .unit-card{padding:5px 8px}.game-shell .card-copy h3{margin-bottom:4px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .game-shell .unit-card{height:74px}.game-shell .role{font-size:16px;line-height:1.1;margin-bottom:2px}.game-shell .card-copy h3{margin-bottom:2px}
+}
+@media(max-height:600px) and (orientation:landscape){
+ .game-shell .unit-card,.game-shell .wagon{height:84px}.game-shell .role{font-size:16px;line-height:1.15;margin-bottom:3px}
+}
+@media(max-height:390px) and (orientation:landscape){
+ .game-shell .role{display:none}.game-shell .unit-card,.game-shell .wagon{height:64px}
+}
+@media(min-width:901px) and (max-width:1200px) and (min-height:601px){
+ .game-shell .unit-card,.game-shell .wagon{height:122px}.game-shell .card-copy h3{margin-bottom:6px}.game-shell .card-bottom{margin-top:4px}
+}
+@media(max-height:520px) and (orientation:portrait){
+ .game-shell .role{display:none}.game-shell .unit-card{height:56px}
+}
+/* 16px minimum: readable content and layouts, including every modal. */
+small{font-size:16px}
+.modal{width:min(760px,100%);padding:32px;line-height:1.5}
+.modal.reward-modal{width:min(1000px,100%)}
+.modal .eyebrow,.modal:before{display:none}
+.modal-intro{font-size:18px;line-height:1.55;max-width:700px}
+.modal p,.modal small,.modal span,.modal button{overflow-wrap:break-word}
+.modal button{min-height:44px}
+.modal .fine-print,.modal .save-note,.modal-platform{font-size:16px;line-height:1.5}
+.modal-platform button,.menu-links button{font-size:16px;min-height:44px}
+.book-grid{gap:16px;margin:26px 0;grid-template-columns:repeat(2,minmax(0,1fr))}
+.book-unit{align-items:flex-start;gap:14px;padding:16px;min-width:0;height:auto}
+.book-unit>div{min-width:0}.book-unit img{width:72px;margin-top:4px}
+.book-unit h3{font-size:24px;line-height:1.2;margin-bottom:10px}
+.book-unit p,.book-unit small,.book-unlock{font-size:16px;line-height:1.5}
+.book-unit small{margin-top:12px}.book-unlock{margin-top:8px;color:#bbd3b7}
+.book-upgrades{padding:22px}.book-upgrades h3{font-size:26px}.book-upgrades p{font-size:16px;line-height:1.65;margin:12px 0}
+.doctrine p,.roster-card>span,.roster-card>small,.contract-card p,.contract-card small,.contract-rule,.contract-reward,.contract-card>strong,.reward-card p,.take-reward,.report-stats span{font-size:16px;line-height:1.5}
+.doctrine,.roster-card,.reward-card,.contract-card{min-width:0;height:auto}
+.roster-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.roster-card{padding:16px}.roster-card>b{font-size:21px}
+.report-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.report-stats span{margin-top:8px}
+.route-map{grid-template-columns:repeat(4,minmax(0,1fr))}.route-map span{font-size:16px;line-height:1.35}
+.contract-card h3{max-width:none}.enemy-preview{position:static;width:auto;height:100px;justify-content:flex-start}
+@media(max-width:850px){
+ .modal{padding:24px}.book-grid{grid-template-columns:1fr}.doctrines{grid-template-columns:1fr}.roster-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rewards{grid-template-columns:1fr}
+ .reward-card{display:flex;text-align:center}.reward-icon{margin-bottom:12px}
+ .report-stats,.route-map{grid-template-columns:repeat(2,minmax(0,1fr))}.contracts{grid-template-columns:1fr}
+}
+@media(max-width:450px){
+ .modal{padding:22px 16px}.modal-intro{font-size:16px}.book-unit{padding:14px}.book-unit img{display:none}.book-unit h3{font-size:23px}.book-upgrades{padding:16px}.roster-grid{grid-template-columns:1fr}.roster-card{min-height:0}.roster-card img{height:80px}.report-stats{gap:12px}
+}
+.game-shell .threat-compact{display:none}
+.game-shell .unit-card,.game-shell .wagon{height:140px}.game-shell .role{font-size:16px;line-height:1.2}
+.game-shell .card-copy h3{margin-bottom:6px}.game-shell .card-bottom{margin-top:5px}.game-shell .wagon{gap:6px}
+.game-shell .card-copy,.game-shell .battle-heading>div:first-child{min-width:0}
+@media(min-width:901px) and (max-width:1200px) and (min-height:601px){
+ .game-shell .portrait{display:none}.game-shell .unit-card,.game-shell .wagon{height:142px}
+}
+@media(max-width:900px) and (orientation:portrait){
+ .game-shell .threat-full{display:none}.game-shell .threat-compact{display:inline}.game-shell .resource-icon{display:none}.game-shell .supply-stat small{margin-left:0}
+ .game-shell .fortress-stat strong{font-size:18px}.game-shell .supply-stat>strong{font-size:20px}.game-shell .supply-stat>span b{font-size:16px}
+ .game-shell .threat,.game-shell .boss-warning{font-size:16px;line-height:1.25}.game-shell .threat b{font-size:16px;line-height:1.25}
+ .game-shell .unit-card{height:104px}.game-shell .role{font-size:16px;line-height:1.15;margin-bottom:4px}.game-shell .card-copy h3{font-size:18px;margin-bottom:4px}.game-shell .card-bottom{margin:0;gap:2px 6px}.game-shell .availability,.game-shell .price{font-size:16px}
+ .game-shell .wagon{height:48px;gap:6px}.game-shell .wagon>b,.game-shell .wagon>span:not(.wagon-icon),.game-shell .wagon>strong,.game-shell .wagon>small{font-size:16px}.game-shell .wagon>small{display:none}
+ .game-shell .battle-status{font-size:16px;min-height:32px;padding:4px 6px}.game-shell .army{font-size:16px}.game-shell .army b{margin-left:2px}
+}
+@media(max-height:650px) and (orientation:portrait){
+ .game-shell .unit-card{height:88px}.game-shell .role{font-size:16px;line-height:1.1;margin-bottom:2px}.game-shell .card-copy h3{font-size:16px;margin-bottom:2px}.game-shell .fortress-stat>span{margin-bottom:1px}.game-shell .fortress-stat strong{font-size:16px;line-height:20px}.game-shell .supply-stat>strong{font-size:18px;line-height:20px}
+}
+@media(max-height:520px) and (orientation:portrait){
+ .game-shell .role{display:none}.game-shell .unit-card{height:56px}.game-shell .battle-status>span:first-child{display:none}
+}
+@media(max-height:600px) and (orientation:landscape){
+ .game-shell .threat-full{display:none}.game-shell .threat-compact{display:inline}.game-shell .threat,.game-shell .threat b,.game-shell .boss-warning{font-size:16px;line-height:1.2}
+ .game-shell .icon-button{min-width:100px}.game-shell .battle-heading{right:calc(max(var(--edge),env(safe-area-inset-right)) + 220px)}
+ .game-shell .resource-icon{display:none}.game-shell .fortress-stat>span{font-size:16px}.game-shell .fortress-stat strong{font-size:16px}.game-shell .supply-stat>span b,.game-shell .supply-stat small{font-size:16px}.game-shell .supply-stat>strong{font-size:18px;margin-left:3px}
+ .game-shell .unit-card,.game-shell .wagon{height:104px}.game-shell .card-copy h3{font-size:16px}.game-shell .price,.game-shell .availability,.game-shell .role{font-size:16px}.game-shell .card-bottom{justify-content:space-between}.game-shell .wagon{width:108px;gap:2px}.game-shell .wagon>b,.game-shell .wagon>strong,.game-shell .wagon>span:not(.wagon-icon){font-size:16px}
+ .game-shell .battle-status,.game-shell .army{font-size:16px}.game-shell .battle-status{min-height:30px;padding:4px 6px}
+}
+@media(max-height:390px) and (orientation:landscape){
+ .game-shell .role{display:none}.game-shell .unit-card,.game-shell .wagon{height:70px}.game-shell .unit-card{padding:4px 5px}.game-shell .card-bottom{gap:2px;flex-wrap:nowrap}.game-shell .card-copy h3{font-size:16px;margin-bottom:4px}.game-shell .supply-stat>strong{font-size:16px}.game-shell .fortress-stat,.game-shell .supply-stat{padding:3px 5px}.game-shell .hud{gap:6px}
+ .game-shell .battle-status>span:first-child{display:none}
+}
+/* Small portrait: preserve readable controls and reserve room for the actual battle. */
+@media(max-width:420px) and (max-height:650px) and (orientation:portrait){
+ .game-shell{--dock-bottom:8px}
+ .game-shell .role,.game-shell .battle-status>span:first-child{display:none}
+ .game-shell .unit-card{height:60px;padding:4px 7px}
+ .game-shell .card-copy h3{font-size:16px;line-height:1.15;margin-bottom:3px}
+ .game-shell .card-bottom{margin:0;flex-wrap:nowrap;gap:4px}
+ .game-shell .price,.game-shell .availability{font-size:16px;line-height:1.2}
+ .game-shell .wagon{height:44px;min-height:44px;padding:4px 7px}
+ .game-shell .battle-status{min-height:24px;height:24px;padding:0 6px;border:0;background:#122c3299;bottom:calc(var(--safe-bottom) + var(--dock-bottom) + var(--dock-height) + 4px);line-height:24px}
+ .game-shell .army{font-size:16px;line-height:24px}
+}
+@media(max-width:420px) and (max-height:520px) and (orientation:portrait){
+ .game-shell{--hud-top:48px}
+ .game-shell .unit-card{height:56px}
+ .game-shell .campaign{align-self:flex-start;padding-top:1px}
+ .game-shell .chapter{font-size:16px;line-height:20px}
+ .game-shell .battle-heading{top:calc(var(--safe-top) + 22px);left:max(var(--edge),env(safe-area-inset-left));right:auto;height:20px}
+ .game-shell .battle-heading>div:first-child{display:none}
+ .game-shell .timer{font-size:16px;line-height:20px;padding:0;background:none}
+}
+/* Low landscape: two text rows per card, compact wagon, count-only status. */
+@media(max-height:390px) and (orientation:landscape){
+ .game-shell{--hud-top:44px;--hud-height:44px}
+ .game-shell .battle-heading>div:first-child{display:none}
+ .game-shell .battle-heading{height:44px;justify-content:flex-start}
+ .game-shell .timer{font-size:16px}
+ .game-shell .threat,.game-shell .boss-warning{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 2px);padding:4px 8px;font-size:16px;line-height:1.2}
+ .game-shell .unit-card{height:56px;padding:4px 5px}
+ .game-shell .card-copy h3{font-size:16px;line-height:1.15;margin-bottom:4px}
+ .game-shell .card-bottom{line-height:1.2;flex-wrap:nowrap;gap:2px}
+ .game-shell .wagon{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:22px 20px;align-content:center;gap:0 3px;width:108px;height:56px;padding:4px 5px}
+ .game-shell .wagon>b{grid-row:1;grid-column:1;font-size:16px;line-height:22px;white-space:nowrap}
+ .game-shell .wagon>strong{grid-row:1;grid-column:2;font-size:16px;line-height:22px}
+ .game-shell .wagon>span:not(.wagon-icon){grid-row:2;grid-column:1/3;font-size:16px;line-height:20px}
+ .game-shell .wagon-arrow{display:none}
+ .game-shell .battle-status{min-height:24px;height:24px;padding:0 6px;border:0;line-height:24px;background:#122c3299;bottom:calc(var(--safe-bottom) + var(--dock-bottom) + var(--dock-height) + 5px)}
+ .game-shell .army{font-size:16px;line-height:24px}
+}
+@media(max-height:390px) and (orientation:landscape){
+ .game-shell .wagon.is-maxed>b{grid-column:1/3}
+ .game-shell .wagon.is-maxed>strong{grid-row:2;grid-column:1/3}
+ .game-shell .wagon.is-maxed>span:not(.wagon-icon){display:none}
+}
+@media(max-width:900px),(max-height:600px){
+ .game-shell .tools [data-action="mute"]{min-width:108px;max-width:108px;width:108px;min-height:44px;padding:4px 5px;font-size:16px;line-height:17px;white-space:normal}
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Марш Пепельного тракта",
+  "original": true,
+  "bpm": 120,
+  "meter": "4/4",
+  "key": "D minor",
+  "bars": 32,
+  "sampleRate": 32000,
+  "samples": 2048000,
+  "loopSeconds": 64,
+  "peakDb": -1.3100309751286456,
+  "rmsDb": -12.320086651585488,
+  "boundaryDelta": 0.0018525363336246812,
+  "files": [
+    "arena-theme.mp3",
+    "arena-theme.ogg"
+  ]
+}
