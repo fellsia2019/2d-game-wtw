@@ -1,4 +1,4 @@
-import { UPGRADES } from '../data/content';
+import { UPGRADES, unitRole } from '../data/content';
 import { Random } from './random';
 import type { HireKind, UpgradeId } from './types';
 
@@ -7,8 +7,8 @@ export function offerRewards(seed: number, battleIndex: number, roster: HireKind
   const remaining = (Object.keys(UPGRADES) as UpgradeId[]).filter(id => {
     if (selected.includes(id)) return false;
     const requirement = UPGRADES[id].requires;
-    if (requirement && !roster.includes(requirement)) return false;
-    if (id === 'banner' && !roster.includes('shield') && !roster.includes('spear')) return false;
+    if (requirement && !roster.some(kind => unitRole(kind) === requirement)) return false;
+    if (id === 'banner' && !roster.some(kind => ['shield', 'spear'].includes(unitRole(kind)))) return false;
     return true;
   });
   for (let i = remaining.length - 1; i > 0; i--) {

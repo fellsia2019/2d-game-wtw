@@ -1,8 +1,9 @@
-import { BATTLES, DOCTRINES, STARTER_KINDS, UNITS, UNLOCKS, UPGRADES } from '../data/content';
+import { DOCTRINES, ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, UNITS, UPGRADES } from '../data/content';
 import { BattleSimulation } from './BattleSimulation';
 import { offerRewards } from './rewards';
 import { SaveService, type Checkpoint } from './save';
-import type { ContractOption, DoctrineId, GameApp, GamePhase, GameState, HireKind, Records, UpgradeId } from './types';
+import { MAX_TALENT_LEVEL, talentCost, type TalentId, type TalentProgress } from './talents';
+import type { ContractOption, DoctrineId, EraChallenges, EraId, EraProgress, EraUnlocks, GameApp, GamePhase, GameState, HireKind, Records, UpgradeId } from './types';
 
 const FIXED_STEP = 1 / 30;
 
@@ -12,9 +13,14 @@ export class GameDirector implements GameApp {
   private simulation: BattleSimulation | null = null;
   private phase: GamePhase = 'menu';
   private seed = 0;
+  private eraId: EraId = 'stone';
+  private unlockedEras: EraUnlocks;
+  private eraProgress: EraProgress;
+  private eraChallenges: EraChallenges;
+  private talentProgress: TalentProgress;
   private battleIndex = 0;
   private doctrine: DoctrineId | null = null;
-  private roster: HireKind[] = [...STARTER_KINDS];
+  private roster: HireKind[] = [...ERA_STARTER_KINDS.stone];
   private upgrades: UpgradeId[] = [];
   private rewards: UpgradeId[] = [];
   private contracts: ContractOption[] = [];
@@ -24,23 +30,28 @@ export class GameDirector implements GameApp {
   private records: Records;
   private paused = false;
   private pauseSources = new Set<string>();
-  private muted = false;
+  private muted = true;
   private platform: GameState['platform'] = { sdk: 'loading', online: true };
 
   constructor(private save: SaveService) {
     this.checkpointAvailable = !!save.load();
     this.records = save.loadRecords();
+    const progress = save.loadEraProgress();
+    this.unlockedEras = progress.unlocked;
+    this.eraProgress = progress.wins;
+    this.eraChallenges = progress.challenges;
+    this.talentProgress = save.loadTalents();
   }
 
   getState(): GameState {
     const sim = this.simulation;
-    const battle = BATTLES[this.battleIndex];
+    const battle = ERA_BATTLES[this.eraId][this.battleIndex];
     const cards = this.roster.map(kind => ({ kind, name: UNITS[kind].name, role: UNITS[kind].role,
       cost: sim?.hireCost(kind) ?? UNITS[kind].cost,
       canHire: this.phase === 'battle' && !this.paused && !this.externallyPaused && !!sim
         && sim.resource >= sim.hireCost(kind) && sim.allyCount < 12 }));
     return {
-      phase: this.phase, seed: this.seed, battleIndex: this.battleIndex, arenaId: battle.arenaId,
+      phase: this.phase, seed: this.seed, eraId: this.eraId, unlockedEras: { ...this.unlockedEras }, eraProgress: { ...this.eraProgress }, eraChallenges: { ...this.eraChallenges }, talentPoints: this.talentProgress.points, talents: { ...this.talentProgress.levels }, battleIndex: this.battleIndex, arenaId: battle.arenaId,
       battleName: this.selectedContract?.name ?? battle.name,
       threat: this.selectedContract?.threat ?? battle.threat,
       elapsed: sim?.elapsed ?? this.report?.duration ?? 0,
@@ -68,11 +79,53 @@ export class GameDirector implements GameApp {
     return () => this.listeners.delete(listener);
   }
 
-  startNewRun(seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0): void {
+  selectEra(id: EraId): boolean {
+    if (!['menu', 'victory', 'defeat'].includes(this.phase) || !this.unlockedEras[id]) return false;
+    this.eraId = id;
+    this.phase = 'menu';
+    this.battleIndex = 0;
+    this.roster = [...ERA_STARTER_KINDS[id]];
+    this.selectedContract = null;
+    this.report = null;
+    this.simulation = null;
+    this.emit();
+    return true;
+  }
+
+  returnToMenu(): boolean {
+    if (this.phase === 'menu' || this.phase === 'battle') return false;
+    if (['preparation', 'contract', 'reward'].includes(this.phase)) this.persist();
+    else if (this.phase !== 'defeat') {
+      this.battleIndex = 0;
+      this.roster = [...ERA_STARTER_KINDS[this.eraId]];
+      this.report = null;
+      this.simulation = null;
+      this.selectedContract = null;
+    }
+    this.phase = 'menu';
+    this.emit();
+    return true;
+  }
+
+  buyTalent(id: TalentId): boolean {
+    if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase) || !Object.hasOwn(this.talentProgress.levels, id)) return false;
+    const level = this.talentProgress.levels[id];
+    const cost = talentCost(level);
+    if (level >= MAX_TALENT_LEVEL || this.talentProgress.points < cost) return false;
+    this.talentProgress.levels[id] = level + 1;
+    this.talentProgress.points -= cost;
+    this.save.writeTalents(this.talentProgress);
+    this.emit();
+    return true;
+  }
+
+  startNewRun(seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0, eraId: EraId = this.eraId): void {
+    if (!this.unlockedEras[eraId]) return;
+    this.eraId = eraId;
     this.seed = seed >>> 0;
     this.battleIndex = 0;
     this.doctrine = null;
-    this.roster = [...STARTER_KINDS];
+    this.roster = [...ERA_STARTER_KINDS[this.eraId]];
     this.upgrades = [];
     this.rewards = [];
     this.contracts = [];
@@ -91,6 +144,7 @@ export class GameDirector implements GameApp {
   continueRun(): void {
     const checkpoint = this.save.load();
     if (!checkpoint) { this.checkpointAvailable = false; this.emit(); return; }
+    this.eraId = checkpoint.eraId ?? 'legacy';
     this.seed = checkpoint.seed;
     this.battleIndex = checkpoint.battleIndex;
     this.doctrine = checkpoint.doctrine;
@@ -148,6 +202,14 @@ export class GameDirector implements GameApp {
     return true;
   }
 
+  retryBattle(): boolean {
+    if (this.phase !== 'defeat' || !this.selectedContract) return false;
+    this.report = null;
+    this.simulation = null;
+    this.beginBattle(true);
+    return true;
+  }
+
   hire(kind: HireKind): boolean {
     if (this.phase !== 'battle' || this.paused || this.externallyPaused || !this.simulation) return false;
     const success = this.simulation.hire(kind);
@@ -200,24 +262,29 @@ export class GameDirector implements GameApp {
   private get externallyPaused(): boolean { return this.pauseSources.size > 0; }
 
   private unlockedUnits(): HireKind[] {
-    return [...STARTER_KINDS, ...UNLOCKS.filter(u => this.records.marks >= u.marks).map(u => u.kind)];
+    if (this.eraId === 'legacy') {
+      const kinds = ERA_HIRE_KINDS.legacy;
+      return [...kinds.slice(0, 4), ...kinds.slice(4).filter((_, i) => this.records.marks >= [1, 3, 5, 8][i])];
+    }
+    const kinds = ERA_HIRE_KINDS[this.eraId];
+    return [...kinds.slice(0, 4), ...kinds.slice(4).filter((_, i) => i === 2 ? this.eraChallenges[this.eraId] : this.eraProgress[this.eraId] >= i + 1)];
   }
 
   private makeContracts(): ContractOption[] {
-    const battle = BATTLES[this.battleIndex];
+    const battle = ERA_BATTLES[this.eraId][this.battleIndex];
     return [
       { id: `${this.battleIndex}-standard`, name: battle.name, threat: battle.threat, roster: [...battle.roster],
         condition: 'Обычные припасы противника', reward: '1 знак контракта', enemyIncome: battle.enemyIncome,
         marks: 1, risk: 'standard' },
       { id: `${this.battleIndex}-daring`, name: `${battle.name}: дерзкий контракт`, threat: battle.threat,
         roster: [...battle.roster], condition: 'Враг начинает с 20 припасами и получает +0,7/с',
-        reward: '2 знака контракта', enemyIncome: battle.enemyIncome + .7, marks: 2, risk: 'daring' }
+        reward: this.eraId === 'legacy' ? '2 знака контракта' : '2 знака и испытание эпохи', enemyIncome: battle.enemyIncome + .7, marks: 2, risk: 'daring' }
     ];
   }
 
   private beginBattle(saveBefore: boolean): void {
     this.simulation = new BattleSimulation(this.battleIndex, this.upgrades, this.seed,
-      this.doctrine ?? 'steel', this.roster, this.selectedContract ?? undefined);
+      this.doctrine ?? 'steel', this.roster, this.selectedContract ?? undefined, this.eraId, this.talentProgress.levels);
     this.phase = 'battle';
     if (saveBefore) this.persist();
     this.emit();
@@ -226,16 +293,20 @@ export class GameDirector implements GameApp {
   private endBattle(): void {
     const report = this.simulation!.report!;
     this.report = { ...report };
-    this.runTime += report.duration;
     if (!report.won) {
       this.phase = 'defeat';
-      this.save.clear();
-      this.checkpointAvailable = false;
       return;
     }
+    this.runTime += report.duration;
     this.records.bestBattle = Math.max(this.records.bestBattle, this.battleIndex + 1);
     this.records.marks += this.selectedContract?.marks ?? 1;
-    if (this.battleIndex === BATTLES.length - 1) {
+    this.talentProgress.points += this.battleIndex === 3 ? 2 : 1;
+    this.save.writeTalents(this.talentProgress);
+    this.eraProgress[this.eraId] = Math.max(this.eraProgress[this.eraId], this.battleIndex + 1);
+    if (this.selectedContract?.risk === 'daring') this.eraChallenges[this.eraId] = true;
+    if (this.eraId === 'stone' && this.battleIndex === 3) this.unlockedEras.bronze = true;
+    this.save.writeEraProgress({ unlocked: this.unlockedEras, wins: this.eraProgress, challenges: this.eraChallenges });
+    if (this.battleIndex === ERA_BATTLES[this.eraId].length - 1) {
       this.records.wins++;
       this.records.bestTime = this.records.bestTime === null ? this.runTime : Math.min(this.records.bestTime, this.runTime);
       this.save.writeRecords(this.records);
@@ -253,7 +324,7 @@ export class GameDirector implements GameApp {
   private persist(): void {
     if (this.phase !== 'preparation' && this.phase !== 'contract' && this.phase !== 'reward' && this.phase !== 'battle') return;
     const checkpoint: Checkpoint = {
-      version: 2, seed: this.seed, battleIndex: this.battleIndex, phase: this.phase,
+      version: 3, eraId: this.eraId, seed: this.seed, battleIndex: this.battleIndex, phase: this.phase,
       doctrine: this.doctrine, roster: [...this.roster], upgrades: [...this.upgrades],
       rewards: [...this.rewards], contracts: this.contracts.map(c => ({ ...c, roster: [...c.roster] })),
       selectedContract: this.selectedContract ? { ...this.selectedContract, roster: [...this.selectedContract.roster] } : null,

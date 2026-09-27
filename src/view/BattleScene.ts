@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { BattleEvent, GameState, UnitState } from '../core/types';
-import { asset, unitArt } from '../art/catalog';
+import { asset, unitArt, roleOf } from '../art/catalog';
 import { UnitMotion } from './UnitMotion';
 import { battlefieldLayout, type BattleInsets } from './BattleLayout';
 
@@ -25,6 +25,10 @@ export class BattleScene extends Phaser.Scene {
   setInsets(insets: BattleInsets) { this.insets = insets; this.layout(); }
   constructor(private read: () => GameState, private onEffect: (event: BattleEvent) => void) { super('battle'); }
   preload() {
+    for (const era of ['stone', 'bronze']) {
+      this.load.svg(`arena-${era}`, asset(`arena-${era}`), { width: 1600, height: 600 });
+      for (const team of ['ally','enemy']) this.load.svg(`${era}-tower-${team}`, asset(`${era}-tower-${team}`), { width: 240, height: 240 });
+    }
     this.load.svg('arena', asset('arena'), { width: 1600, height: 600 });
     this.load.svg('arena-frost', asset('arena-frost'), { width: 1600, height: 600 });
     this.load.svg('arena-citadel', asset('arena-citadel'), { width: 1600, height: 600 });
@@ -55,7 +59,8 @@ export class BattleScene extends Phaser.Scene {
     const sceneHeight = Math.max(h, this.baseline() / .82);
     const sceneWidth = Math.max(w, sceneHeight * 1200 / 450);
     this.background.setDisplaySize(sceneWidth, sceneHeight).setPosition((w - sceneWidth) / 2, this.baseline() - sceneHeight * .82);
-    this.cameras.main.setBackgroundColor(this.currentArena === 'citadel' ? '#443b39' : this.currentArena === 'iron' || this.currentArena === 'arrows' ? '#394f5b' : '#383f3d');
+    const arenaId = this.currentArena.split(':')[1];
+    this.cameras.main.setBackgroundColor(arenaId === 'citadel' ? '#443b39' : arenaId === 'iron' || arenaId === 'arrows' ? '#394f5b' : '#383f3d');
     const size = this.metrics().towerSize;
     this.towers[0].setPosition(this.point(0), this.baseline() + 12).setDisplaySize(size, size);
     this.towers[1].setPosition(this.point(1000), this.baseline() + 12).setDisplaySize(size, size);
@@ -63,9 +68,11 @@ export class BattleScene extends Phaser.Scene {
   update(_time: number, delta: number) {
     if (!this.ready) return;
     const state = this.read(); this.snapshot = state;
-    if (this.currentArena !== state.arenaId) {
-      this.currentArena = state.arenaId;
-      this.background.setTexture(state.arenaId === 'citadel' ? 'arena-citadel' : state.arenaId === 'iron' || state.arenaId === 'arrows' ? 'arena-frost' : 'arena');
+    if (this.currentArena !== `${state.eraId}:${state.arenaId}`) {
+      this.currentArena = `${state.eraId}:${state.arenaId}`;
+      this.towers[0].setTexture(state.eraId === 'legacy' ? 'tower-ally' : `${state.eraId}-tower-ally`);
+      this.towers[1].setTexture(state.eraId === 'legacy' ? 'tower-enemy' : `${state.eraId}-tower-enemy`);
+      this.background.setTexture(state.eraId !== 'legacy' ? `arena-${state.eraId}` : state.arenaId === 'citadel' ? 'arena-citadel' : state.arenaId === 'iron' || state.arenaId === 'arrows' ? 'arena-frost' : 'arena');
       this.layout();
     }
     const reset = state.seed !== this.runSeed || state.battleIndex !== this.phaseIndex || state.elapsed < this.lastSimulationTime || (state.events.length > 0 && state.events[state.events.length - 1].id < this.seen);
@@ -131,10 +138,10 @@ export class BattleScene extends Phaser.Scene {
     const barY = y - 174 * scale - 7;
     figure.bar.fillStyle(0x11242a, .85).fillRoundedRect(x - 16, barY, 32, 4, 2);
     figure.bar.fillStyle(unit.team === 'ally' ? 0x91dbc0 : 0xf0a188).fillRoundedRect(x - 16, barY, 32 * Math.max(0, unit.hp / unit.maxHp), 4, 2);
-    if (unit.kind === 'shield' || unit.kind === 'bulwark') {
+    if (roleOf(unit.kind) === 'shield' || roleOf(unit.kind) === 'bulwark') {
       figure.bar.lineStyle(1, 0xdce7c9, .8).strokeRoundedRect(x - 22, barY - 1, 4, 6, 1);
     }
-    if (unit.kind === 'banner') figure.bar.lineStyle(1, unit.team === 'ally' ? 0xd1dd96 : 0xf1a18b, .22).strokeEllipse(x, y - 2, this.scale.width < 650 ? 65 : 140, 13);
+    if (roleOf(unit.kind) === 'banner') figure.bar.lineStyle(1, unit.team === 'ally' ? 0xd1dd96 : 0xf1a18b, .22).strokeEllipse(x, y - 2, this.scale.width < 650 ? 65 : 140, 13);
   }
   private drawDamage() {
     this.damage.clear();

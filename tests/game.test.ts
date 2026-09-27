@@ -124,17 +124,22 @@ describe('battle simulation', () => {
     expect(sim.units.filter(u => u.team === 'enemy').length).toBeGreaterThanOrEqual(3);
   });
 
-  it('makes losing without hires explainable and allows a new attempt', () => {
-    const director = new GameDirector(new SaveService(new MemoryStorage()));
+  it('makes losing without hires explainable and retries the current battle', () => {
+    const save = new SaveService(new MemoryStorage());
+    const director = new GameDirector(save);
     director.startNewRun(99);
     director.selectDoctrine('steel'); director.beginRun();
     director.chooseContract(director.getState().contracts[0].id);
+    const contract = director.getState().selectedContract;
     for (let i = 0; i < 420 * 30 && director.getState().phase === 'battle'; i++) director.tick();
     expect(director.getState().phase).toBe('defeat');
     expect(director.getState().report?.reason).toMatch(/крепост|время/i);
-    director.startNewRun(100);
-    expect(director.getState().phase).toBe('preparation');
+    expect(director.getState().canContinue).toBe(true);
+    expect(save.load()?.phase).toBe('battle');
+    expect(director.retryBattle()).toBe(true);
+    expect(director.getState().phase).toBe('battle');
     expect(director.getState().battleIndex).toBe(0);
+    expect(director.getState().selectedContract).toBe(contract);
   });
 });
 
@@ -142,7 +147,7 @@ describe('run and persistence', () => {
   it('completes all four battles through rewards and restores each checkpoint', () => {
     const storage = new MemoryStorage();
     let director = new GameDirector(new SaveService(storage));
-    director.startNewRun(23);
+    director.startNewRun(23, 'legacy');
     expect(director.beginRun()).toBe(false);
     expect(director.selectDoctrine('steel')).toBe(true);
     expect(director.beginRun()).toBe(true);
@@ -192,7 +197,7 @@ describe('run and persistence', () => {
     const storage = new MemoryStorage();
     storage.setItem('arena-naemnikov-records-v1', JSON.stringify({ runs: 3, wins: 1, bestBattle: 4, bestTime: 200, marks: 8 }));
     let director = new GameDirector(new SaveService(storage));
-    director.startNewRun(123);
+    director.startNewRun(123, 'legacy');
     expect(director.getState().unlockedUnits).toHaveLength(8);
     expect(director.setLoadout(['shield', 'raider', 'thrower', 'siege'])).toBe(true);
     expect(director.selectDoctrine('bargain')).toBe(true);
@@ -231,7 +236,7 @@ describe('run and persistence', () => {
       doctrine: 'steel', roster: ['shield', 'spear', 'archer', 'medic'], upgrades: [], rewards: [],
       contracts: [], selectedContract: null, report: null, runTime: 20 };
     save.write(checkpoint); save.write({ ...checkpoint, battleIndex: 2 });
-    storage.setItem('arena-naemnikov-run-v2', '{broken');
+    storage.setItem('arena-naemnikov-run-v3', '{broken');
     expect(save.load()?.battleIndex).toBe(1);
     save.clear();
     storage.setItem('arena-naemnikov-run-v1', JSON.stringify({ version: 1, seed: 5, battleIndex: 1,

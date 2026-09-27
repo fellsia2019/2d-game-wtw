@@ -1,6 +1,12 @@
+import type { TalentId, TalentLevels } from './talents';
 export type Team = 'ally' | 'enemy';
-export type HireKind = 'shield' | 'spear' | 'archer' | 'medic' | 'raider' | 'thrower' | 'banner' | 'siege';
-export type UnitKind = HireKind | 'bulwark' | 'enemyArcher';
+export type EraId = 'stone' | 'bronze' | 'legacy';
+export type UnitRole = 'shield' | 'spear' | 'archer' | 'medic' | 'raider' | 'thrower' | 'banner' | 'siege';
+export type LegacyHireKind = UnitRole;
+export type StoneHireKind = 'stoneShield' | 'stoneSpear' | 'stoneSlinger' | 'stoneShaman' | 'stoneScout' | 'stoneThrower' | 'stoneTotem' | 'stoneRam';
+export type BronzeHireKind = 'bronzeGuard' | 'bronzeSpear' | 'bronzeArcher' | 'bronzeHealer' | 'bronzeChariot' | 'bronzePitch' | 'bronzeHerald' | 'bronzeRam';
+export type HireKind = LegacyHireKind | StoneHireKind | BronzeHireKind;
+export type UnitKind = HireKind | 'bulwark' | 'enemyArcher' | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing';
 export type UpgradeId = 'supply' | 'wagon' | 'banner' | 'arrows' | 'bandages' | 'contract' | 'pikes' | 'workshop' | 'boots' | 'siegecraft' | 'lastReserve' | 'standard';
 export type DoctrineId = 'steel' | 'arrow' | 'bargain';
 export type GamePhase = 'menu' | 'preparation' | 'contract' | 'battle' | 'reward' | 'victory' | 'defeat';
@@ -43,6 +49,9 @@ export interface ContractOption {
   risk: 'standard' | 'daring';
 }
 export interface Records { runs: number; wins: number; bestBattle: number; bestTime: number | null; marks: number; }
+export interface EraProgress { stone: number; bronze: number; legacy: number; }
+export interface EraUnlocks { stone: boolean; bronze: boolean; legacy: boolean; }
+export type EraChallenges = EraUnlocks;
 export interface BattleReport {
   won: boolean;
   reason: string;
@@ -60,6 +69,12 @@ export interface BattleReport {
 export interface GameState {
   phase: GamePhase;
   seed: number;
+  eraId: EraId;
+  unlockedEras: EraUnlocks;
+  eraProgress: EraProgress;
+  eraChallenges: EraChallenges;
+  talentPoints: number;
+  talents: TalentLevels;
   battleIndex: number; // zero based; 0..3
   arenaId: 'ash' | 'iron' | 'arrows' | 'citadel';
   battleName: string;
@@ -100,12 +115,16 @@ export interface GameState {
 export interface GameApp {
   getState(): GameState;
   subscribe(listener: (state: GameState) => void): () => void;
-  startNewRun(seed?: number): void;
+  selectEra(id: EraId): boolean;
+  returnToMenu(): boolean;
+  buyTalent(id: TalentId): boolean;
+  startNewRun(seed?: number, eraId?: EraId): void;
   continueRun(): void;
   selectDoctrine(id: DoctrineId): boolean;
   setLoadout(kinds: HireKind[]): boolean;
   beginRun(): boolean;
   chooseContract(id: string): boolean;
+  retryBattle(): boolean;
   hire(kind: HireKind): boolean;
   upgradeIncome(): boolean;
   chooseReward(id: UpgradeId): boolean;

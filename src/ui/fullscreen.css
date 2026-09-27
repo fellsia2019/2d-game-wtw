@@ -279,3 +279,48 @@ small{font-size:16px}
 @media(max-width:900px),(max-height:600px){
  .game-shell .tools [data-action="mute"]{min-width:108px;max-width:108px;width:108px;min-height:44px;padding:4px 5px;font-size:16px;line-height:17px;white-space:normal}
 }
+/* A single decision on each preparation screen. */
+.preparation-modal{background:radial-gradient(ellipse at top,#263b46,#142630 70%);border-color:#8da0a5}
+.preparation-modal .prep-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+.preparation-modal .modal-back{position:static;margin:0;background:#a5b2b5;border:2px solid #e6ebe5;color:#122831;box-shadow:0 4px 0 #485b63;font-weight:800}
+.preparation-modal .prep-stage-label{color:#eacb89;font-size:16px;font-weight:850;letter-spacing:1.3px}
+.preparation-modal h2{font:700 clamp(32px,4vw,48px) Georgia,serif;margin:8px 0 12px}
+.preparation-modal .modal-intro{margin:0 auto 22px;max-width:670px}
+.preparation-modal .doctrines{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:28px 0 4px}
+.preparation-modal .doctrine{display:flex;flex-direction:column;min-height:215px;padding:22px;border:2px solid #f1d5a4;border-radius:9px;background:linear-gradient(145deg,#e3b779,#bc8759);box-shadow:0 6px 0 #594635;text-align:left;color:#2c241c}
+.preparation-modal .doctrine h3{font:700 27px Georgia,serif;margin:0 0 13px;color:#2b251e}
+.preparation-modal .doctrine p{font-size:17px;line-height:1.5;color:#382a22;flex:1}
+.preparation-modal .doctrine-choice{display:block;margin-top:18px;padding-top:10px;border-top:1px solid #785a3b;color:#352719;font-size:17px;font-weight:900;text-align:right}
+.preparation-modal .doctrine.selected:after{display:none}
+.preparation-modal .roster-picked{width:max-content;margin:18px 0 10px;padding:9px 14px;border:1px solid #738d98;border-radius:7px;background:#203744;text-align:left;font-size:16px}
+.preparation-modal .roster-picked b{color:#f0d59b;white-space:nowrap}
+.preparation-modal .roster-instruction{margin:0 0 16px;text-align:left}
+.preparation-modal .roster-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.preparation-modal .roster-card{display:grid;grid-template-columns:70px minmax(0,1fr);grid-template-rows:auto auto auto;align-content:center;align-items:center;gap:3px 8px;min-height:138px;padding:10px;border:2px solid #8ca4b1;background:linear-gradient(145deg,#3c5361,#263e4d);box-shadow:0 3px 0 #122632;text-align:left}
+.preparation-modal .roster-card img{grid-column:1;grid-row:1/4;width:70px;height:92px;object-fit:contain}.preparation-modal .roster-card>b,.preparation-modal .roster-card>span,.preparation-modal .roster-card>small{grid-column:2;margin:0}
+.preparation-modal .roster-card>b{font-size:18px;line-height:1.15}.preparation-modal .roster-card>span,.preparation-modal .roster-card>small{font-size:16px;line-height:1.25}
+.preparation-modal .roster-card.selected{border-color:#f0cf86;background:linear-gradient(145deg,#695843,#3d4542);box-shadow:inset 0 0 0 1px #f7dfaa,0 3px 0 #272c2f}
+.preparation-modal .roster-card:disabled:not(.selected){opacity:.55}
+.preparation-modal .preparation-actions{position:static;flex-direction:column;gap:7px;margin-top:20px;padding:16px 8px 8px;border-top:1px solid #536c77;background:none}
+.preparation-modal .preparation-actions .primary{min-width:min(350px,100%);background:linear-gradient(#ffe29a,#dca951);border:2px solid #ffedb6;box-shadow:0 5px 0 #654c29;color:#1c2d32}
+.preparation-modal .preparation-actions .primary:disabled{opacity:.55;box-shadow:none}
+.preparation-modal .preparation-actions>span{text-align:center;max-width:none}
+/* Compact sound control shared by the menu, preparation and battle. */
+.sound-toggle,.modal-platform .sound-toggle,.game-shell .tools .sound-toggle{display:grid;place-items:center;flex:none;width:44px;min-width:44px;max-width:44px;height:44px;min-height:44px;padding:7px;border:2px solid #efb8ad;border-radius:9px;background:#9f444c;color:#fff6ed;box-shadow:0 3px 0 #4f2831}
+.sound-toggle.is-on,.modal-platform .sound-toggle.is-on,.game-shell .tools .sound-toggle.is-on{border-color:#a5e5b3;background:#27875c;color:#fff;box-shadow:0 3px 0 #16503c}
+.sound-toggle svg{display:block;width:27px;height:27px}.sound-toggle .sound-wave{display:none}.sound-toggle.is-on .sound-wave{display:block}.sound-toggle.is-on .mute-slash{display:none}
+@media(max-width:700px){
+ .preparation-modal .prep-topbar{margin-bottom:18px}
+ .preparation-modal h2{font-size:31px}
+ .preparation-modal .modal-intro{font-size:16px;margin-bottom:16px}
+ .preparation-modal .doctrines{grid-template-columns:1fr;gap:11px;margin:20px 0 4px}
+ .preparation-modal .doctrine{min-height:0;padding:13px 15px}
+ .preparation-modal .doctrine h3{font-size:22px;margin-bottom:5px}
+ .preparation-modal .doctrine p{font-size:16px;line-height:1.35}
+ .preparation-modal .doctrine-choice{margin-top:7px;padding-top:5px;font-size:16px}
+ .preparation-modal .roster-picked{margin:14px 0 9px}
+ .preparation-modal .roster-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .preparation-modal .roster-card{display:flex;flex-direction:column;gap:0;min-height:152px;padding:8px 7px;text-align:center}
+ .preparation-modal .roster-card img{width:auto;height:52px}
+ .preparation-modal .roster-card>b{font-size:17px;margin:5px 0}.preparation-modal .roster-card>span{flex:1}.preparation-modal .roster-card>small{margin-top:6px}
+}
