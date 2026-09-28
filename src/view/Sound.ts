@@ -2,7 +2,7 @@ import type { BattleEvent, GameState } from '../core/types';
 import { MusicLoop, type MusicLoader } from './MusicLoop';
 
 export type SoundStatus = 'locked' | 'ready' | 'unavailable';
-type SoundState = Pick<GameState, 'muted' | 'paused' | 'phase'>;
+type SoundState = Pick<GameState, 'muted' | 'paused' | 'phase'> & Partial<Pick<GameState, 'musicMuted'>>;
 interface SoundOptions {
   createContext?: () => AudioContext;
   isHidden?: () => boolean;
@@ -24,7 +24,9 @@ export class BattleSound {
   private pendingResume?: Promise<boolean>;
   status: SoundStatus = 'locked';
   constructor(private options: SoundOptions = {}) {}
-  private allowed() { return !this.disposed && this.focused && !this.state.muted && !this.state.paused && !(this.options.isHidden?.() ?? (typeof document !== 'undefined' && document.hidden)); }
+  private allowed() { return !this.disposed && this.focused && (!this.state.muted || !this.musicMuted) && !this.state.paused && !(this.options.isHidden?.() ?? (typeof document !== 'undefined' && document.hidden)); }
+  private get musicMuted() { return this.state.musicMuted ?? this.state.muted; }
+  private musicAllowed() { return this.allowed() && !this.musicMuted; }
   private report(status: SoundStatus) { if (this.status !== status) { this.status = status; this.options.onStatus?.(status); } }
   async unlock(confirm = false): Promise<boolean> {
     if (!this.allowed()) return false;
@@ -34,7 +36,7 @@ export class BattleSound {
         const Constructor = host.AudioContext ?? host.webkitAudioContext;
         this.context = this.options.createContext ? this.options.createContext() : new Constructor();
         this.master = this.context.createGain(); this.master.gain.value = .65; this.master.connect(this.context.destination);
-        this.musicLoop = new MusicLoop(this.context, this.master, () => this.allowed() && this.context?.state === 'running', this.options.loadMusic);
+        this.musicLoop = new MusicLoop(this.context, this.master, () => this.musicAllowed() && this.context?.state === 'running', this.options.loadMusic);
       } catch { this.report('unavailable'); return false; }
     }
     const generation = this.generation;
@@ -43,7 +45,7 @@ export class BattleSound {
     if (!started || generation !== this.generation || !this.allowed()) return false;
     this.report('ready');
     if (confirm) this.confirmation();
-    this.musicLoop?.play(true);
+    if (this.musicAllowed()) this.musicLoop?.play(true);
     return true;
   }
   private resume(): Promise<boolean> {
@@ -63,19 +65,24 @@ export class BattleSound {
   sync(state: SoundState) {
     this.state = state;
     if (!this.allowed()) { this.stop(); return; }
-    if (this.context && this.status === 'ready') void this.resume().then(ok => { if (ok && this.allowed()) this.musicLoop?.play(); });
+    if (this.state.muted) this.stopVoices();
+    if (this.musicMuted) this.musicLoop?.pause();
+    if (this.context && this.status === 'ready') void this.resume().then(ok => { if (ok && this.musicAllowed()) this.musicLoop?.play(); });
   }
   setFocused(focused: boolean) { this.focused = focused; this.sync(this.state); }
   private stop() {
     this.generation++;
     this.musicLoop?.pause();
+    this.stopVoices();
+    if (this.context?.state === 'running') void this.context.suspend().catch(() => {});
+  }
+  private stopVoices() {
     for (const voice of this.voices) { try { voice.stop(); voice.disconnect(); } catch { /* Already ended. */ } }
     this.voices.clear();
-    if (this.context?.state === 'running') void this.context.suspend().catch(() => {});
   }
   private tone(frequency: number, end: number, duration: number, amplitude: number, type: OscillatorType = 'triangle', delay = 0) {
     const ctx = this.context;
-    if (!ctx || !this.allowed() || ctx.state !== 'running' || this.voices.size >= 8) return;
+    if (!ctx || this.state.muted || !this.allowed() || ctx.state !== 'running' || this.voices.size >= 8) return;
     const osc = ctx.createOscillator(), gain = ctx.createGain(), time = ctx.currentTime + delay;
     osc.type = type; osc.frequency.setValueAtTime(frequency, time); osc.frequency.exponentialRampToValueAtTime(Math.max(20, end), time + duration);
     gain.gain.setValueAtTime(.0001, time); gain.gain.exponentialRampToValueAtTime(amplitude, time + .012); gain.gain.exponentialRampToValueAtTime(.0001, time + duration);
@@ -89,7 +96,7 @@ export class BattleSound {
   }
   play(event: BattleEvent) {
     const ctx = this.context;
-    if (!ctx || !this.allowed() || ctx.state !== 'running') return;
+    if (!ctx || this.state.muted || !this.allowed() || ctx.state !== 'running') return;
     if (ctx.currentTime - this.lastEffect < .065 && !['result', 'boss-warning', 'boss-assault'].includes(event.type)) return;
     this.lastEffect = ctx.currentTime;
     switch (event.type) {

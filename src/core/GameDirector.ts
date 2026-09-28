@@ -39,6 +39,7 @@ export class GameDirector implements GameApp {
   private enemyBalanceOverrides: EnemyBalanceOverrides;
   private pauseSources = new Set<string>();
   private muted = true;
+  private musicMuted = true;
   private platform: GameState['platform'] = { sdk: 'loading', online: true };
 
   constructor(private save: SaveService) {
@@ -47,6 +48,8 @@ export class GameDirector implements GameApp {
     this.checkpointAvailable = !!checkpoint;
     this.checkpointEra = checkpoint ? checkpoint.eraId ?? 'stone' : null;
     this.records = save.loadRecords();
+    const audio = save.loadAudio();
+    this.muted = audio.muted; this.musicMuted = audio.musicMuted;
     const progress = save.loadEraProgress();
     this.unlockedEras = progress.unlocked;
     this.eraProgress = progress.wins;
@@ -89,7 +92,7 @@ export class GameDirector implements GameApp {
       contracts: this.contracts.map(c => ({ ...c, roster: [...c.roster] })), selectedContract: this.selectedContract?.id ?? null, contractRisk: this.contractRisk,
       rewards: this.rewards.map(id => ({ id, name: UPGRADES[id].name, description: UPGRADES[id].description })),
       chosenUpgrades: [...this.upgrades], report: this.report ? { ...this.report } : null,
-      battleSpeed: this.battleSpeed, debugEnemyBalance: this.enemyBalances().map(row => ({ ...row })), paused: this.paused || this.externallyPaused, muted: this.muted, canContinue: this.checkpointAvailable && this.checkpointEra === this.eraId,
+      battleSpeed: this.battleSpeed, debugEnemyBalance: this.enemyBalances().map(row => ({ ...row })), paused: this.paused || this.externallyPaused, muted: this.muted, musicMuted: this.musicMuted, canContinue: this.checkpointAvailable && this.checkpointEra === this.eraId,
       records: { ...this.records }, platform: { ...this.platform }
     };
   }
@@ -116,12 +119,12 @@ export class GameDirector implements GameApp {
   }
 
   returnToMenu(): boolean {
-    if (this.phase === 'menu' || this.phase === 'battle') return false;
+    if (this.phase === 'menu') return false;
     if (this.phase === 'victory') {
       const selected = this.save.loadSelectedEra();
       if (selected && selected !== this.eraId && this.unlockedEras[selected]) return this.selectEra(selected);
     }
-    if (['preparation', 'contract', 'reward'].includes(this.phase)) this.persist();
+    if (['preparation', 'contract', 'reward', 'battle'].includes(this.phase)) this.persist();
     else if (this.phase !== 'defeat') {
       this.battleIndex = 0;
       this.roster = [...ERA_STARTER_KINDS[this.eraId]];
@@ -130,6 +133,7 @@ export class GameDirector implements GameApp {
       this.selectedContract = null;
     }
     this.phase = 'menu';
+    this.paused = false;
     this.emit();
     return true;
   }
@@ -320,7 +324,9 @@ export class GameDirector implements GameApp {
   }
 
   togglePause(): void { if (this.phase === 'battle') { this.paused = !this.paused; this.emit(); } }
-  toggleMute(): void { this.muted = !this.muted; this.emit(); }
+  toggleMute(): void { this.muted = !this.muted; this.saveAudio(); this.emit(); }
+  toggleMusic(): void { this.musicMuted = !this.musicMuted; this.saveAudio(); this.emit(); }
+  private saveAudio(): void { this.save.writeAudio({ muted: this.muted, musicMuted: this.musicMuted }); }
   setExternalPause(value: boolean, source = 'external'): void {
     const before = this.externallyPaused;
     if (value) this.pauseSources.add(source); else this.pauseSources.delete(source);

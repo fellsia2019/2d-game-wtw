@@ -2,11 +2,12 @@ import { expect, it } from 'vitest';
 import { enemyBalanceDefaults } from '../src/core/enemyBalance';
 import { BattleSimulation } from '../src/core/BattleSimulation';
 import { ERA_BATTLES, ERA_STARTER_KINDS } from '../src/data/content';
+import { CAMPAIGN_PLANS } from './helpers/campaign';
 
-it.each([[0, 0], [1, 2], [2, 4], [3, 6]])('bronze battle %i can be completed with progression tier %i', (battle, level) => {
+it.each(CAMPAIGN_PLANS.bronze.map((plan, battle) => [battle, plan.tier]))('bronze battle %i can be completed with progression tier %i', (battle, level) => {
   const sim = new BattleSimulation(battle, [], 23, 'steel', undefined, undefined, 'bronze',
     { damage: level, health: level, attackSpeed: level, supply: level }, 1 + level * 10);
-  const order = battle === 2 ? '0112' : '012';
+  const order = CAMPAIGN_PLANS.bronze[battle].order;
   let purchase = 0;
   while (!sim.report) {
     sim.step();

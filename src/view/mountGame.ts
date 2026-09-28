@@ -7,12 +7,13 @@ import { BattleSound } from './Sound';
 import { GameUI } from '../ui/GameUI';
 import '../ui/game.css';
 import '../ui/fullscreen.css';
+import '../ui/results.css';
 
-export function mountGame(root: HTMLElement, app: GameApp): () => void {
+export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void = () => {}): () => void {
   const ui = new GameUI(root, app);
   const sound = new BattleSound({ onStatus: status => ui.setAudioStatus(status) });
   let state: GameState = app.getState();
-  const scene = new BattleScene(() => state, event => sound.play(event));
+  const scene = new BattleScene(() => state, event => sound.play(event), onReady);
   scene.setInsets(ui.battleInsets());
   const game = new Phaser.Game({ type: Phaser.AUTO, parent: ui.arena, backgroundColor: '#263e48', transparent: false, scene, scale: { mode: Phaser.Scale.RESIZE, width: ui.arena.clientWidth, height: ui.arena.clientHeight }, render: { antialias: true, roundPixels: false }, audio: { noAudio: true }, banner: false });
   const unsubscribe = app.subscribe(next => { state = next; ui.update(next); sound.sync(next); });
@@ -27,7 +28,7 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
   const click = (event: MouseEvent) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
     if (!button || button.disabled) return;
-    if (button.dataset.action !== 'mute') void sound.unlock();
+    if (!['mute', 'music'].includes(button.dataset.action ?? '')) void sound.unlock();
     switch (button.dataset.action) {
       case 'start': app.startNewRun(); break;
       case 'start-era':
@@ -46,10 +47,14 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
       case 'battle-speed': app.setBattleSpeed(Number(button.dataset.speed)); break;
       case 'reward': app.chooseReward(button.dataset.reward as UpgradeId); break;
       case 'pause': app.togglePause(); break;
+      case 'main-menu': ui.openPanel(null); app.returnToMenu(); break;
       case 'mute':
         if (state.muted) { app.toggleMute(); void sound.unlock(true); }
-        else if (sound.status !== 'ready') void sound.unlock(true);
         else app.toggleMute();
+        break;
+      case 'music':
+        if (state.musicMuted) { app.toggleMusic(); void sound.unlock(); }
+        else app.toggleMusic();
         break;
       case 'doctrine': if (app.selectDoctrine(button.dataset.doctrine as DoctrineId)) ui.showRosterStep(); break;
       case 'roster': ui.toggleRoster(button.dataset.kind as HireKind); break;
@@ -90,15 +95,17 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
     if (event.key === 'Tab') {
       const modal = root.querySelector<HTMLElement>('[role="dialog"]');
       if (!modal) return;
-      const buttons = Array.from(modal.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
+      const buttons = Array.from(modal.closest('.scrim')!.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
       const first = buttons[0], last = buttons[buttons.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     }
   };
   root.addEventListener('change', change); root.addEventListener('click', click); window.addEventListener('keydown', key);
-  const blur = () => sound.setFocused(false);
-  const focus = () => sound.setFocused(true);
+  const blur = () => { sound.setFocused(false); app.setExternalPause(true, 'focus'); };
+  const focus = () => { sound.setFocused(true); app.setExternalPause(false, 'focus'); };
+  const contextmenu = (event: Event) => event.preventDefault();
+  root.addEventListener('contextmenu', contextmenu);
   const visibility = () => sound.sync(state);
   window.addEventListener('blur', blur); window.addEventListener('focus', focus);
   document.addEventListener('visibilitychange', visibility);
@@ -109,5 +116,5 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
   };
   const observer = new ResizeObserver(resize); ui.layoutElements.forEach(element => observer.observe(element));
   window.visualViewport?.addEventListener('resize', resize);
-  return () => { window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); sound.destroy(); game.destroy(true); root.replaceChildren(); };
+  return () => { root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); sound.destroy(); game.destroy(true); root.replaceChildren(); };
 }

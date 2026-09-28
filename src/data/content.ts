@@ -9,15 +9,15 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   stoneShield: { name: 'Пещерный страж', role: 'Защитник · крепкий каменный щит', cost: 16, hp: 49, damage: 3, range: 24, speed: 34, period: 1.1, armor: .18 },
   stoneSpear: { name: 'Охотник с копьём', role: 'Против брони · длинное копьё', cost: 24, hp: 27, damage: 9, range: 43, speed: 43, period: 1.2, armor: 0, antiArmor: 2.3 },
   stoneSlinger: { name: 'Пращник', role: 'Дальний бой · короткая дистанция', cost: 27, hp: 19, damage: 8, range: 128, speed: 40, period: 1.1, armor: 0 },
-  stoneShaman: { name: 'Шаман', role: 'Поддержка · лечит бойцов', cost: 39, hp: 22, damage: 2, heal: 6, range: 90, speed: 35, period: 1.5, armor: 0 },
+  stoneShaman: { name: 'Племенной лекарь', role: 'Поддержка · лечит бойцов', cost: 39, hp: 22, damage: 2, heal: 6, range: 90, speed: 35, period: 1.5, armor: 0 },
   stoneScout: { name: 'Лазутчик', role: 'Засада · первый удар по стрелку сильнее', cost: 23, hp: 26, damage: 10, range: 26, speed: 82, period: .85, armor: 0 },
   stoneThrower: { name: 'Метатель валунов', role: 'Площадь · каменная осыпь', cost: 37, hp: 22, damage: 9, range: 105, speed: 31, period: 1.7, armor: 0 },
-  stoneTotem: { name: 'Хранитель тотема', role: 'Командир · ускоряет атаки', cost: 43, hp: 27, damage: 0, range: 30, speed: 35, period: 1.3, armor: .05 },
+  stoneTotem: { name: 'Знаменосец племени', role: 'Командир · ускоряет атаки', cost: 43, hp: 27, damage: 0, range: 30, speed: 35, period: 1.3, armor: .05 },
   stoneRam: { name: 'Таранщик', role: 'Осада · крушит укрепления', cost: 52, hp: 36, damage: 8, range: 35, speed: 27, period: 1.7, armor: .1 },
   bronzeGuard: { name: 'Бронзовый страж', role: 'Защитник · броня крепче рядом с фалангой', cost: 20, hp: 57, damage: 4, range: 27, speed: 30, period: 1.1, armor: .35 },
   bronzeSpear: { name: 'Копейщик фаланги', role: 'Против брони · строй усиливает защиту', cost: 29, hp: 33, damage: 10, range: 48, speed: 35, period: 1.25, armor: .12, antiArmor: 2.4 },
   bronzeArcher: { name: 'Лучник города', role: 'Дальний бой · прицельный залп', cost: 33, hp: 22, damage: 8, range: 168, speed: 36, period: 1, armor: .05 },
-  bronzeHealer: { name: 'Храмовый лекарь', role: 'Поддержка · лечит бойцов', cost: 43, hp: 26, damage: 2, heal: 8, range: 113, speed: 33, period: 1.5, armor: .08 },
+  bronzeHealer: { name: 'Городской лекарь', role: 'Поддержка · лечит бойцов', cost: 43, hp: 26, damage: 2, heal: 8, range: 113, speed: 33, period: 1.5, armor: .08 },
   bronzeChariot: { name: 'Колесничий', role: 'Прорыв · стремительная атака', cost: 34, hp: 38, damage: 12, range: 36, speed: 93, period: 1.1, armor: .12 },
   bronzePitch: { name: 'Метатель смолы', role: 'Площадь · обжигающий залп', cost: 43, hp: 23, damage: 10, range: 125, speed: 31, period: 1.7, armor: .03 },
   bronzeHerald: { name: 'Глашатай', role: 'Командир · ускоряет атаки', cost: 49, hp: 32, damage: 0, range: 29, speed: 33, period: 1.2, armor: .2 },
@@ -29,7 +29,7 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   stoneChief: { name: 'Вождь Чёрного камня', role: 'Босс · сокрушает строй', cost: 64, hp: 600, damage: 20, range: 38, speed: 35, period: 1.3, armor: .25, archetype: 'shield' },
   bronzeEnemySpear: { name: 'Бронзовый копейщик', role: 'Враг · пробивает броню', cost: 30, hp: 34, damage: 11, range: 48, speed: 34, period: 1.2, armor: .12, antiArmor: 2.2, archetype: 'spear' },
   bronzeRaider: { name: 'Колесница налётчиков', role: 'Враг · прорыв', cost: 39, hp: 39, damage: 12, range: 34, speed: 82, period: 1.05, armor: .1, archetype: 'raider' },
-  bronzeEnemyArcher: { name: 'Храмовый лучник', role: 'Враг · дальний бой', cost: 32, hp: 23, damage: 8, range: 157, speed: 34, period: 1.05, armor: .08, archetype: 'archer' },
+  bronzeEnemyArcher: { name: 'Лучник стражи', role: 'Враг · дальний бой', cost: 32, hp: 23, damage: 8, range: 157, speed: 34, period: 1.05, armor: .08, archetype: 'archer' },
   bronzeGate: { name: 'Страж ворот', role: 'Враг · тяжёлая броня', cost: 43, hp: 80, damage: 6, range: 29, speed: 25, period: 1.3, armor: .5, archetype: 'shield' },
   bronzeKing: { name: 'Царь Медных ворот', role: 'Босс · бронзовый натиск', cost: 76, hp: 781, damage: 30 / 1.15, range: 42, speed: 31, period: 1.3, armor: .45, archetype: 'shield' }
 };
@@ -83,7 +83,7 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
   bronze: [
     { name: 'Дорога колесниц', threat: 'Колесницы прорываются сквозь дальний строй', ai: 'rush', enemyIncome: 13, enemyStartingSupplies: 10, enemyHealthMultiplier: 1.1, enemyDamageMultiplier: 1.05, roster: ['bronzeRaider', 'bronzeEnemySpear', 'bronzeEnemyArcher'], arenaId: 'ash' },
     { name: 'Бронзовая фаланга', threat: 'Копейщики под прикрытием стражей ворот', ai: 'wall', enemyIncome: 15, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.15, enemyDamageMultiplier: 1.1, roster: ['bronzeGate', 'bronzeEnemySpear'], arenaId: 'iron' },
-    { name: 'Храмовые стены', threat: 'Лучники стреляют из-за плотного строя', ai: 'ranged', enemyIncome: 16, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.15, roster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'arrows' },
+    { name: 'Городские стены', threat: 'Лучники стреляют из-за плотного строя', ai: 'ranged', enemyIncome: 16, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.15, roster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'arrows' },
     { name: 'Царь Медных ворот', threat: 'При 50% здоровья крепости царь ведёт ударную волну', ai: 'boss', enemyIncome: 17, enemyStartingSupplies: 25, enemyHealthMultiplier: 1.28, enemyDamageMultiplier: 1.15, enemyRecruitRoster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeEnemyArcher'], roster: ['bronzeKing', 'bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'citadel' }
   ]
 };

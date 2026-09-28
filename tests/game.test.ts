@@ -304,3 +304,45 @@ describe('run and persistence', () => {
     expect(save.load()).toBeNull();
   });
 });
+
+
+it('returns from a paused battle to the menu and resumes the saved stage without losing gold', () => {
+  const storage = new MemoryStorage();
+  const director = new GameDirector(new SaveService(storage));
+  director.startNewRun(123, 'stone');
+  director.selectDoctrine('steel');
+  director.beginRun();
+  director.chooseContract(director.getState().contracts[0].id);
+  for (let i = 0; i < 90; i++) director.tick();
+  const before = director.getState();
+  director.togglePause();
+  expect(director.returnToMenu()).toBe(true);
+  expect(director.getState().phase).toBe('menu');
+  expect(director.getState().paused).toBe(false);
+  expect(director.getState().canContinue).toBe(true);
+  expect(director.getState().gold).toBe(before.gold);
+  director.tick();
+  expect(director.getState().gold).toBe(before.gold);
+  const restored = new GameDirector(new SaveService(storage));
+  restored.continueRun();
+  expect(restored.getState().phase).toBe('battle');
+  expect(restored.getState().battleIndex).toBe(before.battleIndex);
+  expect(restored.getState().gold).toBe(before.gold);
+  expect(restored.getState().paused).toBe(false);
+});
+
+
+it('saves music and battle effects as independent audio preferences', () => {
+  const storage = new MemoryStorage();
+  const game = new GameDirector(new SaveService(storage));
+  game.toggleMusic();
+  expect(game.getState().musicMuted).toBe(false);
+  expect(game.getState().muted).toBe(true);
+  let restored = new GameDirector(new SaveService(storage));
+  expect(restored.getState().musicMuted).toBe(false);
+  expect(restored.getState().muted).toBe(true);
+  restored.toggleMute(); restored.toggleMusic();
+  restored = new GameDirector(new SaveService(storage));
+  expect(restored.getState().muted).toBe(false);
+  expect(restored.getState().musicMuted).toBe(true);
+});

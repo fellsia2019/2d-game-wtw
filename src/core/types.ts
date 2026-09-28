@@ -115,6 +115,7 @@ export interface GameState {
   debugEnemyBalance: EnemyBalance[];
   paused: boolean;
   muted: boolean;
+  musicMuted: boolean;
   canContinue: boolean;
   records: Records;
   platform: { sdk: 'available' | 'unavailable' | 'loading'; online: boolean };
@@ -139,10 +140,12 @@ export interface GameApp {
   upgradeIncome(): boolean;
   chooseReward(id: UpgradeId): boolean;
   setBattleSpeed(speed: number): boolean;
+  setExternalPause(paused: boolean, source?: string): void;
   startDebugBattle(battleIndex: number): boolean;
   setEnemyBalance(battleIndex: number, balance: EnemyBalance): boolean;
   resetEnemyBalance(): void;
   togglePause(): void;
   toggleMute(): void;
+  toggleMusic(): void;
   dispose(): void;
 }

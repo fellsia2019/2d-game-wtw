@@ -9,8 +9,9 @@ if (!root) throw new Error('Missing #app');
 let storage: Storage | null = null;
 try { storage = window.localStorage; } catch { /* private mode */ }
 const app = new GameDirector(new SaveService(storage));
-mountGame(root, app);
-const platform = new YandexAdapter(paused => app.setExternalPause(paused, 'advertisement'));
+const platform = new YandexAdapter((paused, source) => app.setExternalPause(paused, source));
+app.subscribe(state => platform.setGameplay(state.phase === 'battle' && !state.paused));
+mountGame(root, app, () => platform.markGameReady());
 void platform.initialize().then(available => app.setPlatformStatus({ sdk: available ? 'available' : 'unavailable' }));
 const network = () => app.setPlatformStatus({ online: navigator.onLine });
 window.addEventListener('online', network);

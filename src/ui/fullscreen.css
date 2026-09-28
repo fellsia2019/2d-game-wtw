@@ -1,5 +1,7 @@
 /* One viewport, one arena. HTML controls float on the same Phaser battlefield. */
 html,body,#app{width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+#app{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#app input{-webkit-user-select:text;user-select:text}
 body{min-width:0;min-height:0;padding:0}
 .game-shell{
   --edge:clamp(12px,1.6vw,32px);--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
@@ -330,3 +332,44 @@ small{font-size:16px}
 
 .game-shell .battle-wallet{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #a5864855;border-radius:8px;background:#162e32;color:#efce7d;font-size:16px;white-space:nowrap}.battle-wallet .ui-icon{width:24px;height:24px}
 @media(max-width:420px){.game-shell .tools{gap:4px}.game-shell .battle-wallet{padding:5px 6px}.battle-wallet .ui-icon{width:20px;height:20px}.game-shell .battle-wallet b{max-width:90px;overflow:hidden;text-overflow:ellipsis}}
+
+/* Audio stays outside scrolling panels, including results and preparation. */
+.audio-controls{display:flex;gap:8px;align-items:center}
+.scrim>.audio-controls{position:fixed;top:max(8px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:25;padding:4px;background:#132d34;border-radius:12px;box-shadow:0 3px 12px #0005}
+.scrim{padding-top:calc(64px + env(safe-area-inset-top))}
+.game-shell .tools .audio-controls{gap:4px}
+/* Put play actions before secondary information on short screens. */
+@media(max-height:600px){
+ .menu-modal .menu-hero{min-height:0;grid-template-columns:1fr}
+ .menu-modal .menu-art{display:none}
+ .menu-modal .menu-hero-copy{padding:12px}
+ .menu-modal .menu-hero-copy h2{font-size:26px;margin:4px 0 8px}
+ .menu-modal .menu-hero-copy .modal-intro{display:none}
+ .menu-modal .menu-hero-actions{margin-top:8px;gap:6px}
+ .menu-modal .hero-play{min-height:44px;font-size:18px}
+ .modal.battle-ready-modal{padding:12px 16px;display:flex;flex-direction:column}
+ .battle-ready-modal .modal-topbar{margin:0 0 6px}
+ .battle-ready-modal h2{font-size:24px;margin:6px 0}
+ .battle-ready-modal .ready-actions{order:-1;width:100%;margin:0 0 12px}
+ .battle-ready-modal .ready-actions .primary{min-height:44px;font-size:18px}
+ .battle-ready-modal .ready-actions .restart-epoch{display:none}
+ .battle-ready-modal .ready-progress{margin:6px 0}
+}
+/* Roster actions stay at the viewport bottom, outside the scrollable panel. */
+.roster-scrim{padding-bottom:calc(108px + env(safe-area-inset-bottom))}
+.roster-scrim>.pick-footer{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:25;width:min(960px,calc(100% - 28px));min-height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin:0;padding:8px 12px;border:1px solid #7b9a88;border-radius:10px;background:#19343a;box-shadow:0 -6px 24px #07151c80}
+.roster-scrim>.pick-footer .primary{width:min(100%,350px);min-height:44px;padding:8px 12px;font-size:16px}
+@media(max-width:420px){
+ .game-shell .battle-heading{top:calc(var(--safe-top) + var(--hud-top) + var(--hud-height) + 6px);left:max(var(--edge),env(safe-area-inset-left));right:max(var(--edge),env(safe-area-inset-right));height:28px}
+ .game-shell .battle-heading>div:first-child{min-width:0;flex:1}
+ .game-shell .battle-heading h1{font-size:16px;white-space:nowrap}
+ .game-shell .timer{font-size:16px;padding:3px 6px}
+}
+@media(max-height:600px){
+ .pause-modal .result-seal,.pause-modal>.eyebrow{display:none}
+ .pause-modal h2{font-size:28px;margin:6px 0 10px}
+ .pause-modal .modal-intro{line-height:1.3}
+ .pause-modal .modal-actions{margin-top:12px;gap:6px}
+ .pause-modal .modal-actions button{min-height:44px;padding:8px 12px}
+ .pause-modal .save-note{margin-top:12px}
+}

@@ -20,12 +20,15 @@ export class BattleScene extends Phaser.Scene {
   private runSeed = -1;
   private phaseIndex = -1;
   private ready = false;
+  private loadFailed = false;
   private currentArena = '';
   private lastSimulationTime = 0;
   private insets: BattleInsets = { top: 190, bottom: 210, left: 12, right: 12 };
   setInsets(insets: BattleInsets) { this.insets = insets; this.layout(); }
-  constructor(private read: () => GameState, private onEffect: (event: BattleEvent) => void) { super('battle'); }
+  constructor(private read: () => GameState, private onEffect: (event: BattleEvent) => void,
+    private onReady: () => void = () => {}) { super('battle'); }
   preload() {
+    this.load.on('loaderror', () => { this.loadFailed = true; });
     for (const era of ['stone', 'bronze']) {
       this.load.svg(`arena-${era}`, asset(`arena-${era}`), { width: 1600, height: 600 });
       for (const team of ['ally','enemy']) this.load.svg(`${era}-tower-${team}`, asset(`${era}-tower-${team}`), { width: 240, height: 240 });
@@ -45,6 +48,7 @@ export class BattleScene extends Phaser.Scene {
     this.layout();
     this.game.canvas.setAttribute('aria-label', 'Поле боя: союзники слева, враги справа. Бой идёт автоматически.');
     this.game.canvas.setAttribute('role', 'img');
+    if (!this.loadFailed) requestAnimationFrame(() => this.onReady());
   }
   private metrics() { return battlefieldLayout(this.scale.width, this.scale.height, this.insets); }
   private point(x: number) { const { left, right } = this.metrics(); return left + x / 1000 * (right - left); }

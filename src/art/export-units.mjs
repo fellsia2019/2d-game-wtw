@@ -41,7 +41,7 @@ export function exportUnits(eras) {
      if(new Set(hashes.slice(16,48)).size<16)throw Error(`Insufficient standard motion: ${name}`);
     }
     writeFileSync(`public/assets/${name}-sheet.png`,rendered.asPng());
-    contact+=`<svg x="${r%5*192}" y="${Math.floor(r/5)*216+24}" width="192" height="192">${rig(0)}</svg><text x="${r%5*192+96}" y="${Math.floor(r/5)*216+20}" text-anchor="middle" fill="#eee0bc" font-family="Segoe UI" font-size="14">${role}</text>`;
+    contact+=`<svg x="${r%5*192}" y="${Math.floor(r/5)*216+24}" width="192" height="192">${rig(0)}</svg><text x="${r%5*192+96}" y="${Math.floor(r/5)*216+20}" text-anchor="middle" fill="#eee0bc" font-family="Segoe UI" font-size="16">${role}</text>`;
     count++;
    }
    writeFileSync(`public/assets/${era}${enemy?'-enemy':''}-contact.png`,new Resvg(svg(960,456,'<rect width="960" height="456" fill="#203239"/>'+contact)).render().asPng());

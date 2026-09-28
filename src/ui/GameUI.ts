@@ -15,6 +15,9 @@ const countWord = (count: number, one: string, few: string, many: string) => cou
 const soundIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path class="sound-wave" d="M16 8c2 2 2 6 0 8m2-11c4 4 4 10 0 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="mute-slash" d="M16 9l5 6m0-6l-5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const soundButton = (extraClass = '') => `<button data-action="mute" class="sound-toggle ${extraClass}" type="button" aria-label="Включить звук" aria-pressed="false" title="Включить звук">${soundIcon}</button>`;
 
+const musicButton = () => `<button data-action="music" class="sound-toggle music-toggle" type="button" aria-label="Включить музыку" aria-pressed="false" title="Включить музыку"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17V5l11-2v12M9 8l11-2" fill="none" stroke="currentColor" stroke-width="2"/><ellipse cx="6" cy="18" rx="3" ry="2" fill="currentColor"/><ellipse cx="17" cy="16" rx="3" ry="2" fill="currentColor"/><path class="mute-slash" d="M3 3l18 18" stroke="currentColor" stroke-width="2"/></svg></button>`;
+const audioControls = () => `<div class="audio-controls" aria-label="Музыка и звуки">${musicButton()}${soundButton()}</div>`;
+
 export class GameUI {
   readonly arena: HTMLElement;
   private overlay: HTMLElement;
@@ -32,13 +35,17 @@ export class GameUI {
   private audioStatus: SoundStatus = 'locked';
   setAudioStatus(status: SoundStatus) { this.audioStatus = status; if (this.state) this.updateSoundControls(); }
   private updateSoundControls() {
-    const enabled = !this.state.muted && this.audioStatus === 'ready';
-    const label = enabled ? 'Выключить звук' : !this.state.muted && this.audioStatus === 'unavailable' ? 'Повторить включение звука' : 'Включить звук';
-    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-action="mute"]')) {
-      button.classList.toggle('is-on', enabled); button.setAttribute('aria-label', label); button.setAttribute('aria-pressed', String(enabled));
-      button.title = label;
+    for (const action of ['mute', 'music'] as const) {
+      const muted = action === 'music' ? this.state.musicMuted : this.state.muted;
+      const enabled = !muted;
+      const label = `${enabled ? 'Выключить' : 'Включить'} ${action === 'music' ? 'музыку' : 'звуки игры'}`;
+      for (const button of this.root.querySelectorAll<HTMLButtonElement>(`[data-action="${action}"]`)) {
+        button.classList.toggle('is-on', enabled); button.setAttribute('aria-label', label);
+        button.setAttribute('aria-pressed', String(enabled)); button.title = label + (this.audioStatus === 'unavailable' ? ' · аудио недоступно' : '');
+      }
     }
   }
+
   get layoutElements(): HTMLElement[] {
     return Array.from(this.root.querySelectorAll<HTMLElement>('.arena,.hud,.recruitment,.boss-warning'));
   }
@@ -49,7 +56,7 @@ export class GameUI {
     const arena = this.arena.getBoundingClientRect();
     const hud = this.root.querySelector<HTMLElement>('.hud')!.getBoundingClientRect();
     const dockBounds = dock.getBoundingClientRect();
-    const lowerEdges = ['.hud', '.boss-warning'].map(selector => {
+    const lowerEdges = ['.hud', '.boss-warning', '.battle-heading'].map(selector => {
       const element = this.root.querySelector<HTMLElement>(selector)!;
       return element.hidden || !element.getClientRects().length ? 0 : element.getBoundingClientRect().bottom - arena.top;
     });
@@ -132,18 +139,18 @@ export class GameUI {
     const report = state.report, final = state.phase === 'victory', lost = state.phase === 'defeat';
     const total = ERA_BATTLES[state.eraId].length;
     const status = lost ? 'Поражение' : final ? 'Эпоха пройдена!' : 'Победа!';
-    const rewardIcons = { supply: 'supplies', wagon: 'supply', banner: 'attackSpeed', arrows: 'damage', bandages: 'health', contract: 'gold', pikes: 'damage', workshop: 'supply', boots: 'attackSpeed', siegecraft: 'damage', lastReserve: 'health', standard: 'attackSpeed' } as const;
-    let content = `<header class="result-header"><span class="result-emblem ${lost ? 'lost' : ''}">${uiIcon(lost ? 'damage' : 'trophy')}</span><div class="eyebrow">${eraName(state.eraId)} · ${final ? `${total} / ${total} боёв` : `Бой ${state.battleIndex + 1} / ${total}`}</div><h2 id="dialog-title">${status}</h2></header><div class="result-summary"><div class="result-gold">${uiIcon('gold')}<b>+${report?.goldEarned ?? 0}</b><span>Золото сохранено</span></div><div><b>${clock(report?.duration ?? 0)}</b><span>Время боя</span></div><div><b>${report?.hires ?? 0}</b><span>Призвано бойцов</span></div></div>`;
+    const stats = `<div class="result-summary" aria-label="Итоги боя"><div class="result-stat result-gold"><b class="result-stat-value">${uiIcon('gold')} +${report?.goldEarned ?? 0}</b><span>Золото</span></div><div class="result-stat"><b class="result-stat-value">${clock(report?.duration ?? 0)}</b><span>Время боя</span></div><div class="result-stat"><b class="result-stat-value">${report?.hires ?? 0}</b><span>Призвано</span></div></div>`;
+    let content = `<header class="result-header"><h2 id="dialog-title">${status}</h2><span class="result-context">${eraName(state.eraId)}<br/>Бой ${final ? total : state.battleIndex + 1} / ${total}</span></header>${stats}`;
     if (lost) {
       content += `<p class="result-hint">Усиль отряд и попробуй снова.</p><div class="result-actions"><button class="primary" data-action="talents" data-result-primary="true">Улучшить отряд ${uiIcon('gold')} ${state.gold}</button><button class="secondary" data-action="retry">Повторить бой →</button></div>`;
     } else if (!final) {
-      content += `<h3 class="result-choice-title">Выбери усиление и продолжи →</h3><div class="rewards result-rewards">${state.rewards.map(reward => `<button class="reward-card" data-action="reward" data-reward="${reward.id}"><span class="reward-icon">${uiIcon(rewardIcons[reward.id])}</span><h3>${esc(reward.name)}</h3><p>${esc(reward.description)}</p><span class="take-reward">Взять → бой ${state.battleIndex + 2}</span></button>`).join('')}</div><button class="result-link" data-action="talents">Улучшить отряд · ${uiIcon('gold')} ${state.gold}</button>`;
+      content += `<h3 class="result-choice-title">Выбери усиление</h3><div class="rewards result-rewards">${state.rewards.map(reward => `<button class="reward-card" data-action="reward" data-reward="${reward.id}"><p class="reward-effect">${esc(reward.description)}</p><span class="take-reward"><span class="continue-label">Продолжить</span> →</span></button>`).join('')}</div>`;
     } else {
       const next = state.eraId === 'stone' ? 'bronze' : null;
-      if (next) content += `<div class="result-next-era"><span class="result-next-label">ДАЛЬШЕ</span><h3>${eraName(next)}</h3><div class="result-next-portraits">${ERA_HIRE_KINDS[next].slice(0, 4).map(kind => `<img src="${portrait(kind)}" alt="${esc(UNITS[kind].name)}"/>`).join('')}</div><p>Новая эпоха — новые бойцы</p>${next === 'bronze' ? `<small>${uiIcon('point')} +1 очко за первый переход</small>` : ''}</div><div class="result-actions"><button class="primary" data-action="start-era" data-era="${next}" data-result-primary="true">Перейти в ${next === 'bronze' ? 'бронзовый' : 'каменный'} век →</button></div>`;
+      if (next) content += `<div class="result-actions"><button class="primary" data-action="start-era" data-era="${next}" data-result-primary="true">Перейти в бронзовый век →</button></div><div class="result-next-era"><span class="result-next-label">ДАЛЬШЕ</span><h3>${eraName(next)}</h3><div class="result-next-portraits">${ERA_HIRE_KINDS[next].slice(0, 4).map(kind => `<img src="${portrait(kind)}" alt="${esc(UNITS[kind].name)}"/>`).join('')}</div><p>Новая эпоха — новые бойцы</p>${next === 'bronze' ? `<small>${uiIcon('point')} +1 очко за первый переход</small>` : ''}</div>`;
       else content += `<div class="result-finished">${uiIcon('trophy')}<h3>Все доступные эпохи пройдены</h3><p>Собери другой отряд и повтори поход.</p></div><div class="result-actions"><button class="primary" data-action="start" data-result-primary="true">Начать эпоху заново →</button></div>`;
     }
-    return `${content}<div class="result-bottom"><button class="result-link" data-action="back">В меню</button><button class="secondary restart-epoch" data-action="start">Начать эпоху заново</button>${soundButton()}</div>`;
+    return `${content}<div class="result-bottom">${state.phase === 'reward' ? `<button class="result-button result-upgrade" data-action="talents"><span>Улучшить отряд</span><span class="result-button-wallet">${uiIcon('gold')} ${state.gold}</span></button>` : ''}<button class="result-button" data-action="back">В меню</button></div>`;
   }
   private talentsHTML(state: GameState, global = false) {
     const levels = global ? state.globalTalents : state.talents;
@@ -164,7 +171,7 @@ export class GameUI {
   }
   constructor(private root: HTMLElement, app: GameApp) {
     root.innerHTML = `<main class="game-shell">
-      <header class="masthead"><div class="brand"><span class="brand-seal">⚔</span><div><b>Знамёна эпох</b><span data-field="era">КАМЕННЫЙ ВЕК</span></div></div><div class="campaign"><span class="chapter" data-field="chapter">БОЙ 01 / 04</span><div class="route" aria-label="Маршрут из четырёх боёв"><i></i><span></span><i></i><span></span><i></i><span></span><i></i></div></div><div class="tools"><span class="battle-wallet" title="Золото эпохи · заработано в этом бою">${uiIcon('gold')}<b data-field="gold">0</b></span>${soundButton('icon-button')}<button data-action="pause" class="icon-button" title="Пауза · Escape" data-field="pause">Ⅱ Пауза</button></div></header>
+      <header class="masthead"><div class="brand"><span class="brand-seal">⚔</span><div><b>Знамёна эпох</b><span data-field="era">КАМЕННЫЙ ВЕК</span></div></div><div class="campaign"><span class="chapter" data-field="chapter">БОЙ 01 / 04</span><div class="route" aria-label="Маршрут из четырёх боёв"><i></i><span></span><i></i><span></span><i></i><span></span><i></i></div></div><div class="tools"><span class="battle-wallet" title="Золото эпохи · заработано в этом бою">${uiIcon('gold')}<b data-field="gold">0</b></span>${audioControls()}<button data-action="pause" class="icon-button" title="Пауза · Escape" data-field="pause">Ⅱ Пауза</button></div></header>
       <section class="battle-panel" aria-label="Бой">
         <div class="battle-heading"><div><span class="eyebrow">БОЙ <span data-field="contract">01</span></span><h1 data-field="battleName">Пепельный тракт</h1></div><div class="timer"><span class="live-dot"></span><span data-field="time">00:00</span></div></div>
         <div class="hud"><div class="fortress-stat ally"><span>Наши</span><strong data-field="allyHp">100 <small>/ 100</small></strong><div class="meter"><i data-field="allyBar"></i></div></div><div class="supply-stat"><span><span class="supply-label">Припасы</span> <b data-field="income">+6 / сек</b></span><strong>${uiIcon('supplies')} <span data-field="resource">0</span></strong></div><div class="fortress-stat enemy"><span>Враг <span class="glyph-status" data-field="glyphStatus" hidden></span></span><strong data-field="enemyHp">100 <small>/ 100</small></strong><div class="meter"><i data-field="enemyBar"></i></div></div></div>
@@ -245,7 +252,7 @@ export class GameUI {
     this.root.querySelector<HTMLButtonElement>('[data-action="income"]')!.setAttribute('aria-label', `Улучшить доход: доход +1 в секунду, цена ${state.incomeUpgradeCost}. Уровень ${state.incomeUpgrades}.`);
     this.root.querySelector<HTMLButtonElement>('[data-action="income"]')!.disabled = !active || state.resource < state.incomeUpgradeCost;
     this.root.classList.toggle('is-paused', state.paused);
-    const key = `${state.eraId}:${JSON.stringify(state.unlockedEras)}:${state.phase}:${state.paused}:${state.canContinue}:${state.battleIndex}:${state.rewards.map(r => r.id).join()}:${state.selectedDoctrine}:${state.contractRisk}:${state.contracts.map(c => c.id).join()}:${state.muted}:${state.platform.online}:${state.platform.sdk}:${state.gold}:${JSON.stringify(state.talents)}:${state.globalTalentPoints}:${JSON.stringify(state.globalTalents)}:${state.baseLevel}`;
+    const key = `${state.eraId}:${JSON.stringify(state.unlockedEras)}:${state.phase}:${state.paused}:${state.canContinue}:${state.battleIndex}:${state.rewards.map(r => r.id).join()}:${state.selectedDoctrine}:${state.contractRisk}:${state.contracts.map(c => c.id).join()}:${state.muted}:${state.musicMuted}:${state.platform.online}:${state.platform.sdk}:${state.gold}:${JSON.stringify(state.talents)}:${state.globalTalentPoints}:${JSON.stringify(state.globalTalents)}:${state.baseLevel}`;
     if (key !== this.modalKey) { this.modalKey = key; this.renderOverlay(state); }
   }
   private renderOverlay(state: GameState) {
@@ -272,7 +279,7 @@ export class GameUI {
     }
     else if (state.phase === 'contract') content = this.contractHTML(state);
     else if (state.phase === 'menu') content = this.menuHTML(state);
-    else if (state.paused && state.phase === 'battle') content = `<div class="result-seal">Ⅱ</div><div class="eyebrow">ПРИКАЗ: ПРИВАЛ</div><h2 id="dialog-title">Бой на паузе</h2><p class="modal-intro">Фронт, припасы и время остановлены.<br/>Твой отряд ждёт возвращения.</p><div class="modal-actions"><button class="primary" data-action="pause">Вернуться в бой →</button><button class="secondary" data-action="start">Начать эпоху заново</button></div>`;
+    else if (state.paused && state.phase === 'battle') content = `<div class="result-seal">Ⅱ</div><div class="eyebrow">ПРИКАЗ: ПРИВАЛ</div><h2 id="dialog-title">Бой на паузе</h2><p class="modal-intro">Фронт, припасы и время остановлены.<br/>Твой отряд ждёт возвращения.</p><div class="modal-actions"><button class="primary" data-action="pause">Вернуться в бой →</button><button class="secondary" data-action="main-menu">В главное меню</button><button class="secondary" data-action="start">Начать эпоху заново</button></div><p class="save-note">Поход и заработанное золото сохранятся.<br/>При продолжении текущий бой начнётся заново.</p>`;
     else if (['reward', 'victory', 'defeat'].includes(state.phase)) content = this.battleResultHTML(state);
 
     const isResult = ['reward', 'victory', 'defeat'].includes(state.phase) && this.panel === null;
@@ -284,22 +291,26 @@ export class GameUI {
     const modalClasses = [wideModal ? 'reward-modal' : '', isMainMenu ? 'menu-modal' : 'has-back',
       isPreparation ? `preparation-modal ${this.preparationStep}-screen` : '',
       state.phase === 'defeat' && !this.panel ? 'defeat-modal' : '',
-      isResult ? `result-modal ${state.phase}-result` : '', isBattleReady ? 'battle-ready-modal' : ''].filter(Boolean).join(' ');
+      isResult ? `result-modal ${state.phase}-result` : '',
+      state.phase === 'battle' && state.paused && !this.panel ? 'pause-modal' : '', isBattleReady ? 'battle-ready-modal' : ''].filter(Boolean).join(' ');
     const backLabel = this.panel ? 'Назад' : isPreparation && this.canReturnToTactics() ? 'Назад к тактике' : state.phase === 'battle' ? 'Назад в бой' : 'Назад в главное меню';
     const backButton = isMainMenu ? '' : `<button class="modal-back" data-action="back">← ${backLabel}</button>`;
     const talentLink = ['contract', 'reward'].includes(state.phase) && this.panel === null
       ? `<button class="talent-link" data-action="talents">Золото: ${state.gold} · Очки эпох: ${state.globalTalentPoints}</button>` : '';
     const platformLabel = !state.platform.online ? 'Нет сети · игра продолжается локально'
       : state.platform.sdk === 'available' ? 'SDK Яндекс Игр подключён · сохранение пока локально' : 'Локальный режим · прогресс в этом браузере';
-    const topbar = isMainMenu || isResult ? '' : `<div class="modal-topbar ${isPreparation ? 'prep-topbar' : ''}">${backButton}${isPreparation ? soundButton() : ''}</div>`;
-    const footer = isPreparation || isResult || isBattleReady ? '' : `<div class="modal-platform">${talentLink}${platformLabel}${soundButton()}</div>`;
-    this.overlay.innerHTML = content ? `<div class="scrim"><section class="modal ${modalClasses}" role="dialog" aria-modal="true" aria-labelledby="dialog-title">${topbar}${content}${footer}</section></div>` : '';
+    const topbar = isMainMenu || isResult ? '' : `<div class="modal-topbar ${isPreparation ? 'prep-topbar' : ''}">${backButton}</div>`;
+    const footer = isPreparation || isResult || isBattleReady ? '' : `<div class="modal-platform">${talentLink}${platformLabel}</div>`;
+    this.overlay.innerHTML = content ? `<div class="scrim ${isPreparation && this.preparationStep === 'roster' ? 'roster-scrim' : ''}">${audioControls()}<section class="modal ${modalClasses}" role="dialog" aria-modal="true" aria-labelledby="dialog-title">${topbar}${content}${footer}</section></div>` : '';
+    const pickFooter = this.overlay.querySelector('.roster-screen .pick-footer');
+    if (pickFooter) this.overlay.querySelector('.scrim')!.append(pickFooter);
     this.updateSoundControls();
     const shell = this.root.querySelector('.game-shell')!;
     for (const child of Array.from(shell.children)) if (child !== this.overlay) (child as HTMLElement).inert = Boolean(content);
     if (content) {
       const buttons = Array.from(this.overlay.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
-      const focus = buttons.find(b => previousAction && b.dataset.action === previousAction && b.dataset.kind === previousKind && b.dataset.doctrine === previousDoctrine && b.dataset.talent === previousTalent && b.dataset.slot === previousSlot) ?? buttons.find(b => b.dataset.resultPrimary) ?? buttons[0];
+      const focus = buttons.find(b => previousAction && b.dataset.action === previousAction && b.dataset.kind === previousKind && b.dataset.doctrine === previousDoctrine && b.dataset.talent === previousTalent && b.dataset.slot === previousSlot) ?? buttons.find(b => b.dataset.resultPrimary)
+        ?? buttons.find(b => ['reward', 'continue', 'start', 'begin', 'pause'].includes(b.dataset.action ?? '')) ?? buttons[0];
       focus?.focus({ preventScroll: true });
       const modal = this.overlay.querySelector<HTMLElement>('.modal'); if (modal) modal.scrollTop = scrollTop;
     }

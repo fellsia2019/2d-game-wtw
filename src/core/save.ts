@@ -37,6 +37,18 @@ const EMPTY: Records = { runs: 0, wins: 0, bestBattle: 0, bestTime: null, marks:
 export class SaveService {
   constructor(private storage: StorageLike | null) {}
 
+  loadAudio(): { muted: boolean; musicMuted: boolean } {
+    try {
+      const value = JSON.parse(this.storage?.getItem('arena-naemnikov-audio-v1') ?? 'null');
+      return { muted: typeof value?.muted === 'boolean' ? value.muted : true,
+        musicMuted: typeof value?.musicMuted === 'boolean' ? value.musicMuted : true };
+    } catch { return { muted: true, musicMuted: true }; }
+  }
+
+  writeAudio(settings: { muted: boolean; musicMuted: boolean }): void {
+    try { this.storage?.setItem('arena-naemnikov-audio-v1', JSON.stringify(settings)); } catch { /* Local audio preferences are optional. */ }
+  }
+
   load(): Checkpoint | null {
     if (!this.storage) return null;
     for (const key of [KEY, BACKUP, PREVIOUS_KEY, PREVIOUS_BACKUP, OLD_KEY]) {

@@ -21,7 +21,7 @@ function face(era, role, c) {
  if(stone) {
   s+=shape('M77 56q-8-22 9-29 16-8 28 9l2 11-14-7-9 2-6 12-4-2-2 9z',c.hair);
   s+=line('M81 39q8-11 18-8',c.hairLight,3);
-  if(sage)s+=shape('M80 37l-5-14 11 7 5-16 8 17 12-9-2 17z',c.bone)+line('M78 44l35-4',c.cloth,5);
+  if(sage)s+=line('M78 44l35-4',c.cloth,5);
   if(['bulwark','boss'].includes(role))s+=shape('M73 42q-3-25 23-28 23 1 25 27l-12-6-8 7-9-6-13 9z',c.hair)+shape('M76 28Q63 22 64 12q5 8 15 9M112 23q10-2 13-11 3 12-10 18',c.bone);
   if(role==='boss')s+=shape('M88 67l24 1-6 14-12 3-9-10z',c.hair);
  } else if(heavy) {
@@ -48,13 +48,12 @@ function equipment(era,role,c,angle,release,healPhase=null,supportPhase=null,sli
  }
  if(role==='medic') {
   // A shorter upright staff leaves headroom for an actual upward healing gesture.
-  const glow=healPhase===null?0:[0,.18,.65,.9,.35,.05][healPhase];
-  s=`<g opacity="${glow}">${ellipse(0,-62,12,12,'#a1e5ba','none')}${ellipse(0,-62,8,8,'none','#e5ffe4',2)}</g>`;
-  s+=shaft(-53,51)+shape('M-10-65l10-9 10 9-3 14H-7z',stone?c.bone:c.metal)+ellipse(0,-62,4,5,c.light)+line('M0-51v7',c.linen,7);
+  // A linen field-medicine pouch on a walking staff, with no ritual ornament.
+  s=shaft(-53,51)+shape('M-9-64q9-5 18 0v13q-9 5-18 0z',c.linen)+line('M-6-62h12',c.cloth,3)+line('M0-51v7',c.linen,7);
  }
  if(role==='banner') {
   const flutter=supportPhase===null?0:3*Math.sin(supportPhase*Math.PI*2)*Math.sin(supportPhase*Math.PI)**2;
-  s=shaft(-67,54)+g('translate(0 8)',(stone?shape('M-13-75l3-15 10 6 10-6 4 15-7 10H-6z',c.bone)+shape('M-8-77l6 2-2 4M8-77l-6 2 2 4',c.wood)+line('M-5-66l5 3 5-3',c.wood,2):shape(`M2-74q20 ${-6+flutter} 36 0l-6 15 7 14q-19 ${-5-flutter}-37 0z`,c.cloth)+shape('M14-69l13 10-13 9z',c.metal,'none'))+line('M0-63v7',c.linen,6));
+  s=shaft(-67,54)+g('translate(0 8)',shape(`M2-74q20 ${-6+flutter} 36 0l-6 15 7 14q-19 ${-5-flutter}-37 0z`,c.cloth)+line('M8-66h20M8-57h16',c.linen,3)+line('M0-63v7',c.linen,6));
  }
  if(role==='archer') {
   if(stone) {

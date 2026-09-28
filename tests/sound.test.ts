@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BattleSound } from '../src/view/Sound';
+import { MusicLoop } from '../src/view/MusicLoop';
 import type { GameState } from '../src/core/types';
 
 const param = () => ({ value: 0, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() });
@@ -28,7 +29,7 @@ function setup(hidden = () => false) {
   const sound = new BattleSound({ createContext: create, isHidden: hidden, onStatus, loadMusic: async () => { throw new Error('No fixture audio'); } }); sounds.push(sound); sound.sync(state());
   return { ctx, sound, create, onStatus };
 }
-afterEach(() => { sounds.splice(0).forEach(s => s.destroy()); vi.useRealTimers(); });
+afterEach(() => { sounds.splice(0).forEach(s => s.destroy()); vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe('Web Audio lifecycle and audible feedback', () => {
   it('does not autoplay, resumes inside gesture and schedules audible confirmation after unmute', async () => {
@@ -71,4 +72,32 @@ describe('Web Audio lifecycle and audible feedback', () => {
     expect(pitches).toContain(659); expect(pitches).toContain(840); expect(pitches).toContain(95);
     hidden = true; sound.sync(state()); expect(ctx.suspend).toHaveBeenCalled();
   });
+});
+
+
+it('mutes music and effects independently without suspending the remaining channel', async () => {
+  const playMusic = vi.spyOn(MusicLoop.prototype, 'play').mockImplementation(() => {});
+  const pauseMusic = vi.spyOn(MusicLoop.prototype, 'pause');
+  const { sound, ctx } = setup();
+  sound.sync(state({ muted: true, musicMuted: false }));
+  await sound.unlock();
+  expect(playMusic).toHaveBeenCalled();
+  sound.play({ id: 1, type: 'attack', x: 500, team: 'ally' });
+  expect(ctx.oscillators).toHaveLength(0);
+  expect(ctx.suspend).not.toHaveBeenCalled();
+  playMusic.mockClear();
+  sound.sync(state({ muted: false, musicMuted: true }));
+  await Promise.resolve(); await Promise.resolve();
+  expect(pauseMusic).toHaveBeenCalled();
+  expect(playMusic).not.toHaveBeenCalled();
+  sound.play({ id: 2, type: 'attack', x: 500, team: 'ally' });
+  expect(ctx.oscillators.length).toBeGreaterThan(0);
+  expect(ctx.suspend).not.toHaveBeenCalled();
+  sound.sync(state({ muted: true, musicMuted: false }));
+  await Promise.resolve(); await Promise.resolve();
+  expect(ctx.oscillators.every(o => o.stop.mock.calls.some(args => args.length === 0))).toBe(true);
+  expect(playMusic).toHaveBeenCalled();
+  expect(ctx.suspend).not.toHaveBeenCalled();
+  sound.sync(state({ muted: true, musicMuted: true }));
+  expect(ctx.suspend).toHaveBeenCalled();
 });

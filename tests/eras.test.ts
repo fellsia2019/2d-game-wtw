@@ -4,6 +4,7 @@ import { BattleSimulation } from '../src/core/BattleSimulation';
 import { GameDirector } from '../src/core/GameDirector';
 import { SaveService, type StorageLike } from '../src/core/save';
 import type { EraId, HireKind } from '../src/core/types';
+import { CAMPAIGN_PLANS, completeCampaignBattle } from './helpers/campaign';
 
 class MemoryStorage implements StorageLike {
   values = new Map<string, string>();
@@ -129,12 +130,13 @@ describe('first two eras', () => {
 });
 
 describe('era campaign smoke', () => {
-  it.each(['stone', 'bronze'] as const)('%s starter lineup can finish four battles', era => {
+  it.each(['stone', 'bronze'] as const)('%s starter lineup with progression can finish four battles', era => {
     const roster = ERA_STARTER_KINDS[era];
     const results = [];
     for (let index = 0; index < 4; index++) {
-      const sim = new BattleSimulation(index, [], 23, 'steel', roster, undefined, era);
-      const order = (era === 'stone' ? ['012', '002', '012', '012'] : ['012', '012', '001', '012'])[index];
+      const { tier, order } = CAMPAIGN_PLANS[era][index];
+      const sim = new BattleSimulation(index, [], 23, 'steel', roster, undefined, era,
+        { damage: tier, health: tier, attackSpeed: tier, supply: tier }, 1 + tier * 10);
       const result = play(sim, [...order].map(i => roster[Number(i)]));
       results.push({ won: result?.won, duration: result?.duration, reason: result?.reason });
     }
@@ -157,7 +159,9 @@ describe('era transition', () => {
     game.continueRun();
     expect(game.getState().phase).toBe('contract');
     game.chooseContract(game.getState().contracts[0].id);
-    expect(game.returnToMenu()).toBe(false);
+    expect(game.returnToMenu()).toBe(true);
+    expect(game.getState().phase).toBe('menu');
+    game.continueRun();
     expect(game.getState().phase).toBe('battle');
     const roster = ERA_STARTER_KINDS.stone;
     const plan = [roster[0], roster[1], roster[2]];
@@ -180,16 +184,8 @@ describe('era transition', () => {
     game.startNewRun(23);
     expect(game.selectDoctrine('steel')).toBe(true);
     expect(game.beginRun()).toBe(true);
-    const orders = ['012', '002', '012', '012'];
     for (let battle = 0; battle < 4; battle++) {
-      expect(game.chooseContract(game.getState().contracts[0].id)).toBe(true);
-      const roster = ERA_STARTER_KINDS.stone;
-      const plan = [...orders[battle]].map(i => roster[Number(i)]);
-      let purchase = 0;
-      for (let i = 0; i < 420 * 30 && game.getState().phase === 'battle'; i++) {
-        game.tick();
-        if (game.hire(plan[purchase % plan.length])) purchase++;
-      }
+      completeCampaignBattle(game, battle);
       const state = game.getState();
       expect(state.report?.won, `stone battle ${battle + 1}: ${state.report?.reason}`).toBe(true);
       expect(state.eraProgress.stone).toBe(battle + 1);
@@ -226,14 +222,7 @@ describe('era mastery', () => {
     expect(game.getState().unlockedUnits).not.toContain(ERA_HIRE_KINDS.stone[6]);
     save.write({ ...save.load()!, battleIndex: 2, contracts: [] });
     game = new GameDirector(save); game.continueRun();
-    expect(game.chooseContract(game.getState().contracts[0].id)).toBe(true);
-    const roster = ERA_STARTER_KINDS.stone;
-    const plan = [roster[0], roster[1], roster[2]];
-    let purchase = 0;
-    for (let i = 0; i < 420 * 30 && game.getState().phase === 'battle'; i++) {
-      game.tick();
-      if (game.hire(plan[purchase % plan.length])) purchase++;
-    }
+    completeCampaignBattle(game, 2);
     expect(game.getState().report?.won).toBe(true);
     expect(game.getState().eraProgress.stone).toBe(3);
     expect(game.getState().unlockedUnits).toContain(ERA_HIRE_KINDS.stone[6]);
@@ -254,16 +243,8 @@ describe('bronze campaign persistence', () => {
     expect(game.selectEra('bronze')).toBe(true);
     game.startNewRun(23);
     game.selectDoctrine('steel'); game.beginRun();
-    const orders = ['012', '012', '001', '012'];
     for (let battle = 0; battle < 4; battle++) {
-      expect(game.chooseContract(game.getState().contracts[0].id)).toBe(true);
-      const roster = ERA_STARTER_KINDS.bronze;
-      const plan = [...orders[battle]].map(i => roster[Number(i)]);
-      let purchase = 0;
-      for (let i = 0; i < 420 * 30 && game.getState().phase === 'battle'; i++) {
-        game.tick();
-        if (game.hire(plan[purchase % plan.length])) purchase++;
-      }
+      completeCampaignBattle(game, battle);
       expect(game.getState().report?.won, `bronze battle ${battle + 1}`).toBe(true);
       if (battle < 3) expect(game.chooseReward(game.getState().rewards[0].id)).toBe(true);
     }
