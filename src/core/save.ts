@@ -1,11 +1,11 @@
 import { validEnemyBalance, type EnemyBalance, type EnemyBalanceOverrides } from './enemyBalance';
-import { ERA_HIRE_KINDS, ERA_ORDER, HIRE_KINDS, STARTER_KINDS, UPGRADES } from '../data/content';
+import { ERA_HIRE_KINDS, ERA_ORDER, UPGRADES, UNITS } from '../data/content';
 import type { BattleReport, ContractOption, DoctrineId, EraChallenges, EraId, EraProgress, EraUnlocks, HireKind, Records, UpgradeId } from './types';
 import { emptyTalentProgress, emptyGlobalTalents, LEGACY_POINT_GOLD, TALENTS, type TalentProgress, type GlobalTalentProgress } from './talents';
 
 export interface Checkpoint {
-  version: 2 | 3;
-  eraId?: EraId;
+  version: 3;
+  eraId: EraId;
   seed: number;
   battleIndex: number;
   phase: 'preparation' | 'contract' | 'reward' | 'battle';
@@ -45,12 +45,6 @@ export class SaveService {
         if (!value) continue;
         const data: unknown = JSON.parse(value);
         if (valid(data)) return data;
-        if (legacy(data)) {
-          const v = data as { seed: number; battleIndex: number; phase: 'reward' | 'battle'; upgrades: UpgradeId[]; rewards: UpgradeId[]; report: BattleReport | null };
-          return { version: 2, seed: v.seed, battleIndex: v.battleIndex, phase: v.phase, doctrine: 'steel',
-            roster: [...STARTER_KINDS], upgrades: v.upgrades, rewards: v.rewards, contracts: [],
-            selectedContract: null, report: v.report, runTime: 0 };
-        }
       } catch { /* storage may be unavailable or damaged */ }
     }
     return null;
@@ -78,7 +72,7 @@ export class SaveService {
     try {
       const raw = JSON.parse(this.storage?.getItem('arena-naemnikov-debug-balance-v1') ?? '{}');
       const result: EnemyBalanceOverrides = {};
-      for (const era of ['stone', 'bronze', 'legacy'] as const) {
+      for (const era of ['stone', 'bronze'] as const) {
         if (Array.isArray(raw?.[era]) && raw[era].length === 4 && raw[era].every(validEnemyBalance))
           result[era] = raw[era].map((row: EnemyBalance) => ({ ...row }));
       }
@@ -93,7 +87,7 @@ export class SaveService {
   loadSelectedEra(): EraId | null {
     try {
       const id = this.storage?.getItem(SELECTED_ERA);
-      return id === 'stone' || id === 'bronze' || id === 'legacy' ? id : null;
+      return id === 'stone' || id === 'bronze' ? id : null;
     } catch { return null; }
   }
 
@@ -102,19 +96,19 @@ export class SaveService {
   }
 
   loadEraProgress(): { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges } {
-    const fallback = { unlocked: { stone: true, bronze: false, legacy: true }, wins: { stone: 0, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } };
+    const fallback = { unlocked: { stone: true, bronze: false }, wins: { stone: 0, bronze: 0 }, challenges: { stone: false, bronze: false } };
     if (!this.storage) return fallback;
     try {
       const raw: unknown = JSON.parse(this.storage.getItem(ERA_PROGRESS) ?? 'null');
       if (!raw || typeof raw !== 'object') return fallback;
       const data = raw as { unlocked?: Partial<EraUnlocks>; wins?: Partial<EraProgress> };
-      if (!data.unlocked || !data.wins || !['stone', 'bronze', 'legacy'].every(id => {
+      if (!data.unlocked || !data.wins || !['stone', 'bronze'].every(id => {
         const era = id as EraId;
         return typeof data.unlocked?.[era] === 'boolean' && Number.isInteger(data.wins?.[era]) && data.wins![era]! >= 0;
       })) return fallback;
       const challenges = (raw as { challenges?: Partial<EraChallenges> }).challenges;
-      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, legacy: true }, wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, legacy: data.wins.legacy! },
-        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, legacy: challenges?.legacy === true } };
+      return { unlocked: { stone: true, bronze: data.unlocked.bronze! }, wins: { stone: data.wins.stone!, bronze: data.wins.bronze! },
+        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true } };
     } catch { return fallback; }
   }
 
@@ -151,14 +145,14 @@ export class SaveService {
   }
 
   private loadTalentWallets(): Record<EraId, TalentProgress> {
-    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), legacy: emptyTalentProgress() };
+    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress() };
     if (!this.storage) return wallets;
     try {
       const current = this.storage.getItem(TALENT_PROGRESS);
       if (current !== null) {
         const raw = JSON.parse(current) as { version?: number; eras?: Partial<Record<EraId, TalentProgress>> } | null;
         if (raw?.version !== 2 || !raw.eras) return wallets;
-        for (const era of ['stone', 'bronze', 'legacy'] as const) {
+        for (const era of ['stone', 'bronze'] as const) {
           const progress = raw.eras[era];
           if (validTalents(progress)) wallets[era] = { gold: progress.gold, levels: { ...progress.levels }, ...(progress.baseLevel !== undefined ? { baseLevel: progress.baseLevel } : {}) };
         }
@@ -167,7 +161,7 @@ export class SaveService {
       // Transfer the old global profile once, into its current campaign only.
       // Newly entered eras always begin with an empty wallet and no talents.
       const checkpoint = this.load();
-      const era = checkpoint ? checkpoint.eraId ?? 'legacy'
+      const era = checkpoint ? checkpoint.eraId ?? 'stone'
         : this.loadEraProgress().wins.bronze > 0 ? 'bronze' : 'stone';
       const stored = this.storage.getItem(OLD_TALENT_PROGRESS);
       if (stored !== null) {
@@ -220,24 +214,16 @@ function valid(value: unknown): value is Checkpoint {
   if (!value || typeof value !== 'object') return false;
   const v = value as Partial<Checkpoint>;
   const ids = Object.keys(UPGRADES) as UpgradeId[];
-  return (v.version === 2 || v.version === 3) && (v.version === 2 || (v.eraId !== undefined && ['stone', 'bronze', 'legacy'].includes(v.eraId))) && Number.isInteger(v.seed) && Number.isInteger(v.battleIndex)
+  return v.version === 3 && v.eraId !== undefined && ERA_ORDER.includes(v.eraId) && Number.isInteger(v.seed) && Number.isInteger(v.battleIndex)
     && v.battleIndex! >= 0 && v.battleIndex! < 4
     && ['preparation', 'contract', 'reward', 'battle'].includes(v.phase ?? '')
     && (v.doctrine === null || ['steel', 'arrow', 'bargain'].includes(v.doctrine ?? ''))
-    && Array.isArray(v.roster) && v.roster.length === 4 && new Set(v.roster).size === 4 && v.roster.every(id => (v.version === 2 ? HIRE_KINDS : ERA_HIRE_KINDS[v.eraId!]).includes(id))
+    && Array.isArray(v.roster) && v.roster.length === 4 && new Set(v.roster).size === 4 && v.roster.every(id => ERA_HIRE_KINDS[v.eraId!].includes(id))
     && Array.isArray(v.upgrades) && v.upgrades.every(id => ids.includes(id))
     && Array.isArray(v.rewards) && v.rewards.every(id => ids.includes(id))
     && (v.contractRisk === undefined || v.contractRisk === null || v.contractRisk === 'standard' || v.contractRisk === 'daring')
-    && Array.isArray(v.contracts) && v.contracts.every(c => !!c && typeof c.id === 'string' && typeof c.name === 'string')
-    && (!v.selectedContract || typeof v.selectedContract.id === 'string')
+    && Array.isArray(v.contracts) && v.contracts.every(c => !!c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.roster) && c.roster.every(id => Object.hasOwn(UNITS,id) && id.startsWith(v.eraId!)))
+    && (!v.selectedContract || (typeof v.selectedContract.id === 'string' && Array.isArray(v.selectedContract.roster) && v.selectedContract.roster.every(id => Object.hasOwn(UNITS,id) && id.startsWith(v.eraId!))))
     && Number.isFinite(v.runTime) && v.runTime! >= 0
     && (v.phase !== 'reward' || (v.rewards.length === 3 && !!v.report));
-}
-
-function legacy(value: unknown): boolean {
-  if (!value || typeof value !== 'object') return false;
-  const v = value as Record<string, unknown>;
-  return v.version === 1 && Number.isInteger(v.seed) && Number.isInteger(v.battleIndex)
-    && (v.battleIndex as number) >= 0 && (v.battleIndex as number) < 3
-    && (v.phase === 'reward' || v.phase === 'battle') && Array.isArray(v.upgrades) && Array.isArray(v.rewards);
 }

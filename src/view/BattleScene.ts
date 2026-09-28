@@ -30,18 +30,14 @@ export class BattleScene extends Phaser.Scene {
       this.load.svg(`arena-${era}`, asset(`arena-${era}`), { width: 1600, height: 600 });
       for (const team of ['ally','enemy']) this.load.svg(`${era}-tower-${team}`, asset(`${era}-tower-${team}`), { width: 240, height: 240 });
     }
-    this.load.svg('arena', asset('arena'), { width: 1600, height: 600 });
-    this.load.svg('arena-frost', asset('arena-frost'), { width: 1600, height: 600 });
-    this.load.svg('arena-citadel', asset('arena-citadel'), { width: 1600, height: 600 });
-    for (const key of ['tower-ally', 'tower-enemy']) this.load.svg(key, asset(key), { width: 240, height: 240 });
     for (const key of new Set(Object.values(unitArt))) {
       this.load.spritesheet(key, asset(key).replace('.svg', '-sheet.png'), { frameWidth: 320, frameHeight: 192 });
       this.load.spritesheet(`enemy-${key}`, asset(`enemy-${key}`).replace('.svg', '-sheet.png'), { frameWidth: 320, frameHeight: 192 });
     }
   }
   create() {
-    this.background = this.add.image(0, 0, 'arena').setOrigin(0);
-    this.towers = [this.add.image(0, 0, 'tower-ally').setOrigin(.5, 1), this.add.image(0, 0, 'tower-enemy').setOrigin(.5, 1)];
+    this.background = this.add.image(0, 0, 'arena-stone').setOrigin(0);
+    this.towers = [this.add.image(0, 0, 'stone-tower-ally').setOrigin(.5, 1), this.add.image(0, 0, 'stone-tower-enemy').setOrigin(.5, 1)];
     this.damage = this.add.graphics().setDepth(2);
     this.fx = this.add.graphics().setDepth(100);
     this.ready = true;
@@ -71,9 +67,9 @@ export class BattleScene extends Phaser.Scene {
     const state = this.read(); this.snapshot = state;
     if (this.currentArena !== `${state.eraId}:${state.arenaId}`) {
       this.currentArena = `${state.eraId}:${state.arenaId}`;
-      this.towers[0].setTexture(state.eraId === 'legacy' ? 'tower-ally' : `${state.eraId}-tower-ally`);
-      this.towers[1].setTexture(state.eraId === 'legacy' ? 'tower-enemy' : `${state.eraId}-tower-enemy`);
-      this.background.setTexture(state.eraId !== 'legacy' ? `arena-${state.eraId}` : state.arenaId === 'citadel' ? 'arena-citadel' : state.arenaId === 'iron' || state.arenaId === 'arrows' ? 'arena-frost' : 'arena');
+      this.towers[0].setTexture(`${state.eraId}-tower-ally`);
+      this.towers[1].setTexture(`${state.eraId}-tower-enemy`);
+      this.background.setTexture(`arena-${state.eraId}`);
       this.layout();
     }
     const reset = state.seed !== this.runSeed || state.battleIndex !== this.phaseIndex || state.elapsed < this.lastSimulationTime || (state.events.length > 0 && state.events[state.events.length - 1].id < this.seen);

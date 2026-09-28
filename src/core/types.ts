@@ -1,13 +1,12 @@
 import type { EnemyBalance } from './enemyBalance';
 import type { TalentId, TalentLevels } from './talents';
 export type Team = 'ally' | 'enemy';
-export type EraId = 'stone' | 'bronze' | 'legacy';
+export type EraId = 'stone' | 'bronze';
 export type UnitRole = 'shield' | 'spear' | 'archer' | 'medic' | 'raider' | 'thrower' | 'banner' | 'siege';
-export type LegacyHireKind = UnitRole;
 export type StoneHireKind = 'stoneShield' | 'stoneSpear' | 'stoneSlinger' | 'stoneShaman' | 'stoneScout' | 'stoneThrower' | 'stoneTotem' | 'stoneRam';
 export type BronzeHireKind = 'bronzeGuard' | 'bronzeSpear' | 'bronzeArcher' | 'bronzeHealer' | 'bronzeChariot' | 'bronzePitch' | 'bronzeHerald' | 'bronzeRam';
-export type HireKind = LegacyHireKind | StoneHireKind | BronzeHireKind;
-export type UnitKind = HireKind | 'bulwark' | 'enemyArcher' | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing';
+export type HireKind = StoneHireKind | BronzeHireKind;
+export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing';
 export type UpgradeId = 'supply' | 'wagon' | 'banner' | 'arrows' | 'bandages' | 'contract' | 'pikes' | 'workshop' | 'boots' | 'siegecraft' | 'lastReserve' | 'standard';
 export type DoctrineId = 'steel' | 'arrow' | 'bargain';
 export type GamePhase = 'menu' | 'preparation' | 'contract' | 'battle' | 'reward' | 'victory' | 'defeat';
@@ -50,8 +49,8 @@ export interface ContractOption {
   risk: 'standard' | 'daring';
 }
 export interface Records { runs: number; wins: number; bestBattle: number; bestTime: number | null; marks: number; }
-export interface EraProgress { stone: number; bronze: number; legacy: number; }
-export interface EraUnlocks { stone: boolean; bronze: boolean; legacy: boolean; }
+export interface EraProgress { stone: number; bronze: number; }
+export interface EraUnlocks { stone: boolean; bronze: boolean; }
 export type EraChallenges = EraUnlocks;
 export interface BattleReport {
   goldEarned?: number; // absent in older saved reports

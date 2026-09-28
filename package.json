@@ -1,9 +1,10 @@
 {
-  "name": "arena-naemnikov",
+  "name": "znamyona-epoh",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "art:units": "node src/art/check-walk.mjs && node src/art/check-ranged.mjs && node src/art/generate-era-sprites.mjs",
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",

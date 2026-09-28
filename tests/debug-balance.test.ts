@@ -12,8 +12,8 @@ class MemoryStorage implements StorageLike {
 const custom = { income: 20, startSupplies: 45, hpBonus: 50, damageBonus: 25 };
 function setup() {
   const save = new SaveService(new MemoryStorage());
-  save.writeEraProgress({ unlocked: { stone: true, bronze: true, legacy: true },
-    wins: { stone: 4, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+  save.writeEraProgress({ unlocked: { stone: true, bronze: true },
+    wins: { stone: 4, bronze: 0 }, challenges: { stone: false, bronze: false } });
   return { save, game: new GameDirector(save) };
 }
 it('persists editable rows independently of other eras and resets to configured defaults', () => {

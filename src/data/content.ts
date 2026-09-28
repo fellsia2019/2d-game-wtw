@@ -6,23 +6,13 @@ export interface UnitDefinition {
 }
 
 export const UNITS: Record<UnitKind, UnitDefinition> = {
-  shield: { name: 'Щитоносец', role: 'Передняя линия · поглощает удары', cost: 18, hp: 50, damage: 3, range: 25, speed: 33, period: 1, armor: .25 },
-  spear: { name: 'Копейщик', role: 'Пробивает броню', cost: 26, hp: 28, damage: 9, range: 40, speed: 41, period: 1.2, armor: 0, antiArmor: 2.5 },
-  archer: { name: 'Стрелок', role: 'Дальний урон из-за строя', cost: 30, hp: 20, damage: 7, range: 155, speed: 38, period: .95, armor: 0 },
-  medic: { name: 'Лекарь', role: 'Лечит ближайшего раненого', cost: 42, hp: 23, damage: 2, heal: 6, range: 105, speed: 36, period: 1.4, armor: 0 },
-  raider: { name: 'Налётчик', role: 'Прорывается к стрелкам', cost: 24, hp: 29, damage: 9, range: 26, speed: 76, period: .85, armor: 0 },
-  thrower: { name: 'Метатель', role: 'Поражает плотные группы', cost: 38, hp: 21, damage: 8, range: 120, speed: 34, period: 1.6, armor: 0 },
-  banner: { name: 'Знаменосец', role: 'Ускоряет атаки рядом', cost: 45, hp: 29, damage: 3, range: 28, speed: 36, period: 1.2, armor: .1 },
-  siege: { name: 'Осадник', role: 'Разрушает крепости', cost: 55, hp: 31, damage: 8, range: 125, speed: 26, period: 1.8, armor: 0 },
-  bulwark: { name: 'Латник', role: 'Тяжёлая броня', cost: 34, hp: 70, damage: 5, range: 27, speed: 27, period: 1.3, armor: .6 },
-  enemyArcher: { name: 'Вражеский стрелок', role: 'Дальний бой', cost: 30, hp: 20, damage: 6, range: 150, speed: 36, period: 1, armor: 0 },
   stoneShield: { name: 'Пещерный страж', role: 'Защитник · крепкий каменный щит', cost: 16, hp: 49, damage: 3, range: 24, speed: 34, period: 1.1, armor: .18 },
   stoneSpear: { name: 'Охотник с копьём', role: 'Против брони · длинное копьё', cost: 24, hp: 27, damage: 9, range: 43, speed: 43, period: 1.2, armor: 0, antiArmor: 2.3 },
   stoneSlinger: { name: 'Пращник', role: 'Дальний бой · короткая дистанция', cost: 27, hp: 19, damage: 8, range: 128, speed: 40, period: 1.1, armor: 0 },
   stoneShaman: { name: 'Шаман', role: 'Поддержка · лечит бойцов', cost: 39, hp: 22, damage: 2, heal: 6, range: 90, speed: 35, period: 1.5, armor: 0 },
   stoneScout: { name: 'Лазутчик', role: 'Засада · первый удар по стрелку сильнее', cost: 23, hp: 26, damage: 10, range: 26, speed: 82, period: .85, armor: 0 },
   stoneThrower: { name: 'Метатель валунов', role: 'Площадь · каменная осыпь', cost: 37, hp: 22, damage: 9, range: 105, speed: 31, period: 1.7, armor: 0 },
-  stoneTotem: { name: 'Хранитель тотема', role: 'Командир · ускоряет атаки', cost: 43, hp: 27, damage: 3, range: 30, speed: 35, period: 1.3, armor: .05 },
+  stoneTotem: { name: 'Хранитель тотема', role: 'Командир · ускоряет атаки', cost: 43, hp: 27, damage: 0, range: 30, speed: 35, period: 1.3, armor: .05 },
   stoneRam: { name: 'Таранщик', role: 'Осада · крушит укрепления', cost: 52, hp: 36, damage: 8, range: 35, speed: 27, period: 1.7, armor: .1 },
   bronzeGuard: { name: 'Бронзовый страж', role: 'Защитник · броня крепче рядом с фалангой', cost: 20, hp: 57, damage: 4, range: 27, speed: 30, period: 1.1, armor: .35 },
   bronzeSpear: { name: 'Копейщик фаланги', role: 'Против брони · строй усиливает защиту', cost: 29, hp: 33, damage: 10, range: 48, speed: 35, period: 1.25, armor: .12, antiArmor: 2.4 },
@@ -30,7 +20,7 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   bronzeHealer: { name: 'Храмовый лекарь', role: 'Поддержка · лечит бойцов', cost: 43, hp: 26, damage: 2, heal: 8, range: 113, speed: 33, period: 1.5, armor: .08 },
   bronzeChariot: { name: 'Колесничий', role: 'Прорыв · стремительная атака', cost: 34, hp: 38, damage: 12, range: 36, speed: 93, period: 1.1, armor: .12 },
   bronzePitch: { name: 'Метатель смолы', role: 'Площадь · обжигающий залп', cost: 43, hp: 23, damage: 10, range: 125, speed: 31, period: 1.7, armor: .03 },
-  bronzeHerald: { name: 'Глашатай', role: 'Командир · ускоряет атаки', cost: 49, hp: 32, damage: 4, range: 29, speed: 33, period: 1.2, armor: .2 },
+  bronzeHerald: { name: 'Глашатай', role: 'Командир · ускоряет атаки', cost: 49, hp: 32, damage: 0, range: 29, speed: 33, period: 1.2, armor: .2 },
   bronzeRam: { name: 'Осадный таран', role: 'Осада · усиленный удар', cost: 61, hp: 48, damage: 11, range: 45, speed: 25, period: 1.9, armor: .28 },
   stoneHunter: { name: 'Ночной охотник', role: 'Враг · стремительный прорыв', cost: 23, hp: 25, damage: 9, range: 26, speed: 74, period: .95, armor: 0, archetype: 'raider' },
   stoneBone: { name: 'Костяной щит', role: 'Враг · прикрытие', cost: 19, hp: 47, damage: 4, range: 26, speed: 31, period: 1.1, armor: .25, archetype: 'shield' },
@@ -44,26 +34,19 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   bronzeKing: { name: 'Царь Медных ворот', role: 'Босс · бронзовый натиск', cost: 76, hp: 781, damage: 30 / 1.15, range: 42, speed: 31, period: 1.3, armor: .45, archetype: 'shield' }
 };
 
-export const HIRE_KINDS: HireKind[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
-export const STARTER_KINDS: HireKind[] = ['shield', 'spear', 'archer', 'medic'];
-export const UNLOCKS: { kind: HireKind; marks: number }[] = [
-  { kind: 'raider', marks: 1 }, { kind: 'thrower', marks: 3 },
-  { kind: 'banner', marks: 5 }, { kind: 'siege', marks: 8 }
-];
-
 export const DOCTRINES: DoctrineOption[] = [
   { id: 'steel', name: 'Оплот', description: 'Первый защитник каждого боя дешевле на 6 припасов.' },
   { id: 'arrow', name: 'Стрела', description: 'Первые два бойца дальнего боя получают +20 к дальности.' },
   { id: 'bargain', name: 'Сделка', description: 'Старт с 20 припасами, но крепость теряет 15% здоровья (минимум 1 HP).' }
 ];
 
-export const UPGRADES: Record<UpgradeId, { name: string; description: string; category: 'economy' | 'defense' | 'offense'; requires?: HireKind }> = {
+export const UPGRADES: Record<UpgradeId, { name: string; description: string; category: 'economy' | 'defense' | 'offense'; requires?: UnitRole }> = {
   supply: { name: 'Полевой запас', description: '+20 припасов в начале боя', category: 'economy' },
   wagon: { name: 'Улучшенное снабжение', description: 'Восстановление припасов +1/с', category: 'economy' },
   banner: { name: 'Знамя стойкости', description: 'Здоровье защитников и бойцов против брони +15%', category: 'defense' },
   arrows: { name: 'Точные стрелы', description: 'Урон бойцов дальнего боя +15%', category: 'offense', requires: 'archer' },
   bandages: { name: 'Полевые повязки', description: 'Лечение +20%', category: 'defense', requires: 'medic' },
-  contract: { name: 'Дешёвый контракт', description: 'Первый призыв каждого боя дешевле на 8', category: 'economy' },
+  contract: { name: 'Подготовленный резерв', description: 'Первый призыв каждого боя дешевле на 8', category: 'economy' },
   pikes: { name: 'Усиленные пики', description: 'Бойцы с копьями сильнее против брони', category: 'offense', requires: 'spear' },
   workshop: { name: 'Инженерная мастерская', description: 'Первое улучшение дохода дешевле на 12', category: 'economy' },
   boots: { name: 'Лёгкие сапоги', description: 'Быстрые бойцы двигаются на 20% быстрее', category: 'offense', requires: 'raider' },
@@ -73,22 +56,14 @@ export const UPGRADES: Record<UpgradeId, { name: string; description: string; ca
 };
 
 export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; enemyStartingSupplies?: number; enemyHealthMultiplier?: number; enemyDamageMultiplier?: number; enemyRecruitRoster?: UnitKind[]; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
-export const BATTLES: BattleDefinition[] = [
-  { name: 'Разминка', threat: 'Налётчики: частые слабые атаки', ai: 'rush', enemyIncome: 6.3, roster: ['raider', 'shield'], arenaId: 'ash' },
-  { name: 'Железная стена', threat: 'Латники: броню пробивают копейщики', ai: 'wall', enemyIncome: 6.4, roster: ['bulwark', 'enemyArcher'], arenaId: 'iron' },
-  { name: 'Под градом стрел', threat: 'Стрелки под прикрытием латников', ai: 'ranged', enemyIncome: 5.9, roster: ['bulwark', 'enemyArcher'], arenaId: 'arrows' },
-  { name: 'Комендант', threat: 'При 50% здоровья крепости готовит отмеченную волну', ai: 'boss', enemyIncome: 6.7, roster: ['bulwark', 'enemyArcher', 'raider'], arenaId: 'citadel' }
-];
-
 export const ERA_ORDER: EraId[] = ['stone', 'bronze'];
-export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', legacy: 'Поход наёмников' };
+export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век' };
 export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   stone: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'],
-  bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam'],
-  legacy: HIRE_KINDS
+  bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam']
 };
 export const ERA_STARTER_KINDS: Record<EraId, HireKind[]> = {
-  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), legacy: STARTER_KINDS
+  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4)
 };
 const ROLES: UnitRole[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
 export function unitRole(kind: UnitKind): UnitRole {
@@ -96,10 +71,9 @@ export function unitRole(kind: UnitKind): UnitRole {
   if (index >= 0) return ROLES[index];
   const bronzeIndex = ERA_HIRE_KINDS.bronze.indexOf(kind as HireKind);
   if (bronzeIndex >= 0) return ROLES[bronzeIndex];
-  return UNITS[kind].archetype ?? (kind === 'bulwark' ? 'shield' : kind === 'enemyArcher' ? 'archer' : kind as UnitRole);
+  return UNITS[kind].archetype!;
 }
 export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
-  legacy: BATTLES,
   stone: [
     { name: 'Ночная засада', threat: 'Ночные охотники быстро подходят к крепости', ai: 'rush', enemyIncome: 5.8, roster: ['stoneHunter', 'stoneBone'], arenaId: 'ash' },
     { name: 'Костяной заслон', threat: 'Костяные щиты прикрывают пращников', ai: 'wall', enemyIncome: 8, enemyStartingSupplies: 8, roster: ['stoneBone', 'stoneEnemySlinger'], arenaId: 'iron' },

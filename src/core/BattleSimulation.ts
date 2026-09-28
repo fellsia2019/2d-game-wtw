@@ -6,7 +6,7 @@ import { emptyTalentProgress, talentMultiplier, type TalentLevels } from './tale
 
 const FORT = { ally: 65, enemy: 935 } as const;
 const STEP = 1 / 30;
-export const KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, legacy: 1 };
+export const KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2 };
 
 export class BattleSimulation {
   readonly battleIndex: number;
@@ -48,7 +48,7 @@ export class BattleSimulation {
   private reserveUsed = false;
   private bossDamagePool = 0;
 
-  constructor(battleIndex: number, upgrades: UpgradeId[], seed: number, doctrine: DoctrineId = 'steel', roster?: HireKind[], contract?: ContractOption, eraId: EraId = 'legacy', talents: TalentLevels = emptyTalentProgress().levels, baseHp = 1, enemyBalance?: EnemyBalance) {
+  constructor(battleIndex: number, upgrades: UpgradeId[], seed: number, doctrine: DoctrineId = 'steel', roster?: HireKind[], contract?: ContractOption, eraId: EraId = 'stone', talents: TalentLevels = emptyTalentProgress().levels, baseHp = 1, enemyBalance?: EnemyBalance) {
     this.allyFortressMaxHp = doctrine === 'bargain' ? Math.max(1, Math.floor(baseHp * .85)) : baseHp;
     this.allyFortressHp = this.allyFortressMaxHp;
     this.eraId = eraId;
@@ -61,7 +61,7 @@ export class BattleSimulation {
     this.enemyBalance = { ...(enemyBalance ?? enemyBalanceDefaults(eraId)[battleIndex]) };
     this.enemyResource = this.enemyBalance.startSupplies;
     this.contract = contract ?? { id: `${battleIndex}-standard`, name: battle.name, threat: battle.threat,
-      roster: battle.roster, condition: 'Обычный бой', reward: '1 знак контракта',
+      roster: battle.roster, condition: 'Обычный бой', reward: '1 знак победы',
       enemyIncome: battle.enemyIncome, marks: 1, risk: 'standard' };
     this.contract = { ...this.contract, risk: 'standard', enemyIncome: this.enemyBalance.income, marks: 1 };
     this.random = new Random((seed ^ Math.imul(battleIndex + 1, 0x9e3779b1)) >>> 0);
@@ -71,7 +71,7 @@ export class BattleSimulation {
   }
 
   get income(): number { return ((this.eraId === 'bronze' ? 8 : 6) + this.incomeUpgrades + (this.upgrades.includes('wagon') ? 1 : 0)) * talentMultiplier(this.talents.supply); }
-  get incomeUpgradeCost(): number { return this.incomeUpgrades === 0 && this.upgrades.includes('workshop') ? 28 : 40; }
+  get incomeUpgradeCost(): number { return 40 + this.incomeUpgrades * 10 - (this.incomeUpgrades === 0 && this.upgrades.includes('workshop') ? 12 : 0); }
   get enemyIncome(): number { return this.contract.enemyIncome + (this.elapsed >= 300 ? 2 : 0); }
   private get enemyDamageMultiplier(): number { return 1 + this.enemyBalance.damageBonus / 100; }
   get allyCount(): number { return this.units.filter(u => u.team === 'ally').length; }
@@ -151,19 +151,11 @@ export class BattleSimulation {
     // Spend the available budget; a single purchase per turn capped effective income.
     while (true) {
       let kind: UnitKind;
-      if (this.eraId === 'legacy') {
-        if (plan === 'rush') kind = this.aiSequence % 4 === 3 ? 'shield' : 'raider';
-        else if (plan === 'wall') kind = this.aiSequence % 3 === 2 ? 'enemyArcher' : 'bulwark';
-        else if (plan === 'ranged') kind = (allyNearFort || this.aiSequence % 3 === 0) ? 'bulwark' : 'enemyArcher';
-        else kind = this.aiSequence % 4 === 0 ? 'bulwark' : this.aiSequence % 4 === 1 ? 'enemyArcher' : 'raider';
-        if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = 'raider';
-      } else {
         const enemies = ERA_BATTLES[this.eraId][this.battleIndex].enemyRecruitRoster ?? this.contract.roster;
         if (plan === 'ranged') kind = enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
         if (kind === 'stoneChief' || kind === 'bronzeKing') kind = enemies.find(id => id !== kind) ?? kind;
-      }
       if (this.enemyResource < UNITS[kind].cost) break;
       this.enemyResource -= UNITS[kind].cost;
       this.spawn(kind, 'enemy');
@@ -184,8 +176,8 @@ export class BattleSimulation {
       this.bossPhase = 'assault';
       this.bossCountdown = 0;
       this.event('boss-assault', 850, 'enemy');
-      for (const kind of this.eraId === 'legacy' ? ['bulwark', 'raider', 'enemyArcher'] as UnitKind[] : ERA_BATTLES[this.eraId][this.battleIndex].roster) this.spawn(kind, 'enemy');
-    } else if (this.bossPhase === 'assault' && !this.units.some(u => u.team === 'enemy' && u.hp > 0 && (this.eraId === 'legacy' ? u.x > 700 : u.kind === 'stoneChief' || u.kind === 'bronzeKing'))) {
+      for (const kind of ERA_BATTLES[this.eraId][this.battleIndex].roster) this.spawn(kind, 'enemy');
+    } else if (this.bossPhase === 'assault' && !this.units.some(u => u.team === 'enemy' && u.hp > 0 && (u.kind === 'stoneChief' || u.kind === 'bronzeKing'))) {
       this.bossPhase = 'spent';
     }
   }
@@ -262,6 +254,12 @@ export class BattleSimulation {
       unit.facing = direction;
       return;
     }
+    // Standards only supply the nearby attack-speed aura. They never strike units or bases.
+    if (unitRole(unit.kind) === 'banner') {
+      unit.action = 'idle';
+      if (targetX !== unit.x) unit.facing = targetX > unit.x ? 1 : -1;
+      return;
+    }
     unit.action = 'attack';
     if (targetX !== unit.x) unit.facing = targetX > unit.x ? 1 : -1;
     if (unit.cooldown > 0) return;
@@ -302,7 +300,7 @@ export class BattleSimulation {
         * (unit.team === 'ally' && unitRole(unit.kind) === 'siege' && this.upgrades.includes('siegecraft') ? 1.2 : 1)
         * (unit.team === 'ally' ? talentMultiplier(this.talents.damage) : this.enemyDamageMultiplier);
       if (unit.team === 'ally') {
-        const bossBattle = this.eraId !== 'legacy' && ERA_BATTLES[this.eraId][this.battleIndex].ai === 'boss';
+        const bossBattle = ERA_BATTLES[this.eraId][this.battleIndex].ai === 'boss';
         const protectedByBoss = bossBattle && this.bossPhase === 'assault';
         const protectedFortress = protectedByBoss || this.enemyGlyphRemaining > 0;
         const nextHp = protectedFortress ? this.enemyFortressHp
@@ -320,13 +318,7 @@ export class BattleSimulation {
   private finish(won: boolean): void {
     if (won) this.goldEarned += 25 * KILL_GOLD[this.eraId];
     const ai = ERA_BATTLES[this.eraId][this.battleIndex].ai;
-    const lossCause = this.eraId === 'legacy'
-      ? this.hires < 2 ? 'Твоя крепость пала: на защиту вышло слишком мало наёмников.'
-        : ai === 'rush' ? 'Налётчики прорвались к твоей крепости. Ранний щит сдерживает натиск.'
-        : ai === 'wall' ? 'Латники продавили строй. Копейщики пробивают их броню.'
-        : ai === 'ranged' ? 'Вражеские стрелки расстреляли строй из-за латников. Нужен прорыв или дальний ответ.'
-        : 'Волна Коменданта сломала оборону. Сохрани припасы к её предупреждению.'
-      : this.hires < 2 ? 'Твоя крепость пала: на защиту вышло слишком мало бойцов.'
+    const lossCause = this.hires < 2 ? 'Твоя крепость пала: на защиту вышло слишком мало бойцов.'
         : ai === 'rush' ? 'Быстрые враги прорвались к крепости. Ранний защитник сдерживает натиск.'
         : ai === 'wall' ? 'Защитники врага продавили строй. Бойцы с копьями пробивают их броню.'
         : ai === 'ranged' ? 'Вражеские стрелки атаковали из-за строя. Нужен прорыв или дальний ответ.'

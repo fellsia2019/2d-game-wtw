@@ -32,7 +32,7 @@ describe('battle simulation', () => {
   it('keeps move and attack states stable across steps and returns survivors to idle at result', () => {
     const sim = new BattleSimulation(0, [], 123);
     sim.resource = 100;
-    expect(sim.hire('shield')).toBe(true);
+    expect(sim.hire('stoneShield')).toBe(true);
     const shield = sim.units[0];
     expect(shield.action).toBe('idle');
     expect(shield.facing).toBe(1);
@@ -61,7 +61,7 @@ describe('battle simulation', () => {
   it('faces a target behind and marks healing as attack preparation', () => {
     const sim = new BattleSimulation(0, [], 8);
     sim.resource = 100;
-    sim.hire('shield'); sim.hire('medic');
+    sim.hire('stoneShield'); sim.hire('stoneShaman');
     const [shield, medic] = sim.units;
     shield.x = 300; medic.x = 315;
     shield.hp -= 10;
@@ -73,7 +73,7 @@ describe('battle simulation', () => {
   });
 
   it('publishes valid actions and facing for every playable and enemy archetype', () => {
-    const kinds: HireKind[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
+    const kinds: HireKind[] = ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'];
     for (const kind of kinds) {
       const sim = new BattleSimulation(1, [], 12, 'steel', kinds);
       sim.resource = 100;
@@ -94,7 +94,7 @@ describe('battle simulation', () => {
   it('replays the same actions and seed exactly', () => {
     const a = new BattleSimulation(0, [], 12345);
     const b = new BattleSimulation(0, [], 12345);
-    const plan: HireKind[] = ['shield', 'archer', 'spear', 'medic'];
+    const plan: HireKind[] = ['stoneShield', 'stoneSlinger', 'stoneSpear', 'stoneShaman'];
     play(a, plan); play(b, plan);
     expect(a.report).toEqual(b.report);
     expect(a.events).toEqual(b.events);
@@ -102,27 +102,53 @@ describe('battle simulation', () => {
 
   it('rejects unaffordable purchases and upgrades income beyond two levels', () => {
     const sim = new BattleSimulation(0, [], 1);
-    expect(sim.hire('shield')).toBe(false);
-    expect(sim.hire('siege')).toBe(false); // outside selected four-card roster
+    expect(sim.hire('stoneShield')).toBe(false);
+    expect(sim.hire('stoneRam')).toBe(false); // outside selected four-card roster
     sim.resource = 100;
+    expect(sim.incomeUpgradeCost).toBe(40);
     expect(sim.upgradeIncome()).toBe(true);
+    expect(sim.resource).toBe(60);
+    expect(sim.incomeUpgradeCost).toBe(50);
     expect(sim.upgradeIncome()).toBe(true);
+    expect(sim.resource).toBe(10);
+    expect(sim.incomeUpgradeCost).toBe(60);
     expect(sim.upgradeIncome()).toBe(false);
+    expect(sim.resource).toBe(10);
+    expect(sim.incomeUpgrades).toBe(2);
     expect(sim.income).toBe(8);
     for (let i = 0; i < 18; i++) {
-      sim.resource = 40;
+      const price = 60 + i * 10;
+      expect(sim.incomeUpgradeCost).toBe(price);
+      sim.resource = price - 1;
+      expect(sim.upgradeIncome()).toBe(false);
+      expect(sim.resource).toBe(price - 1);
+      expect(sim.incomeUpgradeCost).toBe(price);
+      sim.resource = price;
       expect(sim.upgradeIncome()).toBe(true);
       expect(sim.resource).toBe(0);
     }
     expect(sim.incomeUpgrades).toBe(20);
     expect(sim.income).toBe(26);
+    expect(new BattleSimulation(0, [], 1).incomeUpgradeCost).toBe(40);
+  });
+
+  it('discounts only the first income upgrade with the workshop', () => {
+    const sim = new BattleSimulation(0, ['workshop'], 1);
+    sim.resource = 200;
+    for (const price of [28, 50, 60]) {
+      expect(sim.incomeUpgradeCost).toBe(price);
+      const before = sim.resource;
+      expect(sim.upgradeIncome()).toBe(true);
+      expect(sim.resource).toBe(before - price);
+    }
+    expect(new BattleSimulation(0, ['workshop'], 1).incomeUpgradeCost).toBe(28);
   });
 
   it('recruits beyond twelve units and triggers the reserve for a large army', () => {
     const sim = new BattleSimulation(0, ['lastReserve'], 1);
     for (let i = 0; i < 40; i++) {
       sim.resource = 100;
-      expect(sim.hire('shield')).toBe(true);
+      expect(sim.hire('stoneShield')).toBe(true);
     }
     expect(sim.allyCount).toBe(40);
     sim.allyFortressHp = sim.allyFortressMaxHp * .34;
@@ -134,7 +160,7 @@ describe('battle simulation', () => {
 
   it('does not cap enemy hires or discard a boss wave when the army is large', () => {
     const sim = new BattleSimulation(3, [], 1);
-    for (let i = 0; i < 20; i++) sim.units.push({ id: 100 + i, kind: 'bulwark', team: 'enemy', x: 895,
+    for (let i = 0; i < 20; i++) sim.units.push({ id: 100 + i, kind: 'stoneBone', team: 'enemy', x: 895,
       hp: 70, maxHp: 70, cooldown: 100, action: 'idle', facing: -1 });
     sim.enemyResource = 100;
     sim.enemyFortressHp = 50;
@@ -150,7 +176,7 @@ describe('battle simulation', () => {
     expect(sim.bossPhase).toBe('assault');
     expect(sim.bossCountdown).toBe(0);
     expect(sim.events.some(e => e.type === 'boss-assault')).toBe(true);
-    expect(sim.units.filter(u => u.team === 'enemy').length).toBe(3);
+    expect(sim.units.filter(u => u.team === 'enemy').length).toBe(4);
     sim.step();
     expect(sim.events.filter(e => e.type === 'boss-assault')).toHaveLength(1);
   });
@@ -177,8 +203,10 @@ describe('battle simulation', () => {
 describe('run and persistence', () => {
   it('completes all four battles through rewards and restores each checkpoint', () => {
     const storage = new MemoryStorage();
-    let director = new GameDirector(new SaveService(storage));
-    director.startNewRun(23, 'legacy');
+    const profile = new SaveService(storage);
+    profile.writeTalents({gold:0,levels:{damage:50,attackSpeed:50,health:50,supply:50},baseLevel:100});
+    let director = new GameDirector(profile);
+    director.startNewRun(23, 'stone');
     expect(director.beginRun()).toBe(false);
     expect(director.selectDoctrine('steel')).toBe(true);
     expect(director.beginRun()).toBe(true);
@@ -186,8 +214,8 @@ describe('run and persistence', () => {
       const option = director.getState().contracts[0];
       expect(director.chooseContract(option.id)).toBe(true);
       const plan: HireKind[] = battle === 1
-        ? ['shield', 'spear', 'archer', 'spear', 'medic', 'archer']
-        : ['shield', 'archer', 'archer', 'spear', 'medic'];
+        ? ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneSpear', 'stoneShaman', 'stoneSlinger']
+        : ['stoneShield', 'stoneSlinger', 'stoneSlinger', 'stoneSpear', 'stoneShaman'];
       playDirector(director, plan);
       const state = director.getState();
       expect(state.report?.won, `battle ${battle + 1}: ${state.report?.reason}`).toBe(true);
@@ -228,9 +256,11 @@ describe('run and persistence', () => {
     const storage = new MemoryStorage();
     storage.setItem('arena-naemnikov-records-v1', JSON.stringify({ runs: 3, wins: 1, bestBattle: 4, bestTime: 200, marks: 8 }));
     let director = new GameDirector(new SaveService(storage));
-    director.startNewRun(123, 'legacy');
+    new SaveService(storage).writeEraProgress({unlocked:{stone:true,bronze:false},wins:{stone:4,bronze:0},challenges:{stone:false,bronze:false}});
+    director = new GameDirector(new SaveService(storage));
+    director.startNewRun(123, 'stone');
     expect(director.getState().unlockedUnits).toHaveLength(8);
-    expect(director.setLoadout(['shield', 'raider', 'thrower', 'siege'])).toBe(true);
+    expect(director.setLoadout(['stoneShield', 'stoneScout', 'stoneThrower', 'stoneRam'])).toBe(true);
     expect(director.selectDoctrine('bargain')).toBe(true);
     expect(director.beginRun()).toBe(true);
     expect(director.getState().contracts).toHaveLength(1);
@@ -240,7 +270,7 @@ describe('run and persistence', () => {
     director.continueRun();
     const state = director.getState();
     expect(state.selectedDoctrine).toBe('bargain');
-    expect(state.roster).toEqual(['shield', 'raider', 'thrower', 'siege']);
+    expect(state.roster).toEqual(['stoneShield', 'stoneScout', 'stoneThrower', 'stoneRam']);
     expect(state.selectedContract).toBe(standard.id);
     expect(state.enemyIncome).toBe(standard.enemyIncome);
     expect(state.resource).toBe(20);
@@ -249,7 +279,7 @@ describe('run and persistence', () => {
 
   it('filters rewards by the active four-card roster', () => {
     for (let seed = 1; seed <= 24; seed++) {
-      const ids = offerRewards(seed, 1, ['shield', 'raider', 'thrower', 'siege'], []);
+      const ids = offerRewards(seed, 1, ['stoneShield', 'stoneScout', 'stoneThrower', 'stoneRam'], []);
       expect(ids).toHaveLength(3);
       expect(new Set(ids).size).toBe(3);
       expect(ids).not.toContain('arrows');
@@ -259,11 +289,11 @@ describe('run and persistence', () => {
     }
   });
 
-  it('falls back to an earlier checkpoint and migrates a v1 save', () => {
+  it('falls back to a current checkpoint and ignores the removed v1 campaign', () => {
     const storage = new MemoryStorage();
     const save = new SaveService(storage);
-    const checkpoint: Checkpoint = { version: 2, seed: 42, battleIndex: 1, phase: 'contract',
-      doctrine: 'steel', roster: ['shield', 'spear', 'archer', 'medic'], upgrades: [], rewards: [],
+    const checkpoint: Checkpoint = { version: 3, eraId: 'stone', seed: 42, battleIndex: 1, phase: 'contract',
+      doctrine: 'steel', roster: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman'], upgrades: [], rewards: [],
       contracts: [], selectedContract: null, report: null, runTime: 20 };
     save.write(checkpoint); save.write({ ...checkpoint, battleIndex: 2 });
     storage.setItem('arena-naemnikov-run-v3', '{broken');
@@ -271,7 +301,6 @@ describe('run and persistence', () => {
     save.clear();
     storage.setItem('arena-naemnikov-run-v1', JSON.stringify({ version: 1, seed: 5, battleIndex: 1,
       phase: 'battle', upgrades: [], rewards: [], report: null }));
-    expect(save.load()?.version).toBe(2);
-    expect(save.load()?.roster).toEqual(['shield', 'spear', 'archer', 'medic']);
+    expect(save.load()).toBeNull();
   });
 });

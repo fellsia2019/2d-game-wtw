@@ -68,13 +68,13 @@ describe('permanent talents', () => {
   });
 
   it('counts direct and splash kills once, excludes allies and uses era bounties', () => {
-    for (const era of ['stone', 'bronze', 'legacy'] as const) {
+    for (const era of ['stone', 'bronze'] as const) {
       const sim = new BattleSimulation(0, [], 7, 'steel', undefined, undefined, era);
-      sim.units.push({ id: 10, kind: 'thrower', team: 'ally', x: 400,
+      sim.units.push({ id: 10, kind: 'stoneThrower', team: 'ally', x: 400,
         hp: 20, maxHp: 20, cooldown: 0, action: 'idle', facing: 1 });
-      for (const id of [11, 12, 13]) sim.units.push({ id, kind: 'enemyArcher', team: 'enemy', x: 420,
+      for (const id of [11, 12, 13]) sim.units.push({ id, kind: 'stoneEnemySlinger', team: 'enemy', x: 420,
         hp: 1, maxHp: 20, cooldown: 100, action: 'idle', facing: -1 });
-      sim.units.push({ id: 14, kind: 'shield', team: 'ally', x: 100,
+      sim.units.push({ id: 14, kind: 'stoneShield', team: 'ally', x: 100,
         hp: 0, maxHp: 50, cooldown: 100, action: 'idle', facing: 1 });
       sim.step();
       expect(sim.goldEarned).toBe(era === 'bronze' ? 6 : 3);
@@ -104,8 +104,8 @@ describe('permanent talents', () => {
 
   it('starts a new era at zero and awards a global point only on the first transition', () => {
     const save = new SaveService(new MemoryStorage());
-    save.writeEraProgress({ unlocked: { stone: true, bronze: true, legacy: true },
-      wins: { stone: 4, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+    save.writeEraProgress({ unlocked: { stone: true, bronze: true },
+      wins: { stone: 4, bronze: 0 }, challenges: { stone: false, bronze: false } });
     save.writeTalents({ gold: 87, levels: { ...emptyTalentProgress().levels, damage: 3 } });
     let game = new GameDirector(save);
     expect(game.selectEra('bronze')).toBe(true);
@@ -207,9 +207,9 @@ describe('base upgrades and time income', () => {
   it('allows consecutive purchases without ticking when supplies suffice', () => {
     const sim = new BattleSimulation(0, [], 7);
     sim.resource = 100;
-    for (let i = 0; i < 4; i++) expect(sim.hire('shield')).toBe(true);
+    for (let i = 0; i < 4; i++) expect(sim.hire('stoneShield')).toBe(true);
     expect(sim.elapsed).toBe(0);
     expect(sim.allyCount).toBe(4);
-    expect(sim.resource).toBe(34);
+    expect(sim.resource).toBe(42);
   });
 });

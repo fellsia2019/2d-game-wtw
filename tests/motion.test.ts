@@ -3,11 +3,25 @@ import { UnitMotion } from '../src/view/UnitMotion';
 import type { UnitState } from '../src/core/types';
 
 const unit = (overrides: Partial<UnitState> = {}): UnitState => ({
-  id: 7, kind: 'shield', team: 'ally', x: 100, hp: 50, maxHp: 50,
+  id: 7, kind: 'stoneShield', team: 'ally', x: 100, hp: 50, maxHp: 50,
   cooldown: .3, action: 'move', facing: 1, ...overrides
 });
 
 describe('unit presentation clock', () => {
+  it.each(['stoneTotem','bronzeHerald'] as const)('%s raises its standard while stationary and stops the gesture to walk', kind => {
+    const stationary = unit({kind,action:'idle'});
+    const motion = new UnitMotion(stationary,0);
+    const frames = new Set<number>();
+    for(let i=0;i<180;i++)frames.add(motion.advance(1/60).frame);
+    expect([...frames].sort((a,b)=>a-b)).toEqual([0,...Array.from({length:32},(_,i)=>16+i)]);
+    const frozen=motion.advance(1/60);
+    for(let i=0;i<60;i++)expect(motion.advance(1/60,true)).toEqual(frozen);
+    motion.sample({...stationary,action:'move',x:101},1/30);
+    expect(motion.advance(1/60).frame).toBeGreaterThanOrEqual(2);
+    expect(motion.advance(1/60).frame).toBeLessThanOrEqual(9);
+    motion.reset(stationary,0);
+    expect(motion.advance(1/60).frame).toBe(16);
+  });
   it.each([60, 144])('keeps walking through 30Hz snapshots at %iHz render rate', hz => {
     const motion = new UnitMotion(unit(), 0);
     const frames = new Set<number>();
@@ -65,7 +79,7 @@ describe('unit presentation clock', () => {
   });
 
   it('plays heal and fortress strikes once, then holds a ready pose', () => {
-    for (const kind of ['medic', 'siege'] as const) {
+    for (const kind of ['stoneShaman', 'stoneRam'] as const) {
       const motion = new UnitMotion(unit({ kind, action: 'attack' }), 0);
       motion.sample(unit({ kind, action: 'attack' }), 1 / 30);
       expect(motion.advance(1 / 60).frame).toBe(1);

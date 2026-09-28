@@ -45,7 +45,7 @@ export class GameDirector implements GameApp {
     this.enemyBalanceOverrides = save.loadEnemyBalance();
     const checkpoint = save.load();
     this.checkpointAvailable = !!checkpoint;
-    this.checkpointEra = checkpoint ? checkpoint.eraId ?? 'legacy' : null;
+    this.checkpointEra = checkpoint ? checkpoint.eraId ?? 'stone' : null;
     this.records = save.loadRecords();
     const progress = save.loadEraProgress();
     this.unlockedEras = progress.unlocked;
@@ -54,7 +54,6 @@ export class GameDirector implements GameApp {
     const selected = save.loadSelectedEra();
     this.eraId = selected && this.unlockedEras[selected] ? selected
       : [...ERA_ORDER].reverse().find(id => this.unlockedEras[id]) ?? 'stone';
-    if (!selected && !this.unlockedEras.bronze && this.checkpointEra === 'legacy') this.eraId = 'legacy';
     this.roster = [...ERA_STARTER_KINDS[this.eraId]];
     save.writeSelectedEra(this.eraId);
     this.talentProgress = save.loadTalents(this.eraId);
@@ -102,7 +101,7 @@ export class GameDirector implements GameApp {
   }
 
   selectEra(id: EraId): boolean {
-    if (!['menu', 'victory', 'defeat'].includes(this.phase) || !this.unlockedEras[id]) return false;
+    if (!['menu', 'victory', 'defeat'].includes(this.phase) || !ERA_ORDER.includes(id) || !this.unlockedEras[id]) return false;
     this.eraId = id;
     this.save.writeSelectedEra(id);
     this.talentProgress = this.eraTalents(id);
@@ -176,7 +175,7 @@ export class GameDirector implements GameApp {
   continueRun(): void {
     const checkpoint = this.save.load();
     if (!checkpoint) { this.checkpointAvailable = false; this.emit(); return; }
-    this.eraId = checkpoint.eraId ?? 'legacy';
+    this.eraId = checkpoint.eraId ?? 'stone';
     this.save.writeSelectedEra(this.eraId);
     this.talentProgress = this.eraTalents(this.eraId);
     this.awardEraTransition();
@@ -383,10 +382,6 @@ export class GameDirector implements GameApp {
   }
 
   private unlockedUnits(): HireKind[] {
-    if (this.eraId === 'legacy') {
-      const kinds = ERA_HIRE_KINDS.legacy;
-      return [...kinds.slice(0, 4), ...kinds.slice(4).filter((_, i) => this.records.marks >= [1, 3, 5, 8][i])];
-    }
     const kinds = ERA_HIRE_KINDS[this.eraId];
     return [...kinds.slice(0, 4), ...kinds.slice(4).filter((_, i) => this.eraProgress[this.eraId] >= i + 1 || (i === 2 && this.eraChallenges[this.eraId]))];
   }

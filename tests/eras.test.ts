@@ -41,7 +41,7 @@ describe('first two eras', () => {
   it('uses epoch-specific enemy plans, recruits and boss waves', () => {
     for (const era of ['stone', 'bronze'] as EraId[]) {
       const sim = new BattleSimulation(3, [], 4, 'steel', ERA_STARTER_KINDS[era], undefined, era, undefined, 10000);
-      expect(sim.hire(ERA_STARTER_KINDS.legacy[0])).toBe(false);
+      expect(sim.hire(('shield' as unknown as typeof ERA_STARTER_KINDS.stone[number]))).toBe(false);
       for (let i = 0; i < 1000; i++) sim.step();
       expect(sim.units.filter(u => u.team === 'enemy').every(u => ERA_BATTLES[era][3].roster.includes(u.kind))).toBe(true);
       expect(sim.units.some(u => u.kind === (era === 'stone' ? 'stoneChief' : 'bronzeKing'))).toBe(false);
@@ -100,7 +100,7 @@ describe('first two eras', () => {
     game.startNewRun(1);
     expect(game.getState().roster).toEqual(ERA_STARTER_KINDS.stone);
     expect(game.setLoadout(ERA_STARTER_KINDS.bronze)).toBe(false);
-    save.writeEraProgress({ unlocked: { stone: true, bronze: true, legacy: true }, wins: { stone: 4, bronze: 1, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+    save.writeEraProgress({ unlocked: { stone: true, bronze: true }, wins: { stone: 4, bronze: 1 }, challenges: { stone: false, bronze: false } });
     const restored = new GameDirector(save);
     expect(restored.getState().unlockedEras.bronze).toBe(true);
     expect(restored.getState().eraProgress.stone).toBe(4);
@@ -114,16 +114,17 @@ describe('first two eras', () => {
     expect(next.getState().roster).toEqual(ERA_STARTER_KINDS.bronze);
   });
 
-  it('continues an old v2 campaign in legacy mode', () => {
+  it('ignores the removed prototype campaign in v2 saves', () => {
     const storage = new MemoryStorage();
     storage.setItem('arena-naemnikov-run-v2', JSON.stringify({ version: 2, seed: 42, battleIndex: 2,
-      phase: 'contract', doctrine: 'steel', roster: ['shield', 'spear', 'archer', 'medic'], upgrades: [], rewards: [],
+      phase: 'contract', doctrine: 'steel', roster: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman'], upgrades: [], rewards: [],
       contracts: [], selectedContract: null, report: null, runTime: 42 }));
     const game = new GameDirector(new SaveService(storage));
     game.continueRun();
-    expect(game.getState().eraId).toBe('legacy');
-    expect(game.getState().battleIndex).toBe(2);
-    expect(game.getState().roster).toEqual(ERA_STARTER_KINDS.legacy);
+    expect(game.getState().eraId).toBe('stone');
+    expect(game.getState().canContinue).toBe(false);
+    expect(game.getState().battleIndex).toBe(0);
+    expect(game.getState().roster).toEqual(ERA_STARTER_KINDS.stone);
   });
 });
 
@@ -219,7 +220,7 @@ describe('era mastery', () => {
   it('unlocks the seventh card after the third victory and preserves the unlock', () => {
     const storage = new MemoryStorage();
     const save = new SaveService(storage);
-    save.writeEraProgress({ unlocked: { stone: true, bronze: false, legacy: true }, wins: { stone: 2, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+    save.writeEraProgress({ unlocked: { stone: true, bronze: false }, wins: { stone: 2, bronze: 0 }, challenges: { stone: false, bronze: false } });
     let game = new GameDirector(save);
     game.startNewRun(23); game.selectDoctrine('steel'); game.beginRun();
     expect(game.getState().unlockedUnits).not.toContain(ERA_HIRE_KINDS.stone[6]);
@@ -247,8 +248,8 @@ describe('bronze campaign persistence', () => {
   it('finishes the available timeline without unlocking a missing campaign', () => {
     const storage = new MemoryStorage();
     const save = new SaveService(storage);
-    save.writeEraProgress({ unlocked: { stone: true, bronze: true, legacy: true },
-      wins: { stone: 4, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+    save.writeEraProgress({ unlocked: { stone: true, bronze: true },
+      wins: { stone: 4, bronze: 0 }, challenges: { stone: false, bronze: false } });
     let game = new GameDirector(save);
     expect(game.selectEra('bronze')).toBe(true);
     game.startNewRun(23);
@@ -268,7 +269,7 @@ describe('bronze campaign persistence', () => {
     }
     expect(game.getState().phase).toBe('victory');
     expect(game.getState().eraProgress.bronze).toBe(4);
-    expect(Object.keys(game.getState().unlockedEras)).toEqual(['stone', 'bronze', 'legacy']);
+    expect(Object.keys(game.getState().unlockedEras)).toEqual(['stone', 'bronze']);
     game = new GameDirector(save);
     expect(game.getState().eraProgress.bronze).toBe(4);
     expect(game.selectEra('bronze')).toBe(true);
@@ -279,8 +280,8 @@ describe('bronze campaign persistence', () => {
   it('retains epoch unlocks and mastery when a later run is lost', () => {
     const storage = new MemoryStorage();
     const save = new SaveService(storage);
-    save.writeEraProgress({ unlocked: { stone: true, bronze: true, legacy: true },
-      wins: { stone: 4, bronze: 2, legacy: 0 }, challenges: { stone: true, bronze: true, legacy: false } });
+    save.writeEraProgress({ unlocked: { stone: true, bronze: true },
+      wins: { stone: 4, bronze: 2 }, challenges: { stone: true, bronze: true } });
     let game = new GameDirector(save);
     game.selectEra('bronze'); game.startNewRun(3);
     game.selectDoctrine('steel'); game.beginRun(); game.chooseContract(game.getState().contracts[0].id);
