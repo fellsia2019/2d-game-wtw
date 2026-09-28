@@ -250,7 +250,7 @@ describe('bronze campaign persistence', () => {
     }
     expect(game.getState().phase).toBe('victory');
     expect(game.getState().eraProgress.bronze).toBe(4);
-    expect(Object.keys(game.getState().unlockedEras)).toEqual(['stone', 'bronze', 'iron', 'antique']);
+    expect(Object.keys(game.getState().unlockedEras)).toEqual(['stone', 'bronze', 'iron', 'antique', 'medieval']);
     expect(game.getState().unlockedEras.iron).toBe(true);
     game = new GameDirector(save);
     expect(game.getState().eraProgress.bronze).toBe(4);

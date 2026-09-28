@@ -7,13 +7,14 @@ export const descriptions = { shield: 'Держит фронт и поглоща
 export const rewardIcons: Record<string, string> = { supply: '◈', wagon: '✦', banner: '⚑', arrows: '➶', bandages: '✚', contract: '◇', pikes: '↟', workshop: '⚒' };
 
 export const unitRole: Record<string, string> = {
+ medievalGuard:'shield',medievalPikeman:'spear',medievalLongbow:'archer',medievalHealer:'medic',medievalBerserker:'raider',medievalThrower:'thrower',medievalHorn:'banner',medievalRam:'siege',medievalJarl:'shield',
  stoneShield:'shield',stoneSpear:'spear',stoneSlinger:'archer',stoneShaman:'medic',stoneScout:'raider',stoneThrower:'thrower',stoneTotem:'banner',stoneRam:'siege',
  antiqueLegionary:'shield',antiqueHoplite:'spear',antiquePeltast:'archer',antiqueSurgeon:'medic',antiqueRider:'raider',antiqueScorpion:'thrower',antiqueCenturion:'banner',antiqueBallista:'siege',antiqueLegate:'shield',
  ironShield:'shield',ironSpear:'spear',ironArcher:'archer',ironMedic:'medic',ironRaider:'raider',ironThrower:'thrower',ironBanner:'banner',ironSiege:'siege',ironGate:'bulwark',ironCommandant:'boss',
  bronzeGuard:'shield',bronzeSpear:'spear',bronzeArcher:'archer',bronzeHealer:'medic',bronzeChariot:'raider',bronzePitch:'thrower',bronzeHerald:'banner',bronzeRam:'siege',
  stoneHunter:'raider',stoneBone:'bulwark',stoneEnemySlinger:'archer',stoneWolf:'raider',stoneChief:'boss',bronzeEnemySpear:'spear',bronzeRaider:'raider',bronzeEnemyArcher:'archer',bronzeGate:'bulwark',bronzeKing:'boss'
 };
-for (const [kind, role] of Object.entries(unitRole)) unitArt[kind] = `${kind.startsWith('antique') ? 'antique' : kind.startsWith('stone') ? 'stone' : kind.startsWith('iron') ? 'iron' : 'bronze'}-u-${role}`;
+for (const [kind, role] of Object.entries(unitRole)) unitArt[kind] = `${kind.startsWith('medieval') ? 'medieval' : kind.startsWith('antique') ? 'antique' : kind.startsWith('stone') ? 'stone' : kind.startsWith('iron') ? 'iron' : 'bronze'}-u-${role}`;
 export const roleOf = (kind: string) => unitRole[kind] ?? kind;
 export const portrait = (kind: string, enemy = false) => asset(`${enemy ? 'enemy-' : ''}${unitArt[kind] ?? 'stone-u-shield'}`);
 export const eraName = (era: string) => ERA_NAMES[era as EraId] ?? 'Неизвестная эпоха';

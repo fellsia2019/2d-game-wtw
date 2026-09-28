@@ -1,5 +1,6 @@
 import type { UnitState } from '../core/types';
 import { unitRole } from '../data/content';
+import { medievalSignalFrame, medievalTreatmentFrame } from '../art/medieval-motion';
 import { standardFrame } from './SupportMotion';
 
 export interface UnitPose { x: number; frame: number; facing: 1 | -1 }
@@ -15,11 +16,13 @@ export class UnitMotion {
   private strikeAge = -1;
   private supportAge = 0;
   private standard = false;
+  private kind: UnitState['kind'];
   private action: UnitState['action'];
   private facing: 1 | -1;
   private strikeFacing: 1 | -1;
   private pose: UnitPose;
   constructor(unit: UnitState, time: number) {
+    this.kind = unit.kind;
     this.standard = unitRole(unit.kind) === 'banner';
     this.previousX = this.targetX = unit.x; this.tickTime = time;
     this.previousTime = time; this.visualTime = time - 1 / 30;
@@ -35,6 +38,7 @@ export class UnitMotion {
       this.tickTime = time;
     }
     if (this.action !== unit.action && unit.action !== 'move') this.walkAge = 0;
+    if (unit.action === 'move' && this.kind === 'medievalHealer') this.strikeAge = -1;
     this.action = unit.action;
     this.facing = unit.facing;
   }
@@ -52,13 +56,20 @@ export class UnitMotion {
     if (this.standard) this.supportAge = this.action === 'move' ? 0 : this.supportAge + dt;
     if (this.strikeAge >= 0) {
       this.strikeAge += dt;
-      if (this.strikeAge >= .4) this.strikeAge = -1;
+      if (this.strikeAge >= (this.kind === 'medievalHealer' ? 2 : .4)) this.strikeAge = -1;
     }
     const interval = this.tickTime - this.previousTime;
     const alpha = interval > 0 ? Math.max(0, Math.min(1, (this.visualTime - this.previousTime) / interval)) : 1;
+    const walkFps = this.kind === 'medievalHealer' ? 8 : this.kind === 'medievalBerserker' ? 10 : 12;
+    let frame = this.action === 'attack' ? 1 : 0;
+    if (this.strikeAge >= 0) frame = this.kind === 'medievalHealer'
+      ? medievalTreatmentFrame(this.strikeAge) : 10 + Math.min(5, Math.floor(this.strikeAge * 15));
+    else if (this.action === 'move') frame = 2 + Math.floor(this.walkAge * walkFps) % 8;
+    else if (this.standard) frame = this.kind === 'medievalHorn'
+      ? medievalSignalFrame(this.supportAge) : standardFrame(this.supportAge);
     this.pose = {
       x: this.previousX + (this.targetX - this.previousX) * alpha,
-      frame: this.strikeAge >= 0 ? 10 + Math.min(5, Math.floor(this.strikeAge * 15)) : this.action === 'move' ? 2 + Math.floor(this.walkAge * 12) % 8 : this.standard ? standardFrame(this.supportAge) : this.action === 'attack' ? 1 : 0,
+      frame,
       facing: this.strikeAge >= 0 ? this.strikeFacing : this.facing
     };
     return { ...this.pose };
@@ -66,6 +77,7 @@ export class UnitMotion {
   reset(unit: UnitState, time: number): void {
     this.previousX = this.targetX = unit.x; this.tickTime = this.previousTime = time; this.visualTime = time - 1 / 30;
     this.walkAge = 0; this.strikeAge = -1; this.action = unit.action;
+    this.kind = unit.kind;
     this.supportAge = 0; this.standard = unitRole(unit.kind) === 'banner';
     this.facing = this.strikeFacing = unit.facing;
     this.pose = { x: unit.x, frame: 0, facing: unit.facing };

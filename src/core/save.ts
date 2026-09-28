@@ -108,7 +108,7 @@ export class SaveService {
   }
 
   loadEraProgress(): { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges } {
-    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false } };
+    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false, medieval: false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0, medieval: 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false, medieval: false } };
     if (!this.storage) return fallback;
     try {
       const raw: unknown = JSON.parse(this.storage.getItem(ERA_PROGRESS) ?? 'null');
@@ -123,9 +123,11 @@ export class SaveService {
       const antiqueWins = Number.isInteger(data.wins.antique) && data.wins.antique! >= 0 ? data.wins.antique! : 0;
       const ironUnlocked = data.unlocked.bronze! && (data.unlocked.iron === true || data.wins.bronze! >= 4);
       const ironWins = Number.isInteger(data.wins.iron) && data.wins.iron! >= 0 ? data.wins.iron! : 0;
-      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: ironUnlocked && (data.unlocked.antique === true || ironWins >= 4) },
-        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins },
-        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true } };
+      const antiqueUnlocked = ironUnlocked && (data.unlocked.antique === true || ironWins >= 4);
+      const medievalWins = Number.isInteger(data.wins.medieval) && data.wins.medieval! >= 0 ? data.wins.medieval! : 0;
+      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: antiqueUnlocked, medieval: antiqueUnlocked && (data.unlocked.medieval === true || antiqueWins >= 4) },
+        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins, medieval: medievalWins },
+        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true, medieval: challenges?.medieval === true } };
     } catch { return fallback; }
   }
 
@@ -165,7 +167,7 @@ export class SaveService {
   }
 
   private loadTalentWallets(): Record<EraId, TalentProgress> {
-    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress() };
+    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress(), medieval: emptyTalentProgress() };
     if (!this.storage) return wallets;
     try {
       const current = this.storage.getItem(TALENT_PROGRESS);

@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "art:iron": "node src/art/check-walk.mjs && node src/art/check-ranged.mjs && node src/art/generate-iron-sprites.mjs && node src/art/check-iron.mjs",
-    "art:units": "node src/art/check-walk.mjs && node src/art/check-ranged.mjs && node src/art/generate-era-sprites.mjs && node src/art/check-iron.mjs && node src/art/check-antique.mjs",
+    "art:units": "node src/art/check-walk.mjs && node src/art/check-ranged.mjs && node src/art/generate-era-sprites.mjs && node src/art/check-iron.mjs && node src/art/check-antique.mjs && node src/art/check-medieval.mjs",
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
-    "art:antique": "node src/art/check-walk.mjs && node src/art/generate-antique-sprites.mjs && node src/art/check-antique.mjs"
+    "art:antique": "node src/art/check-walk.mjs && node src/art/generate-antique-sprites.mjs && node src/art/check-antique.mjs",
+    "art:medieval": "node src/art/check-walk.mjs && node src/art/generate-medieval-sprites.mjs && node src/art/check-medieval.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"

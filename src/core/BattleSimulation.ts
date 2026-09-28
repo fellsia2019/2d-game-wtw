@@ -44,6 +44,7 @@ export class BattleSimulation {
   private aiSequence = 0;
   private archersHired = 0;
   private rangeBonuses = new Map<number, number>();
+  private counterUntil = new Map<number, number>();
   private ambushUsed = new Set<number>();
   private reserveUsed = false;
   private bossDamagePool = 0;
@@ -105,6 +106,8 @@ export class BattleSimulation {
     if (this.report) return;
     this.enemyGlyphRemaining = Math.max(0, this.enemyGlyphRemaining - STEP);
     if (this.enemyGlyphRemaining < 1e-8) this.enemyGlyphRemaining = 0;
+    for (const [id, until] of this.counterUntil)
+      if (until < this.elapsed || !this.units.some(unit => unit.id === id && unit.hp > 0)) this.counterUntil.delete(id);
     this.activateEnemyGlyph();
     const boss = this.units.find(unit => unit.team === 'enemy' && unit.hp > 0 && isBoss(unit.kind));
     if (boss) this.bossDamagePool = Math.min(boss.maxHp * .25, this.bossDamagePool + boss.maxHp * STEP / 6);
@@ -152,7 +155,7 @@ export class BattleSimulation {
     while (true) {
       let kind: UnitKind;
         const enemies = ERA_BATTLES[this.eraId][this.battleIndex].enemyRecruitRoster ?? this.contract.roster;
-        if (plan === 'ranged') kind = ['iron','antique'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
+        if (plan === 'ranged') kind = ['iron','antique','medieval'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
         if (isBoss(kind)) kind = enemies.find(id => id !== kind) ?? kind;
@@ -273,6 +276,10 @@ export class BattleSimulation {
       * (unit.team === 'ally' ? talentMultiplier(this.talents.attackSpeed) : 1));
     if (target) {
       let raw = def.damage;
+      if (unit.kind === 'medievalBerserker') {
+        if ((this.counterUntil.get(unit.id) ?? 0) >= this.elapsed) raw *= 1.2;
+        this.counterUntil.delete(unit.id);
+      }
       if (['stoneScout', 'stoneHunter'].includes(unit.kind) && !this.ambushUsed.has(unit.id)) {
         this.ambushUsed.add(unit.id);
         if (UNITS[target.kind].range >= 100) raw *= 1.4;
@@ -283,13 +290,15 @@ export class BattleSimulation {
       const armor = this.armor(target) * (unitRole(unit.kind) === 'spear' ? .3 : 1);
       const blocked = raw * armor;
       const dealt = this.damageUnit(target, Math.max(1, raw - blocked));
+      if (target.kind === 'medievalBerserker' && target.hp > 0 && dealt > 0 && def.range < 100)
+        this.counterUntil.set(target.id, this.elapsed + 2);
       if (unit.team === 'ally') { this.damageDealt += dealt; this.blocked += target.team === 'ally' ? blocked : 0; }
       else { this.damageTaken += dealt; if (target.team === 'ally') this.blocked += blocked; }
       this.event('attack', target.x, unit.team, dealt, unit.id, target.id);
       if (blocked) this.event('block', target.x, target.team, blocked, unit.id, target.id);
       if (target.hp <= 0) this.event('death', target.x, target.team, undefined, unit.id, target.id);
-      if (unitRole(unit.kind) === 'thrower' || (unit.kind === 'bronzeKing' || unit.kind === 'ironCommandant' || unit.kind === 'antiqueLegate')) {
-        const splashRadius = (unit.kind === 'bronzeKing' || unit.kind === 'ironCommandant' || unit.kind === 'antiqueLegate') ? 55 : 45;
+      if (unitRole(unit.kind) === 'thrower' || (isBoss(unit.kind) && unit.kind !== 'stoneChief')) {
+        const splashRadius = (isBoss(unit.kind) && unit.kind !== 'stoneChief') ? 55 : 45;
         for (const secondary of enemies.filter(u => u.id !== target.id && Math.abs(u.x - target.x) <= splashRadius).slice(0, 3)) {
           const splash = this.damageUnit(secondary, Math.max(1, def.damage * .5 * (unit.team === 'ally' ? talentMultiplier(this.talents.damage) : this.enemyDamageMultiplier) * (1 - this.armor(secondary))));
           if (unit.team === 'ally') this.damageDealt += splash; else this.damageTaken += splash;

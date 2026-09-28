@@ -1,0 +1,103 @@
+{
+  "frameWidth": 320,
+  "frameHeight": 192,
+  "columns": 4,
+  "rows": 4,
+  "originX": 0.5,
+  "originY": 0.9166666666666666,
+  "frames": {
+    "idle": 0,
+    "ready": 1,
+    "move": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "attack": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "standardLift": [
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ]
+  },
+  "moveFps": 12,
+  "attackFps": 15,
+  "roles": [
+    "shield",
+    "spear",
+    "archer",
+    "medic",
+    "raider",
+    "thrower",
+    "banner",
+    "siege"
+  ],
+  "eras": [
+    "medieval"
+  ],
+  "standardFrames": {
+    "first": 16,
+    "count": 32,
+    "fps": 40
+  },
+  "artVersion": 3,
+  "sheets": [
+    "enemy-medieval-u-archer-sheet.png",
+    "enemy-medieval-u-banner-sheet.png",
+    "enemy-medieval-u-medic-sheet.png",
+    "enemy-medieval-u-raider-sheet.png",
+    "enemy-medieval-u-shield-sheet.png",
+    "enemy-medieval-u-siege-sheet.png",
+    "enemy-medieval-u-spear-sheet.png",
+    "enemy-medieval-u-thrower-sheet.png",
+    "medieval-u-archer-sheet.png",
+    "medieval-u-banner-sheet.png",
+    "medieval-u-medic-sheet.png",
+    "medieval-u-raider-sheet.png",
+    "medieval-u-shield-sheet.png",
+    "medieval-u-siege-sheet.png",
+    "medieval-u-spear-sheet.png",
+    "medieval-u-thrower-sheet.png"
+  ]
+}

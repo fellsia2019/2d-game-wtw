@@ -1,6 +1,6 @@
 import { it, expect } from 'vitest';
 import { BattleSimulation } from '../src/core/BattleSimulation';
-it.each([['stone','stoneSpear','stoneChief'],['bronze','bronzeSpear','bronzeKing'],['iron','ironSpear','ironCommandant'],['antique','antiqueHoplite','antiqueLegate']] as const)('%s keeps its boss visible under an overpowered army and eventually allows killing it', (era,spear,bossKind) => {
+it.each([['stone','stoneSpear','stoneChief'],['bronze','bronzeSpear','bronzeKing'],['iron','ironSpear','ironCommandant'],['antique','antiqueHoplite','antiqueLegate'],['medieval','medievalPikeman','medievalJarl']] as const)('%s keeps its boss visible under an overpowered army and eventually allows killing it', (era,spear,bossKind) => {
  const sim = new BattleSimulation(3, [], 23, 'steel', undefined, undefined, era, {damage:200,attackSpeed:0,health:0,supply:0});
  for(let i=0;i<40;i++){sim.resource=100;sim.hire(spear);const unit=sim.units[sim.units.length-1];unit.x=910;unit.cooldown=0;}
  sim.enemyFortressHp=51;sim.step();
