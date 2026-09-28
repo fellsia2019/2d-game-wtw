@@ -92,3 +92,32 @@ it('rejects invalid debug battle indices without disturbing active combat', () =
   expect(game.getState().elapsed).toBe(before.elapsed);
   expect(game.getState().battleIndex).toBe(1);
 });
+
+it.each([50,100,200])('adds %i upgrade gold during battle without adding supplies or crediting it twice', amount => {
+  const {save,game}=setup();
+  expect(game.addDebugGold(amount)).toBe(false);
+  game.startDebugBattle(0);
+  const before=game.getState();
+  expect(game.addDebugGold(amount)).toBe(true);
+  const after=game.getState();
+  expect(after.gold).toBe(before.gold+amount);
+  expect(after.battleGold).toBe(before.battleGold+amount);
+  expect(after.resource).toBe(before.resource);
+  expect(save.loadTalents(after.eraId).gold).toBe(after.gold);
+  game.tick();
+  expect(game.getState().gold).toBe(after.gold);
+  game.returnToMenu();
+  expect(game.buyTalent('damage')).toBe(true);
+  const restored=new GameDirector(save);
+  expect(restored.getState().gold).toBe(amount-10);
+  expect(restored.getState().talents.damage).toBe(1);
+  expect(save.loadTalents('stone').gold).toBe(0);
+});
+it('allows debug gold on a paused battle and rejects all other amounts', () => {
+  const {game}=setup();game.startDebugBattle(0);game.togglePause();
+  expect(game.addDebugGold(50)).toBe(true);
+  const state=game.getState();
+  for(const amount of [-50,0,1,75,NaN,Infinity]) expect(game.addDebugGold(amount)).toBe(false);
+  expect(game.getState().gold).toBe(state.gold);
+  expect(game.getState().resource).toBe(state.resource);
+});

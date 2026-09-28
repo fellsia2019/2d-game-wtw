@@ -20,11 +20,26 @@ it.each([[0, 1, 1], [1, 1, 1], [2, 1.3, 1.1], [3, 1.35, 1.15]])('applies stone b
   expect(before - ally.hp).toBeCloseTo(UNITS[enemy.kind].damage * damage * (1 - UNITS.stoneShield.armor), 6);
 });
 
-it('increases stone finale boss health by thirty-five percent as well as regular troops', () => {
+it('uses the requested final stone boss health, damage, armor and attack period', () => {
   const sim = new BattleSimulation(3, [], 23, 'steel', undefined, undefined, 'stone');
   sim.enemyFortressHp = 50;
   sim.step();
-  expect(sim.units.find(unit => unit.kind === 'stoneChief')?.maxHp).toBe(810);
+  const boss = sim.units.find(unit => unit.kind === 'stoneChief')!;
+  expect(boss.maxHp).toBe(700);
+  sim.units.splice(0, sim.units.length, boss);
+  sim.resource = 100;
+  sim.hire('stoneShield');
+  const shield = sim.units.find(unit => unit.team === 'ally')!;
+  boss.x = 500; shield.x = 499;
+  boss.cooldown = 0; shield.cooldown = 100;
+  const shieldHp = shield.hp;
+  sim.step();
+  expect(shieldHp - shield.hp).toBeCloseTo(20 * (1 - UNITS.stoneShield.armor));
+  expect(boss.cooldown).toBeCloseTo(1.6);
+  boss.cooldown = 100; shield.cooldown = 0;
+  const bossHp = boss.hp;
+  sim.step();
+  expect(bossHp - boss.hp).toBeCloseTo(UNITS.stoneShield.damage * .8);
 });
 
 

@@ -1,4 +1,5 @@
 /** Shared, articulated vector art. Equipment is drawn in the gripping hand's coordinates. */
+import { ironRig } from './iron-rig.mjs';
 import { walkLeg, walkBodyOffset } from './walk-cycle.mjs';
 import { slingerPose } from './slinger-pose.mjs';
 import { bowPose } from './bow-pose.mjs';
@@ -78,6 +79,7 @@ function equipment(era,role,c,angle,release,healPhase=null,supportPhase=null,sli
 }
 
 export function unitRig(era,role,enemy,frame) {
+ if(era==='iron')return ironRig(role,enemy,frame);
  if(role==='banner'&&frame===1)frame=0;
  const stone=era==='stone', heavy=['bulwark','boss'].includes(role), sage=role==='medic', moving=frame>=2&&frame<10, attack=frame>=10;
  const step=frame-2, phase=step*Math.PI/4, wave=moving?Math.sin(phase):0, bounce=moving?walkBodyOffset(step,heavy):0, k=attack?frame-10:0;

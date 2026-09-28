@@ -9,3 +9,4 @@ coverage/
 .DS_Store
 Thumbs.db
 src/art/audio/
+/output/

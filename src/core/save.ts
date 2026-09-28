@@ -84,7 +84,7 @@ export class SaveService {
     try {
       const raw = JSON.parse(this.storage?.getItem('arena-naemnikov-debug-balance-v1') ?? '{}');
       const result: EnemyBalanceOverrides = {};
-      for (const era of ['stone', 'bronze'] as const) {
+      for (const era of ERA_ORDER) {
         if (Array.isArray(raw?.[era]) && raw[era].length === 4 && raw[era].every(validEnemyBalance))
           result[era] = raw[era].map((row: EnemyBalance) => ({ ...row }));
       }
@@ -99,7 +99,7 @@ export class SaveService {
   loadSelectedEra(): EraId | null {
     try {
       const id = this.storage?.getItem(SELECTED_ERA);
-      return id === 'stone' || id === 'bronze' ? id : null;
+      return ERA_ORDER.includes(id as EraId) ? id as EraId : null;
     } catch { return null; }
   }
 
@@ -108,7 +108,7 @@ export class SaveService {
   }
 
   loadEraProgress(): { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges } {
-    const fallback = { unlocked: { stone: true, bronze: false }, wins: { stone: 0, bronze: 0 }, challenges: { stone: false, bronze: false } };
+    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false } };
     if (!this.storage) return fallback;
     try {
       const raw: unknown = JSON.parse(this.storage.getItem(ERA_PROGRESS) ?? 'null');
@@ -119,12 +119,17 @@ export class SaveService {
         return typeof data.unlocked?.[era] === 'boolean' && Number.isInteger(data.wins?.[era]) && data.wins![era]! >= 0;
       })) return fallback;
       const challenges = (raw as { challenges?: Partial<EraChallenges> }).challenges;
-      return { unlocked: { stone: true, bronze: data.unlocked.bronze! }, wins: { stone: data.wins.stone!, bronze: data.wins.bronze! },
-        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true } };
+      // Old two-era profiles acquire an empty Iron wallet and preserve all existing fields.
+      const antiqueWins = Number.isInteger(data.wins.antique) && data.wins.antique! >= 0 ? data.wins.antique! : 0;
+      const ironUnlocked = data.unlocked.bronze! && (data.unlocked.iron === true || data.wins.bronze! >= 4);
+      const ironWins = Number.isInteger(data.wins.iron) && data.wins.iron! >= 0 ? data.wins.iron! : 0;
+      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: ironUnlocked && (data.unlocked.antique === true || ironWins >= 4) },
+        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins },
+        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true } };
     } catch { return fallback; }
   }
 
-  writeEraProgress(progress: { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges }): void {
+  writeEraProgress(progress: { unlocked: Partial<EraUnlocks>; wins: Partial<EraProgress>; challenges: Partial<EraChallenges> }): void {
     try { this.storage?.setItem(ERA_PROGRESS, JSON.stringify(progress)); } catch { /* storage may be blocked */ }
   }
 
@@ -138,8 +143,11 @@ export class SaveService {
       const stored = this.storage?.getItem(GLOBAL_TALENTS);
       if (!stored) {
         // Honour a transition already completed in the previous game version.
-        if (this.loadEraProgress().wins.bronze > 0 || this.load()?.eraId === 'bronze') {
-          fallback.points = 1; fallback.advancedEras = ['bronze'];
+        const progress = this.loadEraProgress(), checkpoint = this.load();
+        for (const era of ERA_ORDER.slice(1)) {
+          if (progress.wins[era] > 0 || (checkpoint && ERA_ORDER.indexOf(checkpoint.eraId) >= ERA_ORDER.indexOf(era))) {
+            fallback.points++; fallback.advancedEras.push(era);
+          }
         }
         this.writeGlobalTalents(fallback);
         return fallback;
@@ -157,14 +165,14 @@ export class SaveService {
   }
 
   private loadTalentWallets(): Record<EraId, TalentProgress> {
-    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress() };
+    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress() };
     if (!this.storage) return wallets;
     try {
       const current = this.storage.getItem(TALENT_PROGRESS);
       if (current !== null) {
         const raw = JSON.parse(current) as { version?: number; eras?: Partial<Record<EraId, TalentProgress>> } | null;
         if (raw?.version !== 2 || !raw.eras) return wallets;
-        for (const era of ['stone', 'bronze'] as const) {
+        for (const era of ERA_ORDER) {
           const progress = raw.eras[era];
           if (validTalents(progress)) wallets[era] = { gold: progress.gold, levels: { ...progress.levels }, ...(progress.baseLevel !== undefined ? { baseLevel: progress.baseLevel } : {}) };
         }

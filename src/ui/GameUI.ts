@@ -1,14 +1,14 @@
 import { uiIcon } from './icons';
 import type { GameApp, GameState, HireKind, UnitKind } from '../core/types';
 import { descriptions, portrait, roleOf, eraName } from '../art/catalog';
-import { ERA_HIRE_KINDS, UNITS, UPGRADES, ERA_BATTLES } from '../data/content';
+import { ERA_HIRE_KINDS, UNITS, UPGRADES, ERA_BATTLES, ERA_ORDER, nextEra, victoryGold, isBoss } from '../data/content';
 import type { SoundStatus } from '../view/Sound';
 import type { BattleInsets } from '../view/BattleLayout';
 import { TALENTS, talentCost, globalTalentCost, baseHealth, baseHealthCost, type TalentId } from '../core/talents';
 
 const esc = (text: string) => text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const tacticalTraits: Record<string, string> = { shield: 'Держит фронт', spear: 'Против брони', archer: 'Дальний урон', medic: 'Лечение', raider: 'Быстрый прорыв', thrower: 'Урон по группе', banner: 'Ускоряет союзников', siege: 'Бьёт крепость' };
-const describe = (kind: string) => kind.startsWith('stone') || kind.startsWith('bronze') ? UNITS[kind as HireKind].role : (descriptions as Record<string,string>)[roleOf(kind)] ?? 'Особый боец своей эпохи.';
+const describe = (kind: string) => Object.hasOwn(UNITS,kind) ? UNITS[kind as HireKind].role : (descriptions as Record<string,string>)[roleOf(kind)] ?? 'Особый боец своей эпохи.';
 const cardName = (kind: HireKind, name: string) => `<span class="unit-name-full">${esc(name)}</span><span class="unit-name-compact" aria-hidden="true">${esc(({ shield: 'Щит', spear: 'Копьё', banner: 'Знамя' } as Partial<Record<string, string>>)[kind] ?? name)}</span>`;
 const clock = (seconds: number) => `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${Math.floor(seconds % 60).toString().padStart(2, '0')}`;
 const countWord = (count: number, one: string, few: string, many: string) => count % 100 >= 11 && count % 100 <= 14 ? many : count % 10 === 1 ? one : count % 10 >= 2 && count % 10 <= 4 ? few : many;
@@ -66,11 +66,13 @@ export class GameUI {
     return ERA_HIRE_KINDS[state.eraId];
   }
   private eraMap(state: GameState) {
-    return `<div class="era-map" aria-label="Карта эпох">${(['stone','bronze'] as const).map((era,i) => `<button data-action="era" data-era="${era}" class="era-choice ${state.eraId === era ? 'selected' : ''}" aria-pressed="${state.eraId === era}" ${!state.unlockedEras[era] ? 'disabled' : ''}><span class="era-number">0${i+1}</span><b>${eraName(era)}</b><small>${state.eraId === era ? `Выбрана · ${Math.min(4,state.eraProgress[era])} / 4 этапов` : state.unlockedEras[era] ? 'Доступна · выбрать →' : 'Победи вождя каменного века'}</small></button>`).join('')}<p>Следующие эпохи появятся в будущих обновлениях.</p></div>`;
+    return `<div class="era-map" aria-label="Карта эпох">${ERA_ORDER.map((era,i) => `<button data-action="era" data-era="${era}" class="era-choice ${state.eraId === era ? 'selected' : ''}" aria-pressed="${state.eraId === era}" ${!state.unlockedEras[era] ? 'disabled' : ''}><span class="era-number">0${i+1}</span><b>${eraName(era)}</b><small>${state.eraId === era ? `Выбрана · ${Math.min(4,state.eraProgress[era])} / 4 этапов` : state.unlockedEras[era] ? 'Доступна · выбрать →' : `Пройди ${eraName(ERA_ORDER[i - 1]).toLocaleLowerCase('ru')}`}</small></button>`).join('')}<p>Следующие эпохи появятся в будущих обновлениях.</p></div>`;
   }
   private menuIntro(state: GameState) {
     if (state.eraId === 'stone') return 'Пройди четыре сражения и одолей вождя эпохи.<br/>Открой бронзовый век с новым войском и тактикой.';
-    return 'Останови царя Медных ворот в четырёх боях.<br/>Собери новый отряд и освой строй бронзовых воинов.';
+    if (state.eraId === 'bronze') return 'Останови царя Медных ворот в четырёх боях.<br/>Открой Железный век и войско тяжёлых доспехов.';
+    if (state.eraId === 'antique') return 'Пройди лагерь, переправу и стены провинции.<br/>Используй строй, конницу и осаду против Девятого легиона.';
+    return 'Прорви заслон и осадную дорогу к Железной цитадели.<br/>Пробивай броню и одолей коменданта в четвёртом бою.';
   }
   private menuFeaturesHTML(state: GameState) {
     return `<div class="menu-features" aria-label="Разделы игры">
@@ -118,7 +120,7 @@ export class GameUI {
   }
   private contractHTML(state: GameState): string {
     const battle = state.contracts[0];
-    return `<div class="eyebrow">${eraName(state.eraId)} · Бой ${state.battleIndex + 1} / 4</div><h2 id="dialog-title">${esc(state.battleName)}</h2><div class="ready-progress" aria-label="Прогресс эпохи">${[0,1,2,3].map(index => `<span class="${index < state.battleIndex ? 'done' : index === state.battleIndex ? 'current' : ''}">${index < state.battleIndex ? '✓' : index + 1}</span>`).join('')}</div><div class="ready-enemies">${this.enemyFormationHTML(battle.roster)}</div><p class="ready-threat">${esc(battle.threat)}</p><div class="ready-contract"><b>${uiIcon('gold')} +${state.eraId === 'bronze' ? 50 : 25} за победу</b></div><div class="ready-actions"><button class="primary" data-action="contract" data-contract="${battle.id}" data-result-primary="true">Начать бой →</button><button class="secondary" data-action="talents">Улучшить отряд · ${uiIcon('gold')} ${state.gold}</button><button class="secondary restart-epoch" data-action="start">Начать эпоху заново</button></div>`;
+    return `<div class="eyebrow">${eraName(state.eraId)} · Бой ${state.battleIndex + 1} / 4</div><h2 id="dialog-title">${esc(state.battleName)}</h2><div class="ready-progress" aria-label="Прогресс эпохи">${[0,1,2,3].map(index => `<span class="${index < state.battleIndex ? 'done' : index === state.battleIndex ? 'current' : ''}">${index < state.battleIndex ? '✓' : index + 1}</span>`).join('')}</div><div class="ready-enemies">${this.enemyFormationHTML(battle.roster)}</div><p class="ready-threat">${esc(battle.threat)}</p><div class="ready-contract"><b>${uiIcon('gold')} +${victoryGold(state.eraId)} за победу</b></div><div class="ready-actions"><button class="primary" data-action="contract" data-contract="${battle.id}" data-result-primary="true">Начать бой →</button><button class="secondary" data-action="talents">Улучшить отряд · ${uiIcon('gold')} ${state.gold}</button><button class="secondary restart-epoch" data-action="start">Начать эпоху заново</button></div>`;
   }
   private rosterHTML(state: GameState): string {
     const full = this.draft.length === 4;
@@ -146,8 +148,8 @@ export class GameUI {
     } else if (!final) {
       content += `<h3 class="result-choice-title">Выбери усиление</h3><div class="rewards result-rewards">${state.rewards.map(reward => `<button class="reward-card" data-action="reward" data-reward="${reward.id}"><p class="reward-effect">${esc(reward.description)}</p><span class="take-reward"><span class="continue-label">Продолжить</span> →</span></button>`).join('')}</div>`;
     } else {
-      const next = state.eraId === 'stone' ? 'bronze' : null;
-      if (next) content += `<div class="result-actions"><button class="primary" data-action="start-era" data-era="${next}" data-result-primary="true">Перейти в бронзовый век →</button></div><div class="result-next-era"><span class="result-next-label">ДАЛЬШЕ</span><h3>${eraName(next)}</h3><div class="result-next-portraits">${ERA_HIRE_KINDS[next].slice(0, 4).map(kind => `<img src="${portrait(kind)}" alt="${esc(UNITS[kind].name)}"/>`).join('')}</div><p>Новая эпоха — новые бойцы</p>${next === 'bronze' ? `<small>${uiIcon('point')} +1 очко за первый переход</small>` : ''}</div>`;
+      const next = nextEra(state.eraId);
+      if (next) content += `<div class="result-actions"><button class="primary" data-action="start-era" data-era="${next}" data-result-primary="true">Перейти в ${eraName(next).toLocaleLowerCase('ru')} →</button></div><div class="result-next-era"><span class="result-next-label">ДАЛЬШЕ</span><h3>${eraName(next)}</h3><div class="result-next-portraits">${ERA_HIRE_KINDS[next].slice(0, 4).map(kind => `<img src="${portrait(kind)}" alt="${esc(UNITS[kind].name)}"/>`).join('')}</div><p>Новая эпоха — новые бойцы</p><small>${uiIcon('point')} +1 очко за первый переход</small></div>`;
       else content += `<div class="result-finished">${uiIcon('trophy')}<h3>Все доступные эпохи пройдены</h3><p>Собери другой отряд и повтори поход.</p></div><div class="result-actions"><button class="primary" data-action="start" data-result-primary="true">Начать эпоху заново →</button></div>`;
     }
     return `${content}<div class="result-bottom">${state.phase === 'reward' ? `<button class="result-button result-upgrade" data-action="talents"><span>Улучшить отряд</span><span class="result-button-wallet">${uiIcon('gold')} ${state.gold}</span></button>` : ''}<button class="result-button" data-action="back">В меню</button></div>`;
@@ -167,7 +169,7 @@ export class GameUI {
     return `<div class="eyebrow">ДЕРЕВО ТАЛАНТОВ</div><h2 id="dialog-title">${global ? 'Глобальные таланты' : `Таланты · ${eraName(state.eraId)}`}</h2><div class="talent-tabs" role="group" aria-label="Выбор дерева талантов"><button type="button" data-action="talents" class="talent-tab ${!global ? 'is-selected' : ''}" aria-pressed="${!global}">${uiIcon('gold')}<span><b>Таланты эпохи</b><small>За золото · текущая эпоха</small></span></button><button type="button" data-action="global-talents" class="talent-tab ${global ? 'is-selected' : ''}" aria-pressed="${global}">${uiIcon('point')}<span><b>Глобальные таланты</b><small>За очки · все эпохи</small></span></button></div><p class="talent-points">${global ? 'Очки перехода' : 'Золото эпохи'}: ${uiIcon(global ? 'point' : 'gold')} <b>${currency}</b></p><div class="talent-grid">${cards}</div>`;
   }
   private cardsHTML(state: GameState) {
-    return state.cards.map((card, i) => `<button class="unit-card ${card.kind}" data-action="hire" data-kind="${card.kind}" aria-label="Призвать: ${esc(card.name)}"><span class="card-key">${i + 1}</span><div class="portrait"><img src="${portrait(card.kind)}" alt=""/></div><div class="card-copy"><span class="role">${tacticalTraits[roleOf(card.kind)]}</span><h3>${cardName(card.kind, card.name)}</h3><p>${describe(card.kind)}</p><div class="card-bottom"><strong class="price">${uiIcon('supplies')} <span data-field="cost-${card.kind}">${card.cost}</span></strong><span data-field="available-${card.kind}" class="availability"></span></div></div></button>`).join('');
+    return state.cards.map((card, i) => `<button class="unit-card ${card.kind}" data-action="hire" data-kind="${card.kind}" aria-keyshortcuts="${i + 1}" aria-label="Призвать: ${esc(card.name)}"><span class="card-key">${i + 1}</span><div class="portrait"><img src="${portrait(card.kind)}" alt=""/></div><div class="card-copy"><span class="role">${tacticalTraits[roleOf(card.kind)]}</span><h3>${cardName(card.kind, card.name)}</h3><p>${describe(card.kind)}</p><div class="card-bottom"><strong class="price">${uiIcon('supplies')} <span data-field="cost-${card.kind}">${card.cost}</span></strong><span data-field="available-${card.kind}" class="availability"></span></div></div></button>`).join('');
   }
   constructor(private root: HTMLElement, app: GameApp) {
     root.innerHTML = `<main class="game-shell">
@@ -178,10 +180,10 @@ export class GameUI {
         <div class="arena-wrap"><div id="battle-arena" class="arena"></div><div class="arena-vignette"></div><div class="boss-warning" data-field="bossWarning" role="status" hidden></div><div class="arena-label"><span class="wind-mark">≋</span> <b data-field="arenaName">Пепельный тракт</b> <span>•</span> линия фронта</div></div>
 
       </section>
-      <section class="recruitment" aria-label="Призыв бойцов"><div class="section-title"><h2>Твой отряд</h2><span>Нажми карту, чтобы призвать <span class="keyboard-hint">· клавиши 1–4</span></span></div><div class="recruit-row"><div class="cards">${app.getState().cards.map((card, i) => `<button class="unit-card ${card.kind}" data-action="hire" data-kind="${card.kind}" aria-label="Призвать: ${esc(card.name)}"><span class="card-key">${i + 1}</span><div class="portrait"><img src="${portrait(card.kind)}" alt=""/></div><div class="card-copy"><span class="role">${tacticalTraits[roleOf(card.kind)]}</span><h3>${cardName(card.kind, card.name)}</h3><p>${describe(card.kind)}</p><div class="card-bottom"><strong class="price">${uiIcon('supplies')} <span data-field="cost-${card.kind}">${card.cost}</span></strong><span data-field="available-${card.kind}" class="availability"></span></div></div></button>`).join('')}</div><button class="wagon" data-action="income"><span class="wagon-icon" aria-hidden="true">${uiIcon('supply')}</span><b>Доход<span class="wagon-arrow"> ↑</span></b><span>+1 / сек</span><strong>${uiIcon('supplies')} <span data-field="wagonCost">40</span></strong><small data-field="wagonLevel">Ур. 0</small></button></div></section>
+      <section class="recruitment" aria-label="Призыв бойцов"><div class="section-title"><h2>Твой отряд</h2><span>Нажми карту, чтобы призвать <span class="keyboard-hint">· клавиши 1–4</span></span></div><div class="recruit-row"><div class="cards">${app.getState().cards.map((card, i) => `<button class="unit-card ${card.kind}" data-action="hire" data-kind="${card.kind}" aria-keyshortcuts="${i + 1}" aria-label="Призвать: ${esc(card.name)}"><span class="card-key">${i + 1}</span><div class="portrait"><img src="${portrait(card.kind)}" alt=""/></div><div class="card-copy"><span class="role">${tacticalTraits[roleOf(card.kind)]}</span><h3>${cardName(card.kind, card.name)}</h3><p>${describe(card.kind)}</p><div class="card-bottom"><strong class="price">${uiIcon('supplies')} <span data-field="cost-${card.kind}">${card.cost}</span></strong><span data-field="available-${card.kind}" class="availability"></span></div></div></button>`).join('')}</div><button class="wagon" data-action="income"><span class="wagon-icon" aria-hidden="true">${uiIcon('supply')}</span><b>Доход<span class="wagon-arrow"> ↑</span></b><span>+1 / сек</span><strong>${uiIcon('supplies')} <span data-field="wagonCost">40</span></strong><small data-field="wagonLevel">Ур. 0</small></button></div></section>
       <footer class="game-footer"><span data-field="platform">Локальная игра · сохранение в браузере</span><span data-field="boons">Четыре боя — одна эпоха</span></footer>
       <div class="overlay-host"></div>
-    </main><details class="debug-menu"><summary>Debug · <span data-field="speedLabel">×1</span></summary><div class="debug-controls"><a href="${import.meta.env.BASE_URL}sprite-lab.html" target="_blank" rel="noopener">Лаборатория спрайтов ↗</a><p>Скорость боя</p><div class="debug-speeds" role="group" aria-label="Скорость боя">${[1,2,3,4,5].map(speed => `<button data-action="battle-speed" data-speed="${speed}" aria-pressed="${speed === 1}">×${speed}</button>`).join('')}</div><p class="debug-battle-label">Запустить бой заново</p><div class="debug-speeds debug-battles" role="group" aria-label="Выбор боя">${[1,2,3,4].map(battle => `<button data-action="debug-battle" data-battle="${battle - 1}" aria-pressed="false">${battle}</button>`).join('')}</div><div class="debug-balance"></div><p class="debug-note">Сохраняется в браузере · действует со следующего боя</p><button class="debug-reset" data-action="reset-enemy-balance">Сбросить баланс эпохи</button></div></details>`;
+    </main><details class="debug-menu"><summary>Debug · <span data-field="speedLabel">×1</span></summary><div class="debug-controls"><a href="${import.meta.env.BASE_URL}sprite-lab.html" target="_blank" rel="noopener">Лаборатория спрайтов ↗</a><p>Скорость боя</p><div class="debug-speeds" role="group" aria-label="Скорость боя">${[1,2,3,4,5].map(speed => `<button data-action="battle-speed" data-speed="${speed}" aria-pressed="${speed === 1}">×${speed}</button>`).join('')}</div><p class="debug-battle-label">Запустить бой заново</p><div class="debug-speeds debug-battles" role="group" aria-label="Выбор боя">${[1,2,3,4].map(battle => `<button data-action="debug-battle" data-battle="${battle - 1}" aria-pressed="false">${battle}</button>`).join('')}</div><p class="debug-battle-label">Золото для прокачки</p><div class="debug-speeds debug-gold" role="group" aria-label="Добавить золото для прокачки">${[50,100,200].map(amount => `<button data-action="debug-gold" data-gold="${amount}" aria-label="Добавить ${amount} золота для прокачки" title="Золото текущей эпохи · не припасы" disabled>+${amount}</button>`).join('')}</div><div class="debug-balance"></div><p class="debug-note">Сохраняется в браузере · действует со следующего боя</p><button class="debug-reset" data-action="reset-enemy-balance">Сбросить баланс эпохи</button></div></details>`;
     this.arena = root.querySelector('.arena')!; this.overlay = root.querySelector('.overlay-host')!;
     for (const element of root.querySelectorAll<HTMLElement>('[data-field]')) this.fields.set(element.dataset.field!, element);
   }
@@ -205,6 +207,7 @@ export class GameUI {
       button.setAttribute('aria-pressed', String(index === state.battleIndex));
       button.title = ERA_BATTLES[state.eraId][index].name;
     }
+    for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-action="debug-gold"]')) button.disabled = state.phase !== 'battle';
     this.text('speedLabel', `×${state.battleSpeed}`);
     for (const button of this.root.querySelectorAll<HTMLButtonElement>('[data-action="battle-speed"]')) button.setAttribute('aria-pressed', String(Number(button.dataset.speed) === state.battleSpeed));
     if (state.phase === 'preparation' && this.previousPhase !== 'preparation') { this.draft = [...state.roster]; this.preparationStep = state.selectedDoctrine ? 'roster' : 'tactics'; this.visitedTactics = false; }
@@ -235,17 +238,17 @@ export class GameUI {
     this.root.querySelector('.fortress-stat.enemy')!.classList.toggle('has-glyph', state.enemyGlyphRemaining > 0);
     const warning = this.fields.get('bossWarning')!;
     warning.hidden = state.bossPhase !== 'warning' && state.bossPhase !== 'assault';
-    const boss = state.units.find(unit => unit.team === 'enemy' && (unit.kind === 'stoneChief' || unit.kind === 'bronzeKing') && unit.hp > 0);
+    const boss = state.units.find(unit => unit.team === 'enemy' && isBoss(unit.kind) && unit.hp > 0);
     warning.classList.toggle('boss-health', Boolean(boss));
     if (boss) warning.innerHTML = `<div class="boss-health-title"><b>${esc(UNITS[boss.kind].name)}</b><span>${Math.ceil(boss.hp)} / ${boss.maxHp}</span></div><div class="boss-health-meter"><i style="width:${Math.max(0, Math.min(100, boss.hp / boss.maxHp * 100))}%"></i></div><small>Крепость защищена, пока босс жив</small>`;
     else warning.textContent = state.bossPhase === 'warning' ? `⚑ Подкрепление через ${Math.ceil(state.bossCountdown)} с` : '⚔ Подкрепление на поле';
     for (const [i, dot] of Array.from(this.root.querySelectorAll('.route i')).entries()) dot.className = i < state.battleIndex ? 'done' : i === state.battleIndex ? 'current' : '';
     const active = state.phase === 'battle' && !state.paused;
-    for (const card of state.cards) {
+    for (const [index, card] of state.cards.entries()) {
       const button = this.root.querySelector<HTMLButtonElement>(`button[data-kind="${card.kind}"]`)!;
       button.disabled = !active || !card.canHire;
-      button.setAttribute('aria-label', `${card.name}. ${describe(card.kind)} Цена: ${card.cost} припасов.`);
-      button.title = `${card.name} — ${describe(card.kind)}${!card.canHire ? ' Недостаточно припасов.' : ''}`;
+      button.setAttribute('aria-label', `${card.name}. ${describe(card.kind)} Цена: ${card.cost} припасов. Клавиша ${index + 1}.`);
+      button.title = `${card.name} — клавиша ${index + 1}. ${describe(card.kind)}${!card.canHire ? ' Недостаточно припасов.' : ''}`;
       this.text(`cost-${card.kind}`, String(card.cost));
       this.text(`available-${card.kind}`, card.canHire ? 'Найм' : 'Припасы');
     }

@@ -1,5 +1,5 @@
 import { enemyBalanceDefaults, validEnemyBalance, type EnemyBalance, type EnemyBalanceOverrides } from './enemyBalance';
-import { DOCTRINES, ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, ERA_ORDER, UNITS, UPGRADES } from '../data/content';
+import { DOCTRINES, ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, ERA_ORDER, ERA_INCOME, victoryGold, nextEra, UNITS, UPGRADES } from '../data/content';
 import { BattleSimulation } from './BattleSimulation';
 import { offerRewards } from './rewards';
 import { SaveService, type Checkpoint } from './save';
@@ -78,7 +78,7 @@ export class GameDirector implements GameApp {
       battleName: this.selectedContract?.name ?? battle.name,
       threat: this.selectedContract?.threat ?? battle.threat,
       elapsed: sim?.elapsed ?? this.report?.duration ?? 0,
-      resource: sim?.resource ?? 0, income: sim?.income ?? (this.eraId === 'bronze' ? 8 : 6),
+      resource: sim?.resource ?? 0, income: sim?.income ?? ERA_INCOME[this.eraId],
       enemyIncome: sim?.enemyIncome ?? this.selectedContract?.enemyIncome ?? this.enemyBalances()[this.battleIndex].income,
       bossPhase: sim?.bossPhase ?? 'none', bossCountdown: sim?.bossCountdown ?? 0, enemyGlyphRemaining: sim?.enemyGlyphRemaining ?? 0,
       incomeUpgrades: sim?.incomeUpgrades ?? 0, incomeUpgradeCost: sim?.incomeUpgradeCost ?? 40,
@@ -316,6 +316,18 @@ export class GameDirector implements GameApp {
     return true;
   }
 
+  addDebugGold(amount: number): boolean {
+    if (this.phase !== 'battle' || !this.simulation || this.simulation.report || ![50, 100, 200].includes(amount)
+      || !Number.isSafeInteger(this.talentProgress.gold + amount)
+      || !Number.isSafeInteger(this.simulation.goldEarned + amount)) return false;
+    this.talentProgress.gold += amount;
+    this.simulation.goldEarned += amount;
+    this.creditedBattleGold += amount;
+    this.save.writeTalents(this.talentProgress, this.eraId);
+    this.emit();
+    return true;
+  }
+
   setBattleSpeed(speed: number): boolean {
     if (!Number.isInteger(speed) || speed < 1 || speed > 5) return false;
     this.battleSpeed = speed;
@@ -395,7 +407,7 @@ export class GameDirector implements GameApp {
   private makeContracts(): ContractOption[] {
     const battle = ERA_BATTLES[this.eraId][this.battleIndex];
     return [{ id: `${this.battleIndex}-standard`, name: battle.name, threat: battle.threat,
-      roster: [...battle.roster], condition: '', reward: `+${this.eraId === 'bronze' ? 50 : 25} золота за победу`,
+      roster: [...battle.roster], condition: '', reward: `+${victoryGold(this.eraId)} золота за победу`,
       enemyIncome: this.enemyBalances()[this.battleIndex].income, marks: 1, risk: 'standard' }];
   }
 
@@ -420,9 +432,10 @@ export class GameDirector implements GameApp {
     this.records.bestBattle = Math.max(this.records.bestBattle, this.battleIndex + 1);
     this.records.marks += this.selectedContract?.marks ?? 1;
     this.eraProgress[this.eraId] = Math.max(this.eraProgress[this.eraId], this.battleIndex + 1);
-    if (this.eraId === 'stone' && this.battleIndex === 3 && !this.unlockedEras.bronze) {
-      this.unlockedEras.bronze = true;
-      this.save.writeSelectedEra('bronze');
+    const next = nextEra(this.eraId);
+    if (next && this.battleIndex === 3 && !this.unlockedEras[next]) {
+      this.unlockedEras[next] = true;
+      this.save.writeSelectedEra(next);
     }
     this.save.writeEraProgress({ unlocked: this.unlockedEras, wins: this.eraProgress, challenges: this.eraChallenges });
     if (this.battleIndex === ERA_BATTLES[this.eraId].length - 1) {

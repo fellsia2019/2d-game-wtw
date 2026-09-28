@@ -2,7 +2,10 @@
 import { Resvg } from '@resvg/resvg-js';
 import { writeFileSync } from 'node:fs';
 import { exportUnits } from './export-units.mjs';
-exportUnits(['stone','bronze']);
+import { exportIronScenery } from './generate-iron-sprites.mjs';
+exportUnits(['stone','bronze','iron','antique'], {manifestEras:['stone','bronze','iron','antique']});
+await import('./generate-antique-sprites.mjs');
+exportIronScenery();
 const ink='#25302b';
 const path=(d,c,s=ink,w=3)=>`<path d="${d}" fill="${c}" stroke="${s}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"/>`;
 const line=(d,c,w=5)=>path(d,'none',c,w);
@@ -23,4 +26,4 @@ for(const era of ['stone','bronze']){
  arena+=path('M0 477q400-22 800 0t800 0v123H0z',stone?'#b8a57b':'#c6ac7a','none')+line('M0 492q400-22 800 0t800 0',stone?'#cfbf92':'#deca99',3);
  writeFileSync(`public/assets/arena-${era}.svg`,svg(1600,600,arena));
 }
-console.log('Generated 40 era sprite sheets and portraits, 4 strongholds and 2 arenas.');
+console.log('Generated 76 era sprite sheets and portraits, 8 strongholds and 4 arenas.');

@@ -1,12 +1,14 @@
 import type { EnemyBalance } from './enemyBalance';
 import type { TalentId, TalentLevels } from './talents';
 export type Team = 'ally' | 'enemy';
-export type EraId = 'stone' | 'bronze';
+export type EraId = 'stone' | 'bronze' | 'iron' | 'antique';
 export type UnitRole = 'shield' | 'spear' | 'archer' | 'medic' | 'raider' | 'thrower' | 'banner' | 'siege';
 export type StoneHireKind = 'stoneShield' | 'stoneSpear' | 'stoneSlinger' | 'stoneShaman' | 'stoneScout' | 'stoneThrower' | 'stoneTotem' | 'stoneRam';
 export type BronzeHireKind = 'bronzeGuard' | 'bronzeSpear' | 'bronzeArcher' | 'bronzeHealer' | 'bronzeChariot' | 'bronzePitch' | 'bronzeHerald' | 'bronzeRam';
-export type HireKind = StoneHireKind | BronzeHireKind;
-export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing';
+export type IronHireKind = 'ironShield' | 'ironSpear' | 'ironArcher' | 'ironMedic' | 'ironRaider' | 'ironThrower' | 'ironBanner' | 'ironSiege';
+export type AntiqueHireKind = 'antiqueLegionary' | 'antiqueHoplite' | 'antiquePeltast' | 'antiqueSurgeon' | 'antiqueRider' | 'antiqueScorpion' | 'antiqueCenturion' | 'antiqueBallista';
+export type HireKind = StoneHireKind | BronzeHireKind | IronHireKind | AntiqueHireKind;
+export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing' | 'ironGate' | 'ironCommandant' | 'antiqueLegate';
 export type UpgradeId = 'supply' | 'wagon' | 'banner' | 'arrows' | 'bandages' | 'contract' | 'pikes' | 'workshop' | 'boots' | 'siegecraft' | 'lastReserve' | 'standard';
 export type DoctrineId = 'steel' | 'arrow' | 'bargain';
 export type GamePhase = 'menu' | 'preparation' | 'contract' | 'battle' | 'reward' | 'victory' | 'defeat';
@@ -49,8 +51,8 @@ export interface ContractOption {
   risk: 'standard' | 'daring';
 }
 export interface Records { runs: number; wins: number; bestBattle: number; bestTime: number | null; marks: number; }
-export interface EraProgress { stone: number; bronze: number; }
-export interface EraUnlocks { stone: boolean; bronze: boolean; }
+export type EraProgress = Record<EraId, number>;
+export type EraUnlocks = Record<EraId, boolean>;
 export type EraChallenges = EraUnlocks;
 export interface BattleReport {
   goldEarned?: number; // absent in older saved reports
@@ -142,6 +144,7 @@ export interface GameApp {
   setBattleSpeed(speed: number): boolean;
   setExternalPause(paused: boolean, source?: string): void;
   startDebugBattle(battleIndex: number): boolean;
+  addDebugGold(amount: number): boolean;
   setEnemyBalance(battleIndex: number, balance: EnemyBalance): boolean;
   resetEnemyBalance(): void;
   togglePause(): void;

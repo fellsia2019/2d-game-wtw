@@ -1,12 +1,12 @@
 import { enemyBalanceDefaults, type EnemyBalance } from './enemyBalance';
-import { ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, UNITS, unitRole } from '../data/content';
+import { ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, ERA_INCOME, ERA_KILL_GOLD, UNITS, unitRole, isBoss } from '../data/content';
 import type { BattleEvent, BattleReport, BossPhase, ContractOption, DoctrineId, EraId, HireKind, Team, UnitKind, UnitState, UpgradeId } from './types';
 import { Random } from './random';
 import { emptyTalentProgress, talentMultiplier, type TalentLevels } from './talents';
 
 const FORT = { ally: 65, enemy: 935 } as const;
 const STEP = 1 / 30;
-export const KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2 };
+export const KILL_GOLD = ERA_KILL_GOLD;
 
 export class BattleSimulation {
   readonly battleIndex: number;
@@ -70,7 +70,7 @@ export class BattleSimulation {
 
   }
 
-  get income(): number { return ((this.eraId === 'bronze' ? 8 : 6) + this.incomeUpgrades + (this.upgrades.includes('wagon') ? 1 : 0)) * talentMultiplier(this.talents.supply); }
+  get income(): number { return (ERA_INCOME[this.eraId] + this.incomeUpgrades + (this.upgrades.includes('wagon') ? 1 : 0)) * talentMultiplier(this.talents.supply); }
   get incomeUpgradeCost(): number { return 40 + this.incomeUpgrades * 10 - (this.incomeUpgrades === 0 && this.upgrades.includes('workshop') ? 12 : 0); }
   get enemyIncome(): number { return this.contract.enemyIncome + (this.elapsed >= 300 ? 2 : 0); }
   private get enemyDamageMultiplier(): number { return 1 + this.enemyBalance.damageBonus / 100; }
@@ -106,7 +106,7 @@ export class BattleSimulation {
     this.enemyGlyphRemaining = Math.max(0, this.enemyGlyphRemaining - STEP);
     if (this.enemyGlyphRemaining < 1e-8) this.enemyGlyphRemaining = 0;
     this.activateEnemyGlyph();
-    const boss = this.units.find(unit => unit.team === 'enemy' && unit.hp > 0 && (unit.kind === 'stoneChief' || unit.kind === 'bronzeKing'));
+    const boss = this.units.find(unit => unit.team === 'enemy' && unit.hp > 0 && isBoss(unit.kind));
     if (boss) this.bossDamagePool = Math.min(boss.maxHp * .25, this.bossDamagePool + boss.maxHp * STEP / 6);
     const previousSeconds = Math.floor(this.elapsed + 1e-8);
     this.elapsed += STEP;
@@ -139,7 +139,7 @@ export class BattleSimulation {
     if (this.allyFortressHp <= 0 || this.enemyFortressHp <= 0) {
       this.finish(this.enemyFortressHp <= 0);
     } else if (this.elapsed >= 420) {
-      const liveBoss = this.units.some(unit => unit.team === 'enemy' && unit.hp > 0 && (unit.kind === 'stoneChief' || unit.kind === 'bronzeKing'));
+      const liveBoss = this.units.some(unit => unit.team === 'enemy' && unit.hp > 0 && isBoss(unit.kind));
       this.finish(!liveBoss && this.enemyFortressHp / 100 < this.allyFortressHp / this.allyFortressMaxHp);
     }
   }
@@ -152,10 +152,10 @@ export class BattleSimulation {
     while (true) {
       let kind: UnitKind;
         const enemies = ERA_BATTLES[this.eraId][this.battleIndex].enemyRecruitRoster ?? this.contract.roster;
-        if (plan === 'ranged') kind = enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
+        if (plan === 'ranged') kind = ['iron','antique'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
-        if (kind === 'stoneChief' || kind === 'bronzeKing') kind = enemies.find(id => id !== kind) ?? kind;
+        if (isBoss(kind)) kind = enemies.find(id => id !== kind) ?? kind;
       if (this.enemyResource < UNITS[kind].cost) break;
       this.enemyResource -= UNITS[kind].cost;
       this.spawn(kind, 'enemy');
@@ -177,7 +177,7 @@ export class BattleSimulation {
       this.bossCountdown = 0;
       this.event('boss-assault', 850, 'enemy');
       for (const kind of ERA_BATTLES[this.eraId][this.battleIndex].roster) this.spawn(kind, 'enemy');
-    } else if (this.bossPhase === 'assault' && !this.units.some(u => u.team === 'enemy' && u.hp > 0 && (u.kind === 'stoneChief' || u.kind === 'bronzeKing'))) {
+    } else if (this.bossPhase === 'assault' && !this.units.some(u => u.team === 'enemy' && u.hp > 0 && isBoss(u.kind))) {
       this.bossPhase = 'spent';
     }
   }
@@ -192,13 +192,13 @@ export class BattleSimulation {
       if (this.doctrine === 'arrow' && this.archersHired < 2) this.rangeBonuses.set(unit.id, 20);
       this.archersHired++;
     }
-    if (kind === 'stoneChief' || kind === 'bronzeKing') this.bossDamagePool = hp * .15;
+    if (isBoss(kind)) this.bossDamagePool = hp * .15;
     this.units.push(unit);
     this.event('spawn', unit.x, team, undefined, unit.id);
   }
 
   private damageUnit(unit: UnitState, damage: number): number {
-    if (unit.team === 'enemy' && (unit.kind === 'stoneChief' || unit.kind === 'bronzeKing')) {
+    if (unit.team === 'enemy' && isBoss(unit.kind)) {
       // A shared damage budget prevents one crowd volley from removing the
       // entire boss phase. Unused budget accumulates for normal attack bursts.
       damage = Math.min(damage, this.bossDamagePool);
@@ -210,6 +210,11 @@ export class BattleSimulation {
 
   private armor(unit: UnitState): number {
     const base = UNITS[unit.kind].armor;
+    if (['antiqueLegionary', 'antiqueHoplite'].includes(unit.kind)) {
+      const formed = this.units.some(other => other.id !== unit.id && other.team === unit.team && other.hp > 0
+        && ['antiqueLegionary', 'antiqueHoplite'].includes(other.kind) && Math.abs(other.x - unit.x) <= 72);
+      return Math.min(.75, base + (formed ? .08 : 0));
+    }
     if (!['bronzeGuard', 'bronzeSpear', 'bronzeGate', 'bronzeEnemySpear'].includes(unit.kind)) return base;
     const formed = this.units.some(other => other.id !== unit.id && other.team === unit.team && other.hp > 0
       && ['bronzeGuard', 'bronzeSpear', 'bronzeGate', 'bronzeEnemySpear'].includes(other.kind)
@@ -283,8 +288,8 @@ export class BattleSimulation {
       this.event('attack', target.x, unit.team, dealt, unit.id, target.id);
       if (blocked) this.event('block', target.x, target.team, blocked, unit.id, target.id);
       if (target.hp <= 0) this.event('death', target.x, target.team, undefined, unit.id, target.id);
-      if (unitRole(unit.kind) === 'thrower' || unit.kind === 'bronzeKing') {
-        const splashRadius = unit.kind === 'bronzeKing' ? 55 : 45;
+      if (unitRole(unit.kind) === 'thrower' || (unit.kind === 'bronzeKing' || unit.kind === 'ironCommandant' || unit.kind === 'antiqueLegate')) {
+        const splashRadius = (unit.kind === 'bronzeKing' || unit.kind === 'ironCommandant' || unit.kind === 'antiqueLegate') ? 55 : 45;
         for (const secondary of enemies.filter(u => u.id !== target.id && Math.abs(u.x - target.x) <= splashRadius).slice(0, 3)) {
           const splash = this.damageUnit(secondary, Math.max(1, def.damage * .5 * (unit.team === 'ally' ? talentMultiplier(this.talents.damage) : this.enemyDamageMultiplier) * (1 - this.armor(secondary))));
           if (unit.team === 'ally') this.damageDealt += splash; else this.damageTaken += splash;

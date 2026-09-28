@@ -3,7 +3,7 @@ import type { BattleEvent, GameState, UnitState } from '../core/types';
 import { asset, unitArt, roleOf } from '../art/catalog';
 import { UnitMotion } from './UnitMotion';
 import { battlefieldLayout, type BattleInsets } from './BattleLayout';
-import { UNITS } from '../data/content';
+import { UNITS, ERA_ORDER, isBoss as bossKind } from '../data/content';
 
 type Figure = { image: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; bar: Phaser.GameObjects.Graphics; motion: UnitMotion; hurt: number; texture: string };
 
@@ -29,7 +29,7 @@ export class BattleScene extends Phaser.Scene {
     private onReady: () => void = () => {}) { super('battle'); }
   preload() {
     this.load.on('loaderror', () => { this.loadFailed = true; });
-    for (const era of ['stone', 'bronze']) {
+    for (const era of ERA_ORDER) {
       this.load.svg(`arena-${era}`, asset(`arena-${era}`), { width: 1600, height: 600 });
       for (const team of ['ally','enemy']) this.load.svg(`${era}-tower-${team}`, asset(`${era}-tower-${team}`), { width: 240, height: 240 });
     }
@@ -129,7 +129,7 @@ export class BattleScene extends Phaser.Scene {
   private drawUnit(unit: UnitState, dt: number, paused: boolean) {
     const figure = this.figures.get(unit.id)!;
     const pose = figure.motion.advance(dt, paused);
-    const isBoss = unit.kind === 'stoneChief' || unit.kind === 'bronzeKing';
+    const isBoss = bossKind(unit.kind);
     const x = this.point(pose.x), scale = this.size() * (isBoss ? 1.5 : 1);
     const y = this.baseline() + (unit.id % 4) * (this.scale.width < 650 ? 4 : 6);
     figure.hurt = Math.max(0, figure.hurt - dt);

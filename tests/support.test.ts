@@ -3,7 +3,7 @@ import { BattleSimulation } from '../src/core/BattleSimulation';
 import { UNITS } from '../src/data/content';
 import type { EraId, Team, UnitKind, UnitState } from '../src/core/types';
 
-const cases: [EraId, UnitKind][] = [['stone', 'stoneTotem'], ['bronze', 'bronzeHerald']];
+const cases: [EraId, UnitKind][] = [['stone', 'stoneTotem'], ['bronze', 'bronzeHerald'], ['iron', 'ironBanner']];
 function figure(id: number, kind: UnitKind, team: Team, x: number, cooldown = 0): UnitState {
  return { id, kind, team, x, hp: 100, maxHp: 100, cooldown, action: 'idle', facing: team === 'ally' ? 1 : -1 };
 }

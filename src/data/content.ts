@@ -22,11 +22,30 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   bronzePitch: { name: 'Метатель смолы', role: 'Площадь · обжигающий залп', cost: 43, hp: 23, damage: 10, range: 125, speed: 31, period: 1.7, armor: .03 },
   bronzeHerald: { name: 'Глашатай', role: 'Командир · ускоряет атаки', cost: 49, hp: 32, damage: 0, range: 29, speed: 33, period: 1.2, armor: .2 },
   bronzeRam: { name: 'Осадный таран', role: 'Осада · усиленный удар', cost: 61, hp: 48, damage: 11, range: 45, speed: 25, period: 1.9, armor: .28 },
+  ironShield: { name: 'Железный щитоносец', role: 'Защитник · большой щит и крепкая броня', cost: 26, hp: 74, damage: 5, range: 27, speed: 29, period: 1.15, armor: .48 },
+  ironSpear: { name: 'Копейщик дружины', role: 'Против брони · пробивает тяжёлый доспех', cost: 36, hp: 42, damage: 12, range: 51, speed: 34, period: 1.2, armor: .18, antiArmor: 2.5 },
+  ironArcher: { name: 'Стрелок заставы', role: 'Дальний бой · прикрывает передний ряд', cost: 40, hp: 28, damage: 10, range: 180, speed: 35, period: 1.05, armor: .08 },
+  ironMedic: { name: 'Полевой лекарь', role: 'Поддержка · лечит бойцов', cost: 52, hp: 32, damage: 2, heal: 10, range: 118, speed: 32, period: 1.5, armor: .1 },
+  ironRaider: { name: 'Налётчик', role: 'Прорыв · секирой давит на стрелков', cost: 42, hp: 46, damage: 15, range: 32, speed: 88, period: .95, armor: .15 },
+  ironThrower: { name: 'Метатель', role: 'Площадь · залп дротиков по группе', cost: 54, hp: 30, damage: 14, range: 140, speed: 31, period: 1.65, armor: .08 },
+  ironBanner: { name: 'Знаменосец', role: 'Поддержка · ускоряет союзников без атак', cost: 60, hp: 40, damage: 0, range: 30, speed: 32, period: 1.2, armor: .1 },
+  ironSiege: { name: 'Осадник', role: 'Осада · расчёт тарана разрушает ворота', cost: 74, hp: 65, damage: 14, range: 45, speed: 24, period: 1.9, armor: .35 },
+  antiqueLegionary: { name: 'Легионер', role: 'Защитник · скутум и защита в строю', cost: 32, hp: 90, damage: 6, range: 28, speed: 30, period: 1.15, armor: .45 },
+  antiqueHoplite: { name: 'Гоплит', role: 'Против брони · копьё и защита в строю', cost: 43, hp: 50, damage: 14, range: 56, speed: 33, period: 1.25, armor: .22, antiArmor: 2.5 },
+  antiquePeltast: { name: 'Пельтаст', role: 'Дальний бой · метает дротики из-за строя', cost: 48, hp: 34, damage: 12, range: 185, speed: 40, period: 1.1, armor: .1 },
+  antiqueSurgeon: { name: 'Хирург лагеря', role: 'Поддержка · перевязывает раненых', cost: 62, hp: 39, damage: 2, heal: 12, range: 125, speed: 33, period: 1.5, armor: .1 },
+  antiqueRider: { name: 'Нумидийский всадник', role: 'Прорыв · быстрый всадник с дротиком', cost: 50, hp: 54, damage: 17, range: 130, speed: 98, period: 1.15, armor: .1 },
+  antiqueScorpion: { name: 'Скорпион', role: 'Площадь · болт пробивает тесную группу', cost: 65, hp: 38, damage: 18, range: 200, speed: 26, period: 1.85, armor: .12 },
+  antiqueCenturion: { name: 'Центурион', role: 'Поддержка · командным жестом ускоряет строй', cost: 72, hp: 48, damage: 0, range: 35, speed: 31, period: 1.2, armor: .25 },
+  antiqueBallista: { name: 'Баллиста', role: 'Осада · дальние удары по укреплениям', cost: 90, hp: 78, damage: 19, range: 210, speed: 22, period: 2.1, armor: .3 },
+  antiqueLegate: { name: 'Легат Девятого легиона', role: 'Босс · опытный легионер с усиленным скутумом', cost: 110, hp: 1450 / 1.3, damage: 36 / 1.2, range: 48, speed: 28, period: 1.5, armor: .5, archetype: 'shield' },
+  ironGate: { name: 'Воротный страж', role: 'Враг · тяжёлый доспех и двуручный молот', cost: 54, hp: 104, damage: 8, range: 36, speed: 23, period: 1.6, armor: .55, archetype: 'shield' },
+  ironCommandant: { name: 'Комендант железной цитадели', role: 'Босс · сабельный удар по строю', cost: 95, hp: 1000, damage: 34 / 1.2, range: 46, speed: 28, period: 1.4, armor: .5, archetype: 'shield' },
   stoneHunter: { name: 'Ночной охотник', role: 'Враг · стремительный прорыв', cost: 23, hp: 25, damage: 9, range: 26, speed: 74, period: .95, armor: 0, archetype: 'raider' },
   stoneBone: { name: 'Костяной щит', role: 'Враг · прикрытие', cost: 19, hp: 47, damage: 4, range: 26, speed: 31, period: 1.1, armor: .25, archetype: 'shield' },
   stoneEnemySlinger: { name: 'Пращник племени', role: 'Враг · дальний бой', cost: 27, hp: 20, damage: 7, range: 130, speed: 36, period: 1.05, armor: 0, archetype: 'archer' },
   stoneWolf: { name: 'Вожак стаи', role: 'Враг · быстрые атаки', cost: 35, hp: 36, damage: 11, range: 31, speed: 71, period: .82, armor: .04, archetype: 'raider' },
-  stoneChief: { name: 'Вождь Чёрного камня', role: 'Босс · сокрушает строй', cost: 64, hp: 600, damage: 20, range: 38, speed: 35, period: 1.3, armor: .25, archetype: 'shield' },
+  stoneChief: { name: 'Вождь Чёрного камня', role: 'Босс · сокрушает строй', cost: 64, hp: 700 / 1.35, damage: 20 / 1.15, range: 38, speed: 35, period: 1.6, armor: .2, archetype: 'shield' },
   bronzeEnemySpear: { name: 'Бронзовый копейщик', role: 'Враг · пробивает броню', cost: 30, hp: 34, damage: 11, range: 48, speed: 34, period: 1.2, armor: .12, antiArmor: 2.2, archetype: 'spear' },
   bronzeRaider: { name: 'Колесница налётчиков', role: 'Враг · прорыв', cost: 39, hp: 39, damage: 12, range: 34, speed: 82, period: 1.05, armor: .1, archetype: 'raider' },
   bronzeEnemyArcher: { name: 'Лучник стражи', role: 'Враг · дальний бой', cost: 32, hp: 23, damage: 8, range: 157, speed: 34, period: 1.05, armor: .08, archetype: 'archer' },
@@ -56,21 +75,29 @@ export const UPGRADES: Record<UpgradeId, { name: string; description: string; ca
 };
 
 export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; enemyStartingSupplies?: number; enemyHealthMultiplier?: number; enemyDamageMultiplier?: number; enemyRecruitRoster?: UnitKind[]; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
-export const ERA_ORDER: EraId[] = ['stone', 'bronze'];
-export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век' };
+export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique'];
+export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12 };
+export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4 };
+export const victoryGold = (era: EraId): number => 25 * ERA_KILL_GOLD[era];
+export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate' };
+export const isBoss = (kind: UnitKind): boolean => Object.values(ERA_BOSSES).includes(kind);
+export const nextEra = (era: EraId): EraId | undefined => ERA_ORDER[ERA_ORDER.indexOf(era) + 1];
+export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность' };
 export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   stone: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'],
-  bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam']
+  bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam'],
+  iron: ['ironShield', 'ironSpear', 'ironArcher', 'ironMedic', 'ironRaider', 'ironThrower', 'ironBanner', 'ironSiege'],
+  antique: ['antiqueLegionary', 'antiqueHoplite', 'antiquePeltast', 'antiqueSurgeon', 'antiqueRider', 'antiqueScorpion', 'antiqueCenturion', 'antiqueBallista']
 };
 export const ERA_STARTER_KINDS: Record<EraId, HireKind[]> = {
-  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4)
+  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4)
 };
 const ROLES: UnitRole[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
 export function unitRole(kind: UnitKind): UnitRole {
-  const index = ERA_HIRE_KINDS.stone.indexOf(kind as HireKind);
-  if (index >= 0) return ROLES[index];
-  const bronzeIndex = ERA_HIRE_KINDS.bronze.indexOf(kind as HireKind);
-  if (bronzeIndex >= 0) return ROLES[bronzeIndex];
+  for (const era of ERA_ORDER) {
+    const index = ERA_HIRE_KINDS[era].indexOf(kind as HireKind);
+    if (index >= 0) return ROLES[index];
+  }
   return UNITS[kind].archetype!;
 }
 export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
@@ -85,5 +112,17 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
     { name: 'Бронзовая фаланга', threat: 'Копейщики под прикрытием стражей ворот', ai: 'wall', enemyIncome: 15, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.15, enemyDamageMultiplier: 1.1, roster: ['bronzeGate', 'bronzeEnemySpear'], arenaId: 'iron' },
     { name: 'Городские стены', threat: 'Лучники стреляют из-за плотного строя', ai: 'ranged', enemyIncome: 16, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.15, roster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'arrows' },
     { name: 'Царь Медных ворот', threat: 'При 50% здоровья крепости царь ведёт ударную волну', ai: 'boss', enemyIncome: 17, enemyStartingSupplies: 25, enemyHealthMultiplier: 1.28, enemyDamageMultiplier: 1.15, enemyRecruitRoster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeEnemyArcher'], roster: ['bronzeKing', 'bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'citadel' }
+  ],
+  iron: [
+    { name: 'Железная застава', threat: 'Налётчики идут под прикрытием щитоносцев; встречай их ранним фронтом', ai: 'rush', enemyIncome: 16, enemyStartingSupplies: 10, enemyHealthMultiplier: 1.1, enemyDamageMultiplier: 1.05, roster: ['ironRaider', 'ironShield', 'ironArcher'], arenaId: 'ash' },
+    { name: 'Дружинный заслон', threat: 'Молот воротного стража ломает фронт; копейщики пробивают его доспех', ai: 'wall', enemyIncome: 18, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.15, enemyDamageMultiplier: 1.1, roster: ['ironGate', 'ironSpear'], arenaId: 'iron' },
+    { name: 'Осадная дорога', threat: 'Щиты и стрелки прикрывают таран; прорывайся к дальнему ряду', ai: 'ranged', enemyIncome: 19, enemyStartingSupplies: 25, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.15, enemyRecruitRoster: ['ironShield', 'ironArcher', 'ironArcher', 'ironSiege'], roster: ['ironShield', 'ironArcher', 'ironSiege'], arenaId: 'arrows' },
+    { name: 'Железная цитадель', threat: 'При 50% крепости комендант выходит со стражем, стрелком и метателем', ai: 'boss', enemyIncome: 20, enemyStartingSupplies: 30, enemyHealthMultiplier: 1.3, enemyDamageMultiplier: 1.2, enemyRecruitRoster: ['ironGate', 'ironArcher', 'ironThrower'], roster: ['ironCommandant', 'ironGate', 'ironArcher', 'ironThrower'], arenaId: 'citadel' }
+  ],
+  antique: [
+    { name: 'Пограничный лагерь', threat: 'Всадники метают дротики под прикрытием легионеров', ai: 'rush', enemyIncome: 18, enemyStartingSupplies: 10, enemyHealthMultiplier: 1.1, enemyDamageMultiplier: 1.05, roster: ['antiqueLegionary', 'antiquePeltast', 'antiqueRider'], arenaId: 'ash' },
+    { name: 'Фаланга у переправы', threat: 'Легионеры и гоплиты усиливают защиту в тесном строю', ai: 'wall', enemyIncome: 22, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.15, enemyDamageMultiplier: 1.1, roster: ['antiqueLegionary', 'antiqueHoplite', 'antiqueCenturion'], arenaId: 'iron' },
+    { name: 'Стены провинции', threat: 'Скорпионы и баллиста ведут огонь из-за скутумов', ai: 'ranged', enemyIncome: 23, enemyStartingSupplies: 25, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.15, enemyRecruitRoster: ['antiqueLegionary', 'antiquePeltast', 'antiqueScorpion', 'antiqueBallista'], roster: ['antiqueLegionary', 'antiquePeltast', 'antiqueScorpion', 'antiqueBallista'], arenaId: 'arrows' },
+    { name: 'Девятый легион', threat: 'При 50% крепости легат выводит легионера, пельтаста и центуриона', ai: 'boss', enemyIncome: 24, enemyStartingSupplies: 30, enemyHealthMultiplier: 1.3, enemyDamageMultiplier: 1.2, enemyRecruitRoster: ['antiqueLegionary', 'antiquePeltast', 'antiqueScorpion'], roster: ['antiqueLegate', 'antiqueLegionary', 'antiquePeltast', 'antiqueCenturion'], arenaId: 'citadel' }
   ]
 };

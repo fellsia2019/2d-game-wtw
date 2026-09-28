@@ -5,6 +5,7 @@ import type { TalentId } from '../core/talents';
 import { BattleScene } from './BattleScene';
 import { BattleSound } from './Sound';
 import { GameUI } from '../ui/GameUI';
+import { recruitSlot } from '../ui/shortcuts';
 import '../ui/game.css';
 import '../ui/fullscreen.css';
 import '../ui/results.css';
@@ -44,6 +45,7 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
         app.startDebugBattle(Number(button.dataset.battle));
         break;
       case 'reset-enemy-balance': app.resetEnemyBalance(); break;
+      case 'debug-gold': app.addDebugGold(Number(button.dataset.gold)); break;
       case 'battle-speed': app.setBattleSpeed(Number(button.dataset.speed)); break;
       case 'reward': app.chooseReward(button.dataset.reward as UpgradeId); break;
       case 'pause': app.togglePause(); break;
@@ -84,14 +86,21 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
     }
   };
   const key = (event: KeyboardEvent) => {
-    if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.target instanceof HTMLInputElement) return;
+    if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.isComposing
+      || (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])'))) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       if (state.phase === 'battle' && !state.paused) { void sound.unlock(); app.togglePause(); }
       else goBack();
       return;
     }
-    if (/^[1-4]$/.test(event.key) && state.phase === 'battle' && !state.paused) { void sound.unlock(); const card = state.cards[Number(event.key) - 1]; if (card) app.hire(card.kind); }
+    const slot = recruitSlot(event);
+    if (slot !== null && state.phase === 'battle' && !state.paused) {
+      event.preventDefault();
+      const card = state.cards[slot];
+      if (card) { void sound.unlock(); app.hire(card.kind); }
+      return;
+    }
     if (event.key === 'Tab') {
       const modal = root.querySelector<HTMLElement>('[role="dialog"]');
       if (!modal) return;

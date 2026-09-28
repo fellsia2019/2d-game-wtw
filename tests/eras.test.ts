@@ -130,7 +130,7 @@ describe('first two eras', () => {
 });
 
 describe('era campaign smoke', () => {
-  it.each(['stone', 'bronze'] as const)('%s starter lineup with progression can finish four battles', era => {
+  it.each(['stone', 'bronze', 'iron'] as const)('%s starter lineup with progression can finish four battles', era => {
     const roster = ERA_STARTER_KINDS[era];
     const results = [];
     for (let index = 0; index < 4; index++) {
@@ -234,7 +234,7 @@ describe('era mastery', () => {
 });
 
 describe('bronze campaign persistence', () => {
-  it('finishes the available timeline without unlocking a missing campaign', () => {
+  it('unlocks Iron after the bronze commandant and preserves that transition', () => {
     const storage = new MemoryStorage();
     const save = new SaveService(storage);
     save.writeEraProgress({ unlocked: { stone: true, bronze: true },
@@ -250,7 +250,8 @@ describe('bronze campaign persistence', () => {
     }
     expect(game.getState().phase).toBe('victory');
     expect(game.getState().eraProgress.bronze).toBe(4);
-    expect(Object.keys(game.getState().unlockedEras)).toEqual(['stone', 'bronze']);
+    expect(Object.keys(game.getState().unlockedEras)).toEqual(['stone', 'bronze', 'iron', 'antique']);
+    expect(game.getState().unlockedEras.iron).toBe(true);
     game = new GameDirector(save);
     expect(game.getState().eraProgress.bronze).toBe(4);
     expect(game.selectEra('bronze')).toBe(true);

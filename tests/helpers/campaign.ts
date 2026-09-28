@@ -7,7 +7,9 @@ import type { EraId } from '../../src/core/types';
 // every stage with a fresh profile. Campaign checks earn all upgrades in play.
 export const CAMPAIGN_PLANS = {
   stone: [{ tier: 0, order: '012' }, { tier: 2, order: '0102' }, { tier: 5, order: '012' }, { tier: 8, order: '002' }],
-  bronze: [{ tier: 2, order: '012' }, { tier: 3, order: '0112' }, { tier: 7, order: '012' }, { tier: 10, order: '002' }]
+  bronze: [{ tier: 2, order: '012' }, { tier: 3, order: '0112' }, { tier: 7, order: '012' }, { tier: 10, order: '002' }],
+  iron: [{ tier: 2, order: '0102' }, { tier: 4, order: '0112' }, { tier: 8, order: '012' }, { tier: 11, order: '002' }],
+  antique: [{ tier: 3, order: '012' }, { tier: 4, order: '0112' }, { tier: 8, order: '012' }, { tier: 11, order: '002' }]
 } satisfies Record<EraId, { tier: number; order: string }[]>;
 
 export function completeCampaignBattle(game: GameDirector, battle: number): number {
