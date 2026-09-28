@@ -27,7 +27,7 @@ function loop(now: number): void {
   const delta = Math.min(0.1, Math.max(0, (now - last) / 1000));
   last = now;
   if (app.getState().phase === 'battle' && !app.getState().paused) {
-    accumulator += delta;
+    accumulator += delta * app.getState().battleSpeed;
     while (accumulator >= app.fixedStep()) { app.tick(); accumulator -= app.fixedStep(); }
   } else accumulator = 0;
   requestAnimationFrame(loop);

@@ -36,12 +36,12 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   stoneBone: { name: 'Костяной щит', role: 'Враг · прикрытие', cost: 19, hp: 47, damage: 4, range: 26, speed: 31, period: 1.1, armor: .25, archetype: 'shield' },
   stoneEnemySlinger: { name: 'Пращник племени', role: 'Враг · дальний бой', cost: 27, hp: 20, damage: 7, range: 130, speed: 36, period: 1.05, armor: 0, archetype: 'archer' },
   stoneWolf: { name: 'Вожак стаи', role: 'Враг · быстрые атаки', cost: 35, hp: 36, damage: 11, range: 31, speed: 71, period: .82, armor: .04, archetype: 'raider' },
-  stoneChief: { name: 'Вождь Чёрного камня', role: 'Босс · сокрушает строй', cost: 64, hp: 110, damage: 15, range: 38, speed: 35, period: 1.3, armor: .25, archetype: 'shield' },
+  stoneChief: { name: 'Вождь Чёрного камня', role: 'Босс · сокрушает строй', cost: 64, hp: 600, damage: 20, range: 38, speed: 35, period: 1.3, armor: .25, archetype: 'shield' },
   bronzeEnemySpear: { name: 'Бронзовый копейщик', role: 'Враг · пробивает броню', cost: 30, hp: 34, damage: 11, range: 48, speed: 34, period: 1.2, armor: .12, antiArmor: 2.2, archetype: 'spear' },
   bronzeRaider: { name: 'Колесница налётчиков', role: 'Враг · прорыв', cost: 39, hp: 39, damage: 12, range: 34, speed: 82, period: 1.05, armor: .1, archetype: 'raider' },
   bronzeEnemyArcher: { name: 'Храмовый лучник', role: 'Враг · дальний бой', cost: 32, hp: 23, damage: 8, range: 157, speed: 34, period: 1.05, armor: .08, archetype: 'archer' },
   bronzeGate: { name: 'Страж ворот', role: 'Враг · тяжёлая броня', cost: 43, hp: 80, damage: 6, range: 29, speed: 25, period: 1.3, armor: .5, archetype: 'shield' },
-  bronzeKing: { name: 'Царь Медных ворот', role: 'Босс · бронзовый натиск', cost: 76, hp: 145, damage: 17, range: 42, speed: 31, period: 1.3, armor: .45, archetype: 'shield' }
+  bronzeKing: { name: 'Царь Медных ворот', role: 'Босс · бронзовый натиск', cost: 76, hp: 781, damage: 30 / 1.15, range: 42, speed: 31, period: 1.3, armor: .45, archetype: 'shield' }
 };
 
 export const HIRE_KINDS: HireKind[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
@@ -54,25 +54,25 @@ export const UNLOCKS: { kind: HireKind; marks: number }[] = [
 export const DOCTRINES: DoctrineOption[] = [
   { id: 'steel', name: 'Оплот', description: 'Первый защитник каждого боя дешевле на 6 припасов.' },
   { id: 'arrow', name: 'Стрела', description: 'Первые два бойца дальнего боя получают +20 к дальности.' },
-  { id: 'bargain', name: 'Сделка', description: 'Старт с 20 припасами, но крепость имеет 85 здоровья.' }
+  { id: 'bargain', name: 'Сделка', description: 'Старт с 20 припасами, но крепость теряет 15% здоровья (минимум 1 HP).' }
 ];
 
 export const UPGRADES: Record<UpgradeId, { name: string; description: string; category: 'economy' | 'defense' | 'offense'; requires?: HireKind }> = {
-  supply: { name: 'Полевой запас', description: 'Максимум припасов +20', category: 'economy' },
-  wagon: { name: 'Слаженный обоз', description: 'Восстановление припасов +1/с', category: 'economy' },
+  supply: { name: 'Полевой запас', description: '+20 припасов в начале боя', category: 'economy' },
+  wagon: { name: 'Улучшенное снабжение', description: 'Восстановление припасов +1/с', category: 'economy' },
   banner: { name: 'Знамя стойкости', description: 'Здоровье защитников и бойцов против брони +15%', category: 'defense' },
   arrows: { name: 'Точные стрелы', description: 'Урон бойцов дальнего боя +15%', category: 'offense', requires: 'archer' },
   bandages: { name: 'Полевые повязки', description: 'Лечение +20%', category: 'defense', requires: 'medic' },
   contract: { name: 'Дешёвый контракт', description: 'Первый призыв каждого боя дешевле на 8', category: 'economy' },
   pikes: { name: 'Усиленные пики', description: 'Бойцы с копьями сильнее против брони', category: 'offense', requires: 'spear' },
-  workshop: { name: 'Инженерная мастерская', description: 'Первый обоз каждого боя дешевле на 12', category: 'economy' },
+  workshop: { name: 'Инженерная мастерская', description: 'Первое улучшение дохода дешевле на 12', category: 'economy' },
   boots: { name: 'Лёгкие сапоги', description: 'Быстрые бойцы двигаются на 20% быстрее', category: 'offense', requires: 'raider' },
   siegecraft: { name: 'Осадный расчёт', description: 'Осадные бойцы наносят крепости на 20% больше урона', category: 'offense', requires: 'siege' },
   lastReserve: { name: 'Последний резерв', description: 'Один бесплатный защитник при крепости ниже 35%', category: 'defense', requires: 'shield' },
   standard: { name: 'Строевой шаг', description: 'Командиры сильнее ускоряют союзников рядом', category: 'offense', requires: 'banner' }
 };
 
-export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
+export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; enemyStartingSupplies?: number; enemyHealthMultiplier?: number; enemyDamageMultiplier?: number; enemyRecruitRoster?: UnitKind[]; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
 export const BATTLES: BattleDefinition[] = [
   { name: 'Разминка', threat: 'Налётчики: частые слабые атаки', ai: 'rush', enemyIncome: 6.3, roster: ['raider', 'shield'], arenaId: 'ash' },
   { name: 'Железная стена', threat: 'Латники: броню пробивают копейщики', ai: 'wall', enemyIncome: 6.4, roster: ['bulwark', 'enemyArcher'], arenaId: 'iron' },
@@ -102,14 +102,14 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
   legacy: BATTLES,
   stone: [
     { name: 'Ночная засада', threat: 'Ночные охотники быстро подходят к крепости', ai: 'rush', enemyIncome: 5.8, roster: ['stoneHunter', 'stoneBone'], arenaId: 'ash' },
-    { name: 'Костяной заслон', threat: 'Костяные щиты прикрывают пращников', ai: 'wall', enemyIncome: 6.0, roster: ['stoneBone', 'stoneEnemySlinger'], arenaId: 'iron' },
-    { name: 'Тропа стаи', threat: 'Вожак стаи ведёт быстрые атаки', ai: 'ranged', enemyIncome: 6.1, roster: ['stoneWolf', 'stoneEnemySlinger', 'stoneHunter'], arenaId: 'arrows' },
-    { name: 'Вождь Чёрного камня', threat: 'При 50% здоровья крепости вождь выходит в бой', ai: 'boss', enemyIncome: 6.4, roster: ['stoneChief', 'stoneBone', 'stoneHunter'], arenaId: 'citadel' }
+    { name: 'Костяной заслон', threat: 'Костяные щиты прикрывают пращников', ai: 'wall', enemyIncome: 8, enemyStartingSupplies: 8, roster: ['stoneBone', 'stoneEnemySlinger'], arenaId: 'iron' },
+    { name: 'Тропа стаи', threat: 'Вожак стаи ведёт быстрые атаки', ai: 'ranged', enemyIncome: 10, enemyStartingSupplies: 10, enemyHealthMultiplier: 1.3, enemyDamageMultiplier: 1.1, roster: ['stoneWolf', 'stoneEnemySlinger', 'stoneHunter'], arenaId: 'arrows' },
+    { name: 'Вождь Чёрного камня', threat: 'При 50% здоровья крепости вождь выходит в бой', ai: 'boss', enemyIncome: 15, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.35, enemyDamageMultiplier: 1.15, enemyRecruitRoster: ['stoneBone', 'stoneHunter', 'stoneEnemySlinger'], roster: ['stoneChief', 'stoneBone', 'stoneHunter', 'stoneEnemySlinger'], arenaId: 'citadel' }
   ],
   bronze: [
-    { name: 'Дорога колесниц', threat: 'Колесницы прорываются сквозь дальний строй', ai: 'rush', enemyIncome: 6.4, roster: ['bronzeRaider', 'bronzeEnemySpear'], arenaId: 'ash' },
-    { name: 'Бронзовая фаланга', threat: 'Копейщики под прикрытием стражей ворот', ai: 'wall', enemyIncome: 6.5, roster: ['bronzeGate', 'bronzeEnemySpear'], arenaId: 'iron' },
-    { name: 'Храмовые стены', threat: 'Лучники стреляют из-за плотного строя', ai: 'ranged', enemyIncome: 6.5, roster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'arrows' },
-    { name: 'Царь Медных ворот', threat: 'При 50% здоровья крепости царь ведёт ударную волну', ai: 'boss', enemyIncome: 6.9, roster: ['bronzeKing', 'bronzeGate', 'bronzeEnemyArcher'], arenaId: 'citadel' }
+    { name: 'Дорога колесниц', threat: 'Колесницы прорываются сквозь дальний строй', ai: 'rush', enemyIncome: 13, enemyStartingSupplies: 10, enemyHealthMultiplier: 1.1, enemyDamageMultiplier: 1.05, roster: ['bronzeRaider', 'bronzeEnemySpear', 'bronzeEnemyArcher'], arenaId: 'ash' },
+    { name: 'Бронзовая фаланга', threat: 'Копейщики под прикрытием стражей ворот', ai: 'wall', enemyIncome: 15, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.15, enemyDamageMultiplier: 1.1, roster: ['bronzeGate', 'bronzeEnemySpear'], arenaId: 'iron' },
+    { name: 'Храмовые стены', threat: 'Лучники стреляют из-за плотного строя', ai: 'ranged', enemyIncome: 16, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.15, roster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'arrows' },
+    { name: 'Царь Медных ворот', threat: 'При 50% здоровья крепости царь ведёт ударную волну', ai: 'boss', enemyIncome: 17, enemyStartingSupplies: 25, enemyHealthMultiplier: 1.28, enemyDamageMultiplier: 1.15, enemyRecruitRoster: ['bronzeGate', 'bronzeEnemyArcher', 'bronzeEnemyArcher'], roster: ['bronzeKing', 'bronzeGate', 'bronzeEnemyArcher', 'bronzeRaider'], arenaId: 'citadel' }
   ]
 };

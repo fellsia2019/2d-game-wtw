@@ -1,3 +1,4 @@
+import type { EnemyBalance } from '../core/enemyBalance';
 import Phaser from 'phaser';
 import type { GameApp, GameState, HireKind, UpgradeId, DoctrineId, EraId } from '../core/types';
 import type { TalentId } from '../core/talents';
@@ -29,10 +30,20 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
     if (button.dataset.action !== 'mute') void sound.unlock();
     switch (button.dataset.action) {
       case 'start': app.startNewRun(); break;
+      case 'start-era':
+        if (app.selectEra(button.dataset.era as EraId)) app.startNewRun();
+        break;
       case 'era': app.selectEra(button.dataset.era as EraId); break;
       case 'continue': app.continueRun(); break;
       case 'hire': app.hire(button.dataset.kind as HireKind); break;
       case 'income': app.upgradeIncome(); break;
+      case 'debug-battle':
+        if (state.phase === 'preparation' && !app.setLoadout(ui.getDraftRoster())) break;
+        ui.openPanel(null);
+        app.startDebugBattle(Number(button.dataset.battle));
+        break;
+      case 'reset-enemy-balance': app.resetEnemyBalance(); break;
+      case 'battle-speed': app.setBattleSpeed(Number(button.dataset.speed)); break;
       case 'reward': app.chooseReward(button.dataset.reward as UpgradeId); break;
       case 'pause': app.togglePause(); break;
       case 'mute':
@@ -48,13 +59,27 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
       case 'book': ui.openPanel('book'); break;
       case 'records': ui.openPanel('records'); break;
       case 'talents': ui.openPanel('talents'); break;
+      case 'global-talents': ui.openPanel('globalTalents'); break;
       case 'buy-talent': app.buyTalent(button.dataset.talent as TalentId); break;
+      case 'buy-base-health': app.buyBaseHealth(); break;
+      case 'buy-global-talent': app.buyGlobalTalent(button.dataset.talent as TalentId); break;
       case 'close-panel': ui.openPanel(null); break;
       case 'back': goBack(); break;
     }
   };
+  const change = (event: Event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.dataset.debugParam) return;
+    const row = input.closest<HTMLElement>('[data-debug-row]')!;
+    const index = Number(row.dataset.debugRow);
+    const balance = { ...state.debugEnemyBalance[index] };
+    balance[input.dataset.debugParam as keyof EnemyBalance] = input.value.trim() ? input.valueAsNumber : NaN;
+    if (!app.setEnemyBalance(index, balance)) {
+      input.value = String(state.debugEnemyBalance[index][input.dataset.debugParam as keyof EnemyBalance]);
+    }
+  };
   const key = (event: KeyboardEvent) => {
-    if (event.repeat || event.ctrlKey || event.altKey || event.metaKey) return;
+    if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.target instanceof HTMLInputElement) return;
     if (event.key === 'Escape') {
       event.preventDefault();
       if (state.phase === 'battle' && !state.paused) { void sound.unlock(); app.togglePause(); }
@@ -71,7 +96,7 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
     }
   };
-  root.addEventListener('click', click); window.addEventListener('keydown', key);
+  root.addEventListener('change', change); root.addEventListener('click', click); window.addEventListener('keydown', key);
   const blur = () => sound.setFocused(false);
   const focus = () => sound.setFocused(true);
   const visibility = () => sound.sync(state);
@@ -84,5 +109,5 @@ export function mountGame(root: HTMLElement, app: GameApp): () => void {
   };
   const observer = new ResizeObserver(resize); ui.layoutElements.forEach(element => observer.observe(element));
   window.visualViewport?.addEventListener('resize', resize);
-  return () => { window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('click', click); window.removeEventListener('keydown', key); sound.destroy(); game.destroy(true); root.replaceChildren(); };
+  return () => { window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); sound.destroy(); game.destroy(true); root.replaceChildren(); };
 }

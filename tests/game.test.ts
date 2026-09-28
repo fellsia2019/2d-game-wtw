@@ -49,6 +49,7 @@ describe('battle simulation', () => {
       expect(shield.action).toBe('attack');
     }
     sim.enemyFortressHp = .5;
+    for (let i = 0; i < 151; i++) { sim.enemyResource = 0; sim.step(); }
     shield.cooldown = 0;
     sim.step();
     expect(sim.report?.won).toBe(true);
@@ -99,7 +100,7 @@ describe('battle simulation', () => {
     expect(a.events).toEqual(b.events);
   });
 
-  it('rejects invalid purchases and caps income investment', () => {
+  it('rejects unaffordable purchases and upgrades income beyond two levels', () => {
     const sim = new BattleSimulation(0, [], 1);
     expect(sim.hire('shield')).toBe(false);
     expect(sim.hire('siege')).toBe(false); // outside selected four-card roster
@@ -108,20 +109,50 @@ describe('battle simulation', () => {
     expect(sim.upgradeIncome()).toBe(true);
     expect(sim.upgradeIncome()).toBe(false);
     expect(sim.income).toBe(8);
+    for (let i = 0; i < 18; i++) {
+      sim.resource = 40;
+      expect(sim.upgradeIncome()).toBe(true);
+      expect(sim.resource).toBe(0);
+    }
+    expect(sim.incomeUpgrades).toBe(20);
+    expect(sim.income).toBe(26);
   });
 
-  it('announces the commander wave before spawning it', () => {
+  it('recruits beyond twelve units and triggers the reserve for a large army', () => {
+    const sim = new BattleSimulation(0, ['lastReserve'], 1);
+    for (let i = 0; i < 40; i++) {
+      sim.resource = 100;
+      expect(sim.hire('shield')).toBe(true);
+    }
+    expect(sim.allyCount).toBe(40);
+    sim.allyFortressHp = sim.allyFortressMaxHp * .34;
+    sim.step();
+    expect(sim.allyCount).toBe(41);
+    sim.step();
+    expect(sim.allyCount).toBe(41);
+  });
+
+  it('does not cap enemy hires or discard a boss wave when the army is large', () => {
+    const sim = new BattleSimulation(3, [], 1);
+    for (let i = 0; i < 20; i++) sim.units.push({ id: 100 + i, kind: 'bulwark', team: 'enemy', x: 895,
+      hp: 70, maxHp: 70, cooldown: 100, action: 'idle', facing: -1 });
+    sim.enemyResource = 100;
+    sim.enemyFortressHp = 50;
+    for (let i = 0; i < 5 * 30; i++) sim.step();
+    expect(sim.enemyCount).toBeGreaterThanOrEqual(24);
+    expect(sim.events.some(event => event.type === 'boss-assault')).toBe(true);
+  });
+
+  it('spawns the commander wave immediately at half fortress health', () => {
     const sim = new BattleSimulation(3, [], 1);
     sim.enemyFortressHp = 50;
     sim.step();
-    expect(sim.bossPhase).toBe('warning');
-    expect(sim.bossCountdown).toBeGreaterThan(4);
-    expect(sim.events.some(e => e.type === 'boss-warning')).toBe(true);
-    for (let i = 0; i < 130; i++) sim.step();
-    expect(sim.bossPhase).toBe('warning');
-    for (let i = 0; i < 8; i++) sim.step();
+    expect(sim.bossPhase).toBe('assault');
+    expect(sim.bossCountdown).toBe(0);
     expect(sim.events.some(e => e.type === 'boss-assault')).toBe(true);
-    expect(sim.units.filter(u => u.team === 'enemy').length).toBeGreaterThanOrEqual(3);
+    expect(sim.units.filter(u => u.team === 'enemy').length).toBe(3);
+    sim.step();
+    expect(sim.events.filter(e => e.type === 'boss-assault')).toHaveLength(1);
   });
 
   it('makes losing without hires explainable and retries the current battle', () => {
@@ -193,7 +224,7 @@ describe('run and persistence', () => {
     expect(director.getState().elapsed).toBeGreaterThan(before);
   });
 
-  it('unlocks the extended roster and preserves doctrine, loadout and chosen risk', () => {
+  it('unlocks the extended roster and preserves doctrine, loadout and battle settings', () => {
     const storage = new MemoryStorage();
     storage.setItem('arena-naemnikov-records-v1', JSON.stringify({ runs: 3, wins: 1, bestBattle: 4, bestTime: 200, marks: 8 }));
     let director = new GameDirector(new SaveService(storage));
@@ -202,19 +233,18 @@ describe('run and persistence', () => {
     expect(director.setLoadout(['shield', 'raider', 'thrower', 'siege'])).toBe(true);
     expect(director.selectDoctrine('bargain')).toBe(true);
     expect(director.beginRun()).toBe(true);
-    const [standard, daring] = director.getState().contracts;
-    expect(daring.enemyIncome).toBeGreaterThan(standard.enemyIncome);
-    expect(daring.marks).toBeGreaterThan(standard.marks);
-    expect(director.chooseContract(daring.id)).toBe(true);
+    expect(director.getState().contracts).toHaveLength(1);
+    const [standard] = director.getState().contracts;
+    expect(director.chooseContract(standard.id)).toBe(true);
     director = new GameDirector(new SaveService(storage));
     director.continueRun();
     const state = director.getState();
     expect(state.selectedDoctrine).toBe('bargain');
     expect(state.roster).toEqual(['shield', 'raider', 'thrower', 'siege']);
-    expect(state.selectedContract).toBe(daring.id);
-    expect(state.enemyIncome).toBe(daring.enemyIncome);
+    expect(state.selectedContract).toBe(standard.id);
+    expect(state.enemyIncome).toBe(standard.enemyIncome);
     expect(state.resource).toBe(20);
-    expect(state.allyFortressHp).toBe(85);
+    expect(state.allyFortressHp).toBe(1);
   });
 
   it('filters rewards by the active four-card roster', () => {

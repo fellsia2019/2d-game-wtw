@@ -40,15 +40,15 @@ describe('first two eras', () => {
 
   it('uses epoch-specific enemy plans, recruits and boss waves', () => {
     for (const era of ['stone', 'bronze'] as EraId[]) {
-      const sim = new BattleSimulation(3, [], 4, 'steel', ERA_STARTER_KINDS[era], undefined, era);
+      const sim = new BattleSimulation(3, [], 4, 'steel', ERA_STARTER_KINDS[era], undefined, era, undefined, 10000);
       expect(sim.hire(ERA_STARTER_KINDS.legacy[0])).toBe(false);
       for (let i = 0; i < 1000; i++) sim.step();
       expect(sim.units.filter(u => u.team === 'enemy').every(u => ERA_BATTLES[era][3].roster.includes(u.kind))).toBe(true);
       expect(sim.units.some(u => u.kind === (era === 'stone' ? 'stoneChief' : 'bronzeKing'))).toBe(false);
       sim.enemyFortressHp = 50;
       sim.step();
-      expect(sim.bossPhase).toBe('warning');
-      for (let i = 0; i < 136; i++) sim.step();
+      expect(sim.bossPhase).toBe('assault');
+
       expect(sim.events.some(e => e.type === 'boss-assault')).toBe(true);
       expect(sim.units.some(u => u.kind === (era === 'stone' ? 'stoneChief' : 'bronzeKing'))).toBe(true);
     }
@@ -201,7 +201,7 @@ describe('era transition', () => {
       }
     }
     expect(game.getState().phase).toBe('victory');
-    expect(game.getState().talentPoints).toBe(5);
+    expect(game.getState().gold).toBeGreaterThan(0);
     expect(game.getState().unlockedEras.bronze).toBe(true);
     expect(game.selectEra('bronze')).toBe(true);
     game.startNewRun(24);
@@ -216,13 +216,16 @@ describe('era transition', () => {
 });
 
 describe('era mastery', () => {
-  it('unlocks the seventh card after a daring victory and keeps it after a loss', () => {
+  it('unlocks the seventh card after the third victory and preserves the unlock', () => {
     const storage = new MemoryStorage();
-    let game = new GameDirector(new SaveService(storage));
-    game.startNewRun(23);
-    game.selectDoctrine('steel'); game.beginRun();
-    const daring = game.getState().contracts[1];
-    expect(game.chooseContract(daring.id)).toBe(true);
+    const save = new SaveService(storage);
+    save.writeEraProgress({ unlocked: { stone: true, bronze: false, legacy: true }, wins: { stone: 2, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+    let game = new GameDirector(save);
+    game.startNewRun(23); game.selectDoctrine('steel'); game.beginRun();
+    expect(game.getState().unlockedUnits).not.toContain(ERA_HIRE_KINDS.stone[6]);
+    save.write({ ...save.load()!, battleIndex: 2, contracts: [] });
+    game = new GameDirector(save); game.continueRun();
+    expect(game.chooseContract(game.getState().contracts[0].id)).toBe(true);
     const roster = ERA_STARTER_KINDS.stone;
     const plan = [roster[0], roster[1], roster[2]];
     let purchase = 0;
@@ -231,10 +234,10 @@ describe('era mastery', () => {
       if (game.hire(plan[purchase % plan.length])) purchase++;
     }
     expect(game.getState().report?.won).toBe(true);
-    expect(game.getState().eraChallenges.stone).toBe(true);
+    expect(game.getState().eraProgress.stone).toBe(3);
     expect(game.getState().unlockedUnits).toContain(ERA_HIRE_KINDS.stone[6]);
     game = new GameDirector(new SaveService(storage));
-    expect(game.getState().eraChallenges.stone).toBe(true);
+    expect(game.getState().eraProgress.stone).toBe(3);
     game.startNewRun(12);
     expect(game.getState().unlockedUnits).toContain(ERA_HIRE_KINDS.stone[6]);
   });
@@ -340,5 +343,31 @@ describe('bronze campaign persistence', () => {
     expect(game.getState().phase).toBe('battle');
     expect(game.getState().battleIndex).toBe(1);
     expect(game.getState().chosenUpgrades).toEqual(upgrades);
+  });
+});
+
+describe('debug battle speed', () => {
+  it('accepts x1–x5, keeps fixed simulation steps and respects pause', () => {
+    const save = new SaveService(new MemoryStorage());
+    const game = new GameDirector(save);
+    expect(game.getState().battleSpeed).toBe(1);
+    for (const speed of [0, 6, 1.5, NaN, Infinity]) expect(game.setBattleSpeed(speed)).toBe(false);
+    expect(game.setBattleSpeed(5)).toBe(true);
+    game.startNewRun(23);
+    game.selectDoctrine('steel'); game.beginRun();
+    game.chooseContract(game.getState().contracts[0].id);
+    for (let i = 0; i < 150; i++) game.tick();
+    expect(game.getState().elapsed).toBeCloseTo(5);
+    expect(game.getState().gold).toBe(5);
+    game.togglePause();
+    const before = game.getState();
+    for (let i = 0; i < 150; i++) game.tick();
+    expect(game.getState().elapsed).toBe(before.elapsed);
+    expect(game.getState().gold).toBe(before.gold);
+    expect(game.setBattleSpeed(1)).toBe(true);
+    game.togglePause();
+    for (let i = 0; i < 30; i++) game.tick();
+    expect(game.getState().elapsed).toBeCloseTo(6);
+    expect(new GameDirector(save).getState().battleSpeed).toBe(1);
   });
 });

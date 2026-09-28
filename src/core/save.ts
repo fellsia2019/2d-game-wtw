@@ -1,6 +1,7 @@
-import { ERA_HIRE_KINDS, HIRE_KINDS, STARTER_KINDS, UPGRADES } from '../data/content';
+import { validEnemyBalance, type EnemyBalance, type EnemyBalanceOverrides } from './enemyBalance';
+import { ERA_HIRE_KINDS, ERA_ORDER, HIRE_KINDS, STARTER_KINDS, UPGRADES } from '../data/content';
 import type { BattleReport, ContractOption, DoctrineId, EraChallenges, EraId, EraProgress, EraUnlocks, HireKind, Records, UpgradeId } from './types';
-import { emptyTalentProgress, MAX_TALENT_LEVEL, TALENTS, type TalentProgress } from './talents';
+import { emptyTalentProgress, emptyGlobalTalents, LEGACY_POINT_GOLD, TALENTS, type TalentProgress, type GlobalTalentProgress } from './talents';
 
 export interface Checkpoint {
   version: 2 | 3;
@@ -14,6 +15,7 @@ export interface Checkpoint {
   rewards: UpgradeId[];
   contracts: ContractOption[];
   selectedContract: ContractOption | null;
+  contractRisk?: 'standard' | 'daring' | null;
   report: BattleReport | null;
   runTime: number;
 }
@@ -24,8 +26,11 @@ const PREVIOUS_KEY = 'arena-naemnikov-run-v2';
 const BACKUP = 'arena-naemnikov-run-v3-backup';
 const PREVIOUS_BACKUP = 'arena-naemnikov-run-v2-backup';
 const OLD_KEY = 'arena-naemnikov-run-v1';
+const SELECTED_ERA = 'arena-naemnikov-selected-era-v1';
 const ERA_PROGRESS = 'arena-naemnikov-eras-v1';
-const TALENT_PROGRESS = 'arena-naemnikov-talents-v1';
+const TALENT_PROGRESS = 'arena-naemnikov-talents-v2';
+const OLD_TALENT_PROGRESS = 'arena-naemnikov-talents-v1';
+const GLOBAL_TALENTS = 'arena-naemnikov-global-talents-v1';
 const RECORDS = 'arena-naemnikov-records-v1';
 const EMPTY: Records = { runs: 0, wins: 0, bestBattle: 0, bestTime: null, marks: 0 };
 
@@ -69,6 +74,33 @@ export class SaveService {
   }
 
 
+  loadEnemyBalance(): EnemyBalanceOverrides {
+    try {
+      const raw = JSON.parse(this.storage?.getItem('arena-naemnikov-debug-balance-v1') ?? '{}');
+      const result: EnemyBalanceOverrides = {};
+      for (const era of ['stone', 'bronze', 'legacy'] as const) {
+        if (Array.isArray(raw?.[era]) && raw[era].length === 4 && raw[era].every(validEnemyBalance))
+          result[era] = raw[era].map((row: EnemyBalance) => ({ ...row }));
+      }
+      return result;
+    } catch { return {}; }
+  }
+
+  writeEnemyBalance(value: EnemyBalanceOverrides): void {
+    try { this.storage?.setItem('arena-naemnikov-debug-balance-v1', JSON.stringify(value)); } catch { /* ignored */ }
+  }
+
+  loadSelectedEra(): EraId | null {
+    try {
+      const id = this.storage?.getItem(SELECTED_ERA);
+      return id === 'stone' || id === 'bronze' || id === 'legacy' ? id : null;
+    } catch { return null; }
+  }
+
+  writeSelectedEra(id: EraId): void {
+    try { this.storage?.setItem(SELECTED_ERA, id); } catch { /* game remains playable */ }
+  }
+
   loadEraProgress(): { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges } {
     const fallback = { unlocked: { stone: true, bronze: false, legacy: true }, wins: { stone: 0, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } };
     if (!this.storage) return fallback;
@@ -90,30 +122,69 @@ export class SaveService {
     try { this.storage?.setItem(ERA_PROGRESS, JSON.stringify(progress)); } catch { /* storage may be blocked */ }
   }
 
-  loadTalents(): TalentProgress {
-    const fallback = emptyTalentProgress();
-    if (!this.storage) return fallback;
+  loadTalents(eraId: EraId = 'stone'): TalentProgress {
+    return this.loadTalentWallets()[eraId];
+  }
+
+  loadGlobalTalents(): GlobalTalentProgress {
+    const fallback = emptyGlobalTalents();
     try {
-      const stored = this.storage.getItem(TALENT_PROGRESS);
-      if (stored === null) {
-        fallback.points = Math.min(60, this.loadRecords().marks);
-        this.writeTalents(fallback);
+      const stored = this.storage?.getItem(GLOBAL_TALENTS);
+      if (!stored) {
+        // Honour a transition already completed in the previous game version.
+        if (this.loadEraProgress().wins.bronze > 0 || this.load()?.eraId === 'bronze') {
+          fallback.points = 1; fallback.advancedEras = ['bronze'];
+        }
+        this.writeGlobalTalents(fallback);
         return fallback;
       }
-      const raw: unknown = JSON.parse(stored);
-      if (!raw || typeof raw !== 'object') return fallback;
-      const data = raw as Partial<TalentProgress>;
-      if (!Number.isSafeInteger(data.points) || data.points! < 0 || !data.levels ||
-        !Object.keys(TALENTS).every(id => {
-          const level = data.levels?.[id as keyof typeof TALENTS];
-          return Number.isInteger(level) && level! >= 0 && level! <= MAX_TALENT_LEVEL;
-        })) return fallback;
-      return { points: data.points!, levels: { ...fallback.levels, ...data.levels } };
+      const raw = JSON.parse(stored) as GlobalTalentProgress | null;
+      if (!raw || !validTalents({ gold: raw.points, levels: raw.levels })
+        || !Array.isArray(raw.advancedEras) || raw.advancedEras.some(id => !ERA_ORDER.slice(1).includes(id as EraId))
+        || new Set(raw.advancedEras).size !== raw.advancedEras.length) return fallback;
+      return { points: raw.points, levels: { ...raw.levels }, advancedEras: [...raw.advancedEras] };
     } catch { return fallback; }
   }
 
-  writeTalents(progress: TalentProgress): void {
-    try { this.storage?.setItem(TALENT_PROGRESS, JSON.stringify(progress)); } catch { /* game remains playable */ }
+  writeGlobalTalents(progress: GlobalTalentProgress): void {
+    try { this.storage?.setItem(GLOBAL_TALENTS, JSON.stringify(progress)); } catch { /* game remains playable */ }
+  }
+
+  private loadTalentWallets(): Record<EraId, TalentProgress> {
+    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), legacy: emptyTalentProgress() };
+    if (!this.storage) return wallets;
+    try {
+      const current = this.storage.getItem(TALENT_PROGRESS);
+      if (current !== null) {
+        const raw = JSON.parse(current) as { version?: number; eras?: Partial<Record<EraId, TalentProgress>> } | null;
+        if (raw?.version !== 2 || !raw.eras) return wallets;
+        for (const era of ['stone', 'bronze', 'legacy'] as const) {
+          const progress = raw.eras[era];
+          if (validTalents(progress)) wallets[era] = { gold: progress.gold, levels: { ...progress.levels }, ...(progress.baseLevel !== undefined ? { baseLevel: progress.baseLevel } : {}) };
+        }
+        return wallets;
+      }
+      // Transfer the old global profile once, into its current campaign only.
+      // Newly entered eras always begin with an empty wallet and no talents.
+      const checkpoint = this.load();
+      const era = checkpoint ? checkpoint.eraId ?? 'legacy'
+        : this.loadEraProgress().wins.bronze > 0 ? 'bronze' : 'stone';
+      const stored = this.storage.getItem(OLD_TALENT_PROGRESS);
+      if (stored !== null) {
+        const old = JSON.parse(stored) as { points?: number; levels?: TalentProgress['levels'] } | null;
+        const progress = { gold: (old?.points ?? NaN) * LEGACY_POINT_GOLD, levels: old?.levels };
+        if (validTalents(progress)) wallets[era] = { gold: progress.gold, levels: { ...progress.levels }, ...(progress.baseLevel !== undefined ? { baseLevel: progress.baseLevel } : {}) };
+      } else wallets[era].gold = Math.min(60, this.loadRecords().marks) * LEGACY_POINT_GOLD;
+      this.storage.setItem(TALENT_PROGRESS, JSON.stringify({ version: 2, eras: wallets }));
+      return wallets;
+    } catch { return wallets; }
+  }
+
+  writeTalents(progress: TalentProgress, eraId: EraId = 'stone'): void {
+    if (!validTalents(progress)) return;
+    const wallets = this.loadTalentWallets();
+    wallets[eraId] = { gold: progress.gold, levels: { ...progress.levels }, ...(progress.baseLevel !== undefined ? { baseLevel: progress.baseLevel } : {}) };
+    try { this.storage?.setItem(TALENT_PROGRESS, JSON.stringify({ version: 2, eras: wallets })); } catch { /* game remains playable */ }
   }
 
   loadRecords(): Records {
@@ -134,6 +205,17 @@ export class SaveService {
   }
 }
 
+function validTalents(value: unknown): value is TalentProgress {
+  if (!value || typeof value !== 'object') return false;
+  const data = value as Partial<TalentProgress>;
+  return Number.isSafeInteger(data.gold) && data.gold! >= 0 && !!data.levels
+    && (data.baseLevel === undefined || (Number.isSafeInteger(data.baseLevel) && data.baseLevel >= 0))
+    && Object.keys(TALENTS).every(id => {
+      const level = data.levels?.[id as keyof typeof TALENTS];
+      return Number.isSafeInteger(level) && level! >= 0;
+    });
+}
+
 function valid(value: unknown): value is Checkpoint {
   if (!value || typeof value !== 'object') return false;
   const v = value as Partial<Checkpoint>;
@@ -145,6 +227,7 @@ function valid(value: unknown): value is Checkpoint {
     && Array.isArray(v.roster) && v.roster.length === 4 && new Set(v.roster).size === 4 && v.roster.every(id => (v.version === 2 ? HIRE_KINDS : ERA_HIRE_KINDS[v.eraId!]).includes(id))
     && Array.isArray(v.upgrades) && v.upgrades.every(id => ids.includes(id))
     && Array.isArray(v.rewards) && v.rewards.every(id => ids.includes(id))
+    && (v.contractRisk === undefined || v.contractRisk === null || v.contractRisk === 'standard' || v.contractRisk === 'daring')
     && Array.isArray(v.contracts) && v.contracts.every(c => !!c && typeof c.id === 'string' && typeof c.name === 'string')
     && (!v.selectedContract || typeof v.selectedContract.id === 'string')
     && Number.isFinite(v.runTime) && v.runTime! >= 0

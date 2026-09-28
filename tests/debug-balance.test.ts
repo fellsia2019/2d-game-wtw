@@ -1,0 +1,94 @@
+import { expect, it } from 'vitest';
+import { GameDirector } from '../src/core/GameDirector';
+import { SaveService, type StorageLike } from '../src/core/save';
+import { BattleSimulation } from '../src/core/BattleSimulation';
+import { enemyBalanceDefaults } from '../src/core/enemyBalance';
+class MemoryStorage implements StorageLike {
+  values = new Map<string, string>();
+  getItem(key: string) { return this.values.get(key) ?? null; }
+  setItem(key: string, value: string) { this.values.set(key, value); }
+  removeItem(key: string) { this.values.delete(key); }
+}
+const custom = { income: 20, startSupplies: 45, hpBonus: 50, damageBonus: 25 };
+function setup() {
+  const save = new SaveService(new MemoryStorage());
+  save.writeEraProgress({ unlocked: { stone: true, bronze: true, legacy: true },
+    wins: { stone: 4, bronze: 0, legacy: 0 }, challenges: { stone: false, bronze: false, legacy: false } });
+  return { save, game: new GameDirector(save) };
+}
+it('persists editable rows independently of other eras and resets to configured defaults', () => {
+  const { save, game } = setup();
+  expect(game.setEnemyBalance(0, custom)).toBe(true);
+  const restored = new GameDirector(save);
+  expect(restored.getState().debugEnemyBalance[0]).toEqual(custom);
+  restored.selectEra('stone');
+  expect(restored.getState().debugEnemyBalance).toEqual(enemyBalanceDefaults('stone'));
+  restored.selectEra('bronze'); restored.resetEnemyBalance();
+  expect(new GameDirector(save).getState().debugEnemyBalance).toEqual(enemyBalanceDefaults('bronze'));
+});
+it('keeps active combat unchanged and applies edits on retry', () => {
+  const { game } = setup();
+  game.startNewRun(23); game.selectDoctrine('steel'); game.beginRun();
+  game.chooseContract(game.getState().contracts[0].id);
+  const sim = (game as unknown as { simulation: BattleSimulation }).simulation;
+  game.setEnemyBalance(0, custom);
+  expect(game.getState().enemyIncome).toBe(13);
+  sim.allyFortressHp = 0; game.tick();
+  expect(game.retryBattle()).toBe(true);
+  const retry = (game as unknown as { simulation: BattleSimulation }).simulation;
+  expect(retry.enemyResource).toBe(45);
+  expect(retry.enemyIncome).toBe(20);
+  expect(retry.enemyBalance).toEqual(custom);
+  for (let i = 0; i < 76; i++) game.tick();
+  expect(game.getState().units.find(unit => unit.kind === 'bronzeRaider')?.maxHp).toBe(59);
+});
+it('rejects empty, non-finite, negative and out-of-range values without overwriting valid rows', () => {
+  const { game } = setup();
+  const initial = game.getState().debugEnemyBalance;
+  for (const income of [NaN, Infinity, -1, 1001]) expect(game.setEnemyBalance(0, { ...custom, income })).toBe(false);
+  expect(game.setEnemyBalance(4, custom)).toBe(false);
+  expect(game.getState().debugEnemyBalance).toEqual(initial);
+});
+
+
+it('starts any debug battle with current army, talents, speed and edited balance', () => {
+  const { save } = setup();
+  save.writeTalents({ gold: 123, levels: { damage: 2, health: 1, attackSpeed: 0, supply: 1 } }, 'bronze');
+  const app = new GameDirector(save);
+  app.setEnemyBalance(3, custom);
+  app.setBattleSpeed(5);
+  const roster = app.getState().roster;
+  for (const index of [2, 0, 3, 1, 1]) {
+    expect(app.startDebugBattle(index)).toBe(true);
+    const state = app.getState();
+    expect(state.phase).toBe('battle');
+    expect(state.battleIndex).toBe(index);
+    expect(state.eraId).toBe('bronze');
+    expect(state.elapsed).toBe(0);
+    expect(state.units).toHaveLength(0);
+    expect(state.roster).toEqual(roster);
+    expect(state.gold).toBe(123);
+    expect(state.talents.damage).toBe(2);
+    expect(state.battleSpeed).toBe(5);
+    expect(save.load()?.battleIndex).toBe(index);
+    if (index === 3) expect(state.enemyIncome).toBe(20);
+    app.tick();
+    app.togglePause();
+  }
+  expect(app.getState().paused).toBe(true);
+  app.startDebugBattle(3);
+  expect(app.getState().paused).toBe(false);
+  const restored = new GameDirector(save); restored.continueRun();
+  expect(restored.getState().battleIndex).toBe(3);
+  expect(restored.getState().enemyIncome).toBe(20);
+});
+
+it('rejects invalid debug battle indices without disturbing active combat', () => {
+  const { game } = setup();
+  game.startDebugBattle(1);
+  game.tick();
+  const before = game.getState();
+  for (const index of [-1, 4, 1.5, NaN, Infinity]) expect(game.startDebugBattle(index)).toBe(false);
+  expect(game.getState().elapsed).toBe(before.elapsed);
+  expect(game.getState().battleIndex).toBe(1);
+});

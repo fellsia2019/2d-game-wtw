@@ -3,6 +3,7 @@ import type { BattleEvent, GameState, UnitState } from '../core/types';
 import { asset, unitArt, roleOf } from '../art/catalog';
 import { UnitMotion } from './UnitMotion';
 import { battlefieldLayout, type BattleInsets } from './BattleLayout';
+import { UNITS } from '../data/content';
 
 type Figure = { image: Phaser.GameObjects.Image; shadow: Phaser.GameObjects.Ellipse; bar: Phaser.GameObjects.Graphics; motion: UnitMotion; hurt: number; texture: string };
 
@@ -128,7 +129,8 @@ export class BattleScene extends Phaser.Scene {
   private drawUnit(unit: UnitState, dt: number, paused: boolean) {
     const figure = this.figures.get(unit.id)!;
     const pose = figure.motion.advance(dt, paused);
-    const x = this.point(pose.x), scale = this.size();
+    const isBoss = unit.kind === 'stoneChief' || unit.kind === 'bronzeKing';
+    const x = this.point(pose.x), scale = this.size() * (isBoss ? 1.5 : 1);
     const y = this.baseline() + (unit.id % 4) * (this.scale.width < 650 ? 4 : 6);
     figure.hurt = Math.max(0, figure.hurt - dt);
     figure.image.setPosition(x, y).setScale(scale).setDepth(y).setAngle(0).setFrame(pose.frame).setFlipX(pose.facing < 0);
@@ -136,11 +138,22 @@ export class BattleScene extends Phaser.Scene {
     figure.shadow.setPosition(x, y - 2).setDisplaySize(104 * scale, 22 * scale).setDepth(y - 1);
     figure.bar.clear().setDepth(y + 1);
     const barY = y - 174 * scale - 7;
-    figure.bar.fillStyle(0x11242a, .85).fillRoundedRect(x - 16, barY, 32, 4, 2);
-    figure.bar.fillStyle(unit.team === 'ally' ? 0x91dbc0 : 0xf0a188).fillRoundedRect(x - 16, barY, 32 * Math.max(0, unit.hp / unit.maxHp), 4, 2);
-    if (roleOf(unit.kind) === 'shield' || roleOf(unit.kind) === 'bulwark') {
-      figure.bar.lineStyle(1, 0xdce7c9, .8).strokeRoundedRect(x - 22, barY - 1, 4, 6, 1);
+    const barWidth = isBoss ? 56 : 32;
+    const barLeft = x - barWidth / 2;
+    const hpWidth = barWidth * Math.max(0, Math.min(1, unit.hp / unit.maxHp));
+    const armor = UNITS[unit.kind].armor;
+    figure.bar.fillStyle(0x11242a, .85).fillRoundedRect(barLeft, barY, barWidth, 5, 2);
+    figure.bar.fillStyle(isBoss ? 0xffd16f : unit.team === 'ally' ? 0x91dbc0 : 0xf0a188).fillRoundedRect(barLeft, barY, hpWidth, 5, 2);
+    if (armor > 0) {
+      // Armor is a texture within remaining HP, not an ambiguous extra glyph.
+      // Heavier armor has denser hatching; keep every stroke inside the fill.
+      figure.bar.lineStyle(1, 0xffffff, .8);
+      const spacing = armor >= .35 ? 5 : 8;
+      for (let offset = 3; offset + 3 <= hpWidth - 1; offset += spacing) {
+        figure.bar.lineBetween(barLeft + offset, barY + 4, barLeft + 3 + offset, barY + 1);
+      }
     }
+    if (isBoss) figure.bar.lineStyle(2, 0xffd16f, .8).strokeEllipse(x, y - 2, 88 * scale, 18 * scale);
     if (roleOf(unit.kind) === 'banner') figure.bar.lineStyle(1, unit.team === 'ally' ? 0xd1dd96 : 0xf1a18b, .22).strokeEllipse(x, y - 2, this.scale.width < 650 ? 65 : 140, 13);
   }
   private drawDamage() {
@@ -149,10 +162,19 @@ export class BattleScene extends Phaser.Scene {
     this.damage.setScale(scale);
     const state = this.snapshot;
     [state.allyFortressHp, state.enemyFortressHp].forEach((hp, i) => {
+      const maxHp = i === 0 ? state.allyFortressMaxHp : state.fortressMaxHp;
       const x = this.point(i * 1000) / scale, y = this.baseline() / scale;
-      if (hp / state.fortressMaxHp < .65) this.damage.lineStyle(3, 0x24272b, .9).beginPath().moveTo(x - 15, y - 75).lineTo(x - 4, y - 61).lineTo(x - 10, y - 48).lineTo(x + 5, y - 28).strokePath();
-      if (hp / state.fortressMaxHp < .3) this.damage.fillStyle(0xff9a63, .12 + Math.sin(state.elapsed * 5) * .06).fillCircle(x, y - 30, 24);
+      if (hp / maxHp < .65) this.damage.lineStyle(3, 0x24272b, .9).beginPath().moveTo(x - 15, y - 75).lineTo(x - 4, y - 61).lineTo(x - 10, y - 48).lineTo(x + 5, y - 28).strokePath();
+      if (hp / maxHp < .3) this.damage.fillStyle(0xff9a63, .12 + Math.sin(state.elapsed * 5) * .06).fillCircle(x, y - 30, 24);
     });
+    if (state.enemyGlyphRemaining > 0) {
+      const x = this.point(1000) / scale, y = this.baseline() / scale - 60;
+      const pulse = (Math.sin(state.elapsed * 5) + 1) / 2;
+      this.damage.fillStyle(0x79dfff, .13 + pulse * .08).fillEllipse(x, y, 180, 180);
+      this.damage.lineStyle(4, 0xb3f1ff, .65 + pulse * .25).strokeEllipse(x, y, 180, 180);
+      // Shield emblem on the visible side of the enemy fortress.
+      this.damage.lineStyle(3, 0xd3faff, 1).beginPath().moveTo(x - 70, y - 20).lineTo(x - 40, y - 20).lineTo(x - 40, y + 3).lineTo(x - 55, y + 18).lineTo(x - 70, y + 3).closePath().strokePath();
+    }
     if (state.bossPhase === 'warning' || state.bossPhase === 'assault') {
       const x = this.point(1000) / scale, y = this.baseline() / scale - 115;
       const pulse = (Math.sin(state.elapsed * 7) + 1) / 2;

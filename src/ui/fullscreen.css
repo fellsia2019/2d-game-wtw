@@ -37,7 +37,7 @@ body{min-width:0;min-height:0;padding:0}
 .game-shell .recruit-row{display:flex;gap:10px;min-width:0}
 .game-shell .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0}
 .game-shell .unit-card{display:flex;height:122px;min-height:0;padding:10px 11px 10px 3px;border-color:#8cb298aa;background:linear-gradient(135deg,#2c4943f2,#152f32f0);box-shadow:0 8px 26px #0005;min-width:0}
-.game-shell .unit-card:disabled{background:linear-gradient(135deg,#283e3bea,#162c30f0)}
+.game-shell .unit-card:disabled{background:var(--unavailable-bg)}
 .game-shell .portrait{width:32%;height:auto;margin:0;align-self:stretch}.game-shell .portrait img{width:120%;height:auto;max-width:112px;max-height:112px}
 .game-shell .card-copy{padding:0 0 0 3px}.game-shell .card-copy h3{font-size:clamp(16px,1.25vw,21px);margin:4px 0 5px}
 .game-shell .card-copy p{font-size:16px;min-height:28px;line-height:1.4}.game-shell .role{font-size:16px;line-height:1.35;max-height:22px}
@@ -284,11 +284,11 @@ small{font-size:16px}
 .preparation-modal .prep-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
 .preparation-modal .modal-back{position:static;margin:0;background:#a5b2b5;border:2px solid #e6ebe5;color:#122831;box-shadow:0 4px 0 #485b63;font-weight:800}
 .preparation-modal .prep-stage-label{color:#eacb89;font-size:16px;font-weight:850;letter-spacing:1.3px}
-.preparation-modal h2{font:700 clamp(32px,4vw,48px) Georgia,serif;margin:8px 0 12px}
+.preparation-modal h2{font:700 clamp(32px,4vw,48px) var(--game-font);margin:8px 0 12px}
 .preparation-modal .modal-intro{margin:0 auto 22px;max-width:670px}
 .preparation-modal .doctrines{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:28px 0 4px}
 .preparation-modal .doctrine{display:flex;flex-direction:column;min-height:215px;padding:22px;border:2px solid #f1d5a4;border-radius:9px;background:linear-gradient(145deg,#e3b779,#bc8759);box-shadow:0 6px 0 #594635;text-align:left;color:#2c241c}
-.preparation-modal .doctrine h3{font:700 27px Georgia,serif;margin:0 0 13px;color:#2b251e}
+.preparation-modal .doctrine h3{font:700 27px var(--game-font);margin:0 0 13px;color:#2b251e}
 .preparation-modal .doctrine p{font-size:17px;line-height:1.5;color:#382a22;flex:1}
 .preparation-modal .doctrine-choice{display:block;margin-top:18px;padding-top:10px;border-top:1px solid #785a3b;color:#352719;font-size:17px;font-weight:900;text-align:right}
 .preparation-modal .doctrine.selected:after{display:none}
@@ -324,3 +324,9 @@ small{font-size:16px}
  .preparation-modal .roster-card img{width:auto;height:52px}
  .preparation-modal .roster-card>b{font-size:17px;margin:5px 0}.preparation-modal .roster-card>span{flex:1}.preparation-modal .roster-card>small{margin-top:6px}
 }
+
+.game-shell .battle-gold{color:var(--gold)}
+@media(max-width:700px){.game-shell .gold-label{display:none}.game-shell .battle-gold::before{content:"◉ ";font-size:16px}.game-shell .army{overflow:hidden;text-overflow:ellipsis}}
+
+.game-shell .battle-wallet{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid #a5864855;border-radius:8px;background:#162e32;color:#efce7d;font-size:16px;white-space:nowrap}.battle-wallet .ui-icon{width:24px;height:24px}
+@media(max-width:420px){.game-shell .tools{gap:4px}.game-shell .battle-wallet{padding:5px 6px}.battle-wallet .ui-icon{width:20px;height:20px}.game-shell .battle-wallet b{max-width:90px;overflow:hidden;text-overflow:ellipsis}}

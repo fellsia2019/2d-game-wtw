@@ -1,3 +1,4 @@
+import type { EnemyBalance } from './enemyBalance';
 import type { TalentId, TalentLevels } from './talents';
 export type Team = 'ally' | 'enemy';
 export type EraId = 'stone' | 'bronze' | 'legacy';
@@ -53,6 +54,7 @@ export interface EraProgress { stone: number; bronze: number; legacy: number; }
 export interface EraUnlocks { stone: boolean; bronze: boolean; legacy: boolean; }
 export type EraChallenges = EraUnlocks;
 export interface BattleReport {
+  goldEarned?: number; // absent in older saved reports
   won: boolean;
   reason: string;
   duration: number;
@@ -73,7 +75,11 @@ export interface GameState {
   unlockedEras: EraUnlocks;
   eraProgress: EraProgress;
   eraChallenges: EraChallenges;
-  talentPoints: number;
+  gold: number;
+  battleGold: number;
+  baseLevel: number;
+  globalTalentPoints: number;
+  globalTalents: TalentLevels;
   talents: TalentLevels;
   battleIndex: number; // zero based; 0..3
   arenaId: 'ash' | 'iron' | 'arrows' | 'citadel';
@@ -81,18 +87,18 @@ export interface GameState {
   threat: string;
   elapsed: number;
   resource: number;
-  resourceMax: number;
   income: number;
   enemyIncome: number;
   bossPhase: BossPhase;
   bossCountdown: number;
+  enemyGlyphRemaining: number;
   incomeUpgrades: number;
   incomeUpgradeCost: number;
   allyFortressHp: number;
   enemyFortressHp: number;
   fortressMaxHp: number;
+  allyFortressMaxHp: number;
   allyCount: number;
-  allyLimit: number;
   units: UnitState[];
   events: BattleEvent[]; // recent events, keyed by id for one-shot visuals
   cards: { kind: HireKind; name: string; role: string; cost: number; canHire: boolean }[];
@@ -102,9 +108,12 @@ export interface GameState {
   selectedDoctrine: DoctrineId | null;
   contracts: ContractOption[];
   selectedContract: string | null;
+  contractRisk: 'standard' | 'daring' | null;
   rewards: RewardOption[];
   chosenUpgrades: UpgradeId[];
   report: BattleReport | null;
+  battleSpeed: number;
+  debugEnemyBalance: EnemyBalance[];
   paused: boolean;
   muted: boolean;
   canContinue: boolean;
@@ -118,6 +127,8 @@ export interface GameApp {
   selectEra(id: EraId): boolean;
   returnToMenu(): boolean;
   buyTalent(id: TalentId): boolean;
+  buyGlobalTalent(id: TalentId): boolean;
+  buyBaseHealth(): boolean;
   startNewRun(seed?: number, eraId?: EraId): void;
   continueRun(): void;
   selectDoctrine(id: DoctrineId): boolean;
@@ -128,6 +139,10 @@ export interface GameApp {
   hire(kind: HireKind): boolean;
   upgradeIncome(): boolean;
   chooseReward(id: UpgradeId): boolean;
+  setBattleSpeed(speed: number): boolean;
+  startDebugBattle(battleIndex: number): boolean;
+  setEnemyBalance(battleIndex: number, balance: EnemyBalance): boolean;
+  resetEnemyBalance(): void;
   togglePause(): void;
   toggleMute(): void;
   dispose(): void;
