@@ -27,7 +27,7 @@ for (const enemy of [false,true]) for (const role of industrialRoles) {
 const manifest = { era:'industrial', status:'draft-awaiting-approval', gameIntegrated:false, modelCount:8, roles:industrialRoles, names:industrialNames, palettes:['ally','enemy'], frameWidth:320, frameHeight:192, framesPerModel:16, origin:[160,176], sheets };
 writeFileSync(`${directory}/manifest.json`,JSON.stringify(manifest,null,2));
 for(const scale of [1,.52,.34]) {
- const cellWidth=scale===1?320:208,rowHeight=scale===1?216:132;
+ const cellWidth=scale===1?320:300,rowHeight=scale===1?216:132;
  let body='<rect width="100%" height="100%" fill="#203239"/>';
  industrialRoles.forEach((role,index)=>{
   for(const enemy of [false,true])for(const [poseIndex,[label,frame]] of poses.entries()) {

@@ -3,11 +3,15 @@ import { unitArt, eraName, asset, roleOf } from './catalog';
 import './sprite-lab.css';
 import type { EraId } from '../core/types';
 import manifest from '../../public/assets/sprite-manifest.json';
+import industrialDraft from '../../public/drafts/industrial/manifest.json';
 import { medievalSignalFrame, medievalTreatmentFrame } from './medieval-motion';
 import { standardFrame } from '../view/SupportMotion';
 
-type Era = EraId;
-const labEraName = eraName;
+type Era = EraId | 'industrial';
+type LabEntry = { id: string; unit: { name: string; role: string; period: number }; era: Era; art: string; artRole: string; boss: boolean; draft: boolean };
+const labEraOrder: Era[] = [...ERA_ORDER, 'industrial'];
+const labEraName = (value: Era) => value === 'industrial' ? 'Индустриальная эпоха · черновик' : eraName(value);
+const roleNames: Record<string, string> = { shield: 'Защитник', spear: 'Против брони', archer: 'Дальний бой', medic: 'Лечение', raider: 'Быстрый прорыв', thrower: 'Урон по группе', banner: 'Поддержка', siege: 'Осада' };
 // Findings from docs/SPRITE_SIZE_REVIEW.md; keyed by art so aliases share the tag.
 const smallModels: Record<string, string> = {
  'bronze-u-raider': 'Мелкий конь колесницы; возница ×0,8.',
@@ -26,13 +30,15 @@ const correctedModels: Record<string, string> = {
  'renaissance-u-siege': 'Расчёт увеличен с ×0,52 до ×0,9; пушка ×1,3.'
 };
 const atlasFrames = (era: Era, role: string) => {
+ if (era === 'industrial') return industrialDraft.framesPerModel;
  const counts = (manifest.eraFrameCounts ?? {}) as Partial<Record<Era, Record<string, number>>>;
  return counts[era]?.[role] ?? (role === 'banner' ? 48 : 16);
 };
 type Pose = 'idle' | 'ready' | 'move' | 'attack';
-const entries = Object.entries(UNITS).map(([id, unit]) => ({
- id, unit, era: unitArt[id].split('-u-')[0] as Era, art: unitArt[id], artRole: roleOf(id), boss: isBoss(id as keyof typeof UNITS)
-})).sort((a,b) => ERA_ORDER.indexOf(a.era)-ERA_ORDER.indexOf(b.era));
+const entries: LabEntry[] = [
+ ...Object.entries(UNITS).map(([id, unit]) => ({ id, unit, era: unitArt[id].split('-u-')[0] as Era, art: unitArt[id], artRole: roleOf(id), boss: isBoss(id as keyof typeof UNITS), draft: false })),
+ ...industrialDraft.roles.map((role, index) => ({ id: `industrial-draft-${role}`, unit: { name: industrialDraft.names[index], role: roleNames[role], period: 1.2 }, era: 'industrial' as const, art: `industrial-u-${role}`, artRole: role, boss: false, draft: true }))
+].sort((a,b) => labEraOrder.indexOf(a.era)-labEraOrder.indexOf(b.era));
 const models = new Set(entries.map(entry => entry.art));
 const primaryIds = new Set<string>();
 const seen = new Set<string>();
@@ -40,10 +46,10 @@ for (const entry of entries) if (!seen.has(entry.art)) { primaryIds.add(entry.id
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
- <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Все игровые модели, обе стороны и полные циклы движения и действия. Одинаковый масштаб и линия опоры позволяют сравнивать размеры. Боссы показаны с игровым увеличением ×1,5.</p><div class="summary"><b>${ERA_ORDER.length} эпох</b><span>${models.size} моделей · ${manifest.sheets.length} атласов</span><span>${entries.length} игровых ID · 16 / 48 кадров</span></div></header>
+ <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Принятые игровые модели и отдельный черновик Индустриальной эпохи. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${labEraOrder.length} эпох, одна на апрув</b><span>${models.size} моделей · ${manifest.sheets.length + industrialDraft.sheets.length} атласов</span><span>${entries.length - industrialDraft.roles.length} игровых ID + ${industrialDraft.roles.length} черновиков · 16 / 48 кадров</span></div></header>
  <form class="controls" onsubmit="return false">
-  <label>Эпоха<select id="era"><option value="all">Все эпохи</option>${ERA_ORDER.map(id => `<option value="${id}">${eraName(id)}</option>`).join('')}</select></label>
-  <label>Каталог<select id="catalog"><option value="models">Уникальные модели</option><option value="ids">Все игровые ID / боссы</option></select></label>
+  <label>Эпоха<select id="era"><option value="all">Все эпохи</option>${labEraOrder.map(id => `<option value="${id}">${labEraName(id)}</option>`).join('')}</select></label>
+  <label>Каталог<select id="catalog"><option value="models">Уникальные модели</option><option value="ids">Все ID / боссы</option></select></label>
   <label>Роль<select id="role"><option value="all">Все роли</option>${[['shield','Защитник'],['spear','Против брони'],['archer','Дальний бой'],['medic','Лечение'],['raider','Прорыв / конница'],['thrower','Урон по группе'],['banner','Поддержка'],['siege','Осада'],['bulwark','Страж'],['boss','Особая модель босса']].map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label>
   <label>Сторона<select id="team"><option value="both">Обе стороны</option><option value="ally">Союзники</option><option value="enemy">Противники</option></select></label>
   <label>Поза<select id="pose"><option value="move">Ходьба</option><option value="attack">Действие роли</option><option value="idle">Стойка</option><option value="ready">Готовность</option></select></label>
@@ -89,14 +95,14 @@ for (const entry of entries) {
  article.dataset.small = String(Boolean(smallModels[entry.art]));
  article.dataset.corrected = String(Boolean(correctedModels[entry.art]));
  article.dataset.era = entry.era; article.dataset.id = entry.id; article.dataset.role = entry.artRole;
- article.dataset.searchId = `${entry.id} ${entry.unit.name} ${entry.unit.role} ${entry.artRole} ${eraName(entry.era)}`.toLocaleLowerCase('ru');
+ article.dataset.searchId = `${entry.id} ${entry.unit.name} ${entry.unit.role} ${entry.artRole} ${labEraName(entry.era)}`.toLocaleLowerCase('ru');
  const aliases = entries.filter(other => other.art === entry.art);
- article.dataset.search = aliases.map(other => `${other.id} ${other.unit.name} ${other.unit.role}`).join(' ').concat(` ${eraName(entry.era)} ${entry.artRole}`).toLocaleLowerCase('ru');
+ article.dataset.search = aliases.map(other => `${other.id} ${other.unit.name} ${other.unit.role}`).join(' ').concat(` ${labEraName(entry.era)} ${entry.artRole}`).toLocaleLowerCase('ru');
  const role = entry.art;
- article.innerHTML = `<div class="unit-heading"><div><span class="eyebrow">${labEraName(entry.era)}</span><h2>${entry.unit.name}</h2>${smallModels[entry.art] ? `<div class="size-warning"><span>Мелкая модель</span><p>${smallModels[entry.art]}</p></div>` : ''}${correctedModels[entry.art] ? `<div class="size-warning size-corrected"><span>Размер исправлен</span><p>${correctedModels[entry.art]}</p></div>` : ''}<p>${entry.unit.role}</p></div><code>${entry.id}</code></div><div class="variants"></div><footer><span>320 × 192 · опора 160,176</span><span>${role}${entry.boss ? ' · босс ×1,5' : ''}</span></footer>`;
+ article.innerHTML = `<div class="unit-heading"><div><span class="eyebrow">${labEraName(entry.era)}</span><h2>${entry.unit.name}</h2>${entry.draft ? '<div class="draft-warning">Черновик · ждёт апрува · в игре нет</div>' : ''}${smallModels[entry.art] ? `<div class="size-warning"><span>Мелкая модель</span><p>${smallModels[entry.art]}</p></div>` : ''}${correctedModels[entry.art] ? `<div class="size-warning size-corrected"><span>Размер исправлен</span><p>${correctedModels[entry.art]}</p></div>` : ''}<p>${entry.unit.role}</p></div><code>${entry.id}</code></div><div class="variants"></div><footer><span>320 × 192 · опора 160,176</span><span>${role}${entry.boss ? ' · босс ×1,5' : ''}</span></footer>`;
  const variants = article.querySelector('.variants')!;
  for (const enemy of [false, true]) {
-  const key = `${enemy ? 'enemy-' : ''}${role}`, portrait = asset(key), sheet = portrait.replace('.svg', '-sheet.png');
+  const key = `${enemy ? 'enemy-' : ''}${role}`, portrait = entry.draft ? `${import.meta.env.BASE_URL}drafts/industrial/${key}.svg` : asset(key), sheet = portrait.replace('.svg', '-sheet.png');
   const block = document.createElement('section'); block.dataset.team = enemy ? 'enemy' : 'ally';
   block.innerHTML = `<div class="team-label ${enemy ? 'enemy' : ''}">${enemy ? 'ПРОТИВНИК' : 'СОЮЗНИК'}</div><div class="stage"><canvas width="480" height="288" aria-label="${entry.unit.name}, ${enemy ? 'противник' : 'союзник'}"></canvas></div><div class="links"><button type="button">${atlasFrames(entry.era, labRole(entry.id))} кадров ↗</button><a href="${portrait}" target="_blank" rel="noopener">SVG</a><a href="${sheet}" target="_blank" rel="noopener">PNG-атлас</a></div>`;
   const image = imageFor(sheet);
@@ -119,7 +125,7 @@ function filter() {
  }
  slider.max = hasBanner ? '47' : '15';
  if (manual !== null) manual = Math.min(manual, Number(slider.max));
- document.querySelector('#count')!.textContent = `Показано ${count} из ${catalog.value === 'models' ? models.size : entries.length} ${catalog.value === 'models' ? 'моделей' : 'игровых ID'}`;
+ document.querySelector('#count')!.textContent = `Показано ${count} из ${catalog.value === 'models' ? models.size : entries.length} ${catalog.value === 'models' ? 'моделей' : 'ID каталога'}`;
  document.querySelector<HTMLElement>('#empty')!.hidden = count > 0;
  const query = new URLSearchParams();
  if (small.checked) query.set('size','small');
@@ -131,7 +137,7 @@ function filter() {
  history.replaceState(null,'',`${location.pathname}${query.size ? '?' + query : ''}`);
 }
 const params = new URLSearchParams(location.search);
-if (ERA_ORDER.includes(params.get('era') as Era)) era.value = params.get('era')!;
+if (labEraOrder.includes(params.get('era') as Era)) era.value = params.get('era')!;
 search.value = params.get('search') ?? '';
 small.checked = params.get('size') === 'small';
 corrected.checked = params.get('size') === 'corrected';
@@ -161,7 +167,7 @@ function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: E
  for (let frame = 0; frame < atlasFrames(arena, role); frame++) {
   const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = boss ? 480 : 320; canvas.height = boss ? 300 : 220;
   const walkLabel = ['контакт','амортизация','пронос стопы','отталкивание'][(frame-2)%4];
-  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
+  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'industrial' ? 'работа инструментом' : arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
   const stage = document.createElement('div'); stage.className = 'stage';
   canvas.style.width = `${canvas.width}px`; canvas.style.height = `${canvas.height}px`; stage.append(canvas);
   figure.append(stage, caption); frames.append(figure); items.push({ canvas, image, enemy, arena, role, frame, period, boss });
@@ -176,7 +182,7 @@ pose.onchange = () => { manual = null; time = 0; };
 function currentFrame(role = displayRole, era = displayEra, period = entries.find(entry=>entry.era === era && entry.artRole === role)?.unit.period ?? 1.2) {
  if (manual !== null) return Math.min(manual,atlasFrames(era, role) - 1);
  const state = pose.value as Pose;
- if (state === 'attack' && role === 'banner') return era === 'medieval' ? medievalSignalFrame(time) : ['high-medieval','renaissance'].includes(era) ? 16 + Math.floor(time * 16) % 32 : standardFrame(time);
+ if (state === 'attack' && role === 'banner' && era !== 'industrial') return era === 'medieval' ? medievalSignalFrame(time) : ['high-medieval','renaissance'].includes(era) ? 16 + Math.floor(time * 16) % 32 : standardFrame(time);
  if (state === 'attack' && atlasFrames(era,role) === 48) return 16 + (Math.floor(time / period * 32) + (era === 'renaissance' ? 7 : 0)) % 32;
  if (era === 'medieval' && state === 'attack' && role === 'medic') return medievalTreatmentFrame(time);
  if (era === 'medieval' && state === 'move' && ['medic','raider'].includes(role)) return 2 + Math.floor(time * (role === 'medic' ? 8 : 10)) % 8;

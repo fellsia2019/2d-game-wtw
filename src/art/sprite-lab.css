@@ -7,3 +7,4 @@ main.compare{grid-template-columns:repeat(3,minmax(0,1fr))}.compare .unit-headin
 .size-filter{color:#f2c18a}.size-warning{margin-top:8px}.size-warning>span{display:inline-block;padding:3px 8px;border:1px solid #b6814d;border-radius:20px;background:#49372b;color:#ffd09b;font:600 12px/1.5 "Segoe UI",sans-serif}.size-warning p,.compare .unit-heading .size-warning p{display:block;margin-top:5px;color:#e6b98c;font-size:12px;line-height:1.45}
 
 .corrected-filter{color:#a5dfc2}.size-corrected>span{border-color:#558c78;background:#28473d;color:#b5edd0}.unit-heading .size-corrected p,.compare .unit-heading .size-corrected p{color:#a5d2bc}
+.draft-warning{display:inline-block;margin:5px 0;padding:4px 9px;border:1px solid #b99b65;border-radius:20px;background:#4b3b2a;color:#f1d2a0;font-size:12px;font-weight:700}
