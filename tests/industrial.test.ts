@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import manifest from '../public/assets/sprite-manifest.json';
 import { BattleSimulation } from '../src/core/BattleSimulation';
+import { enemyBalanceDefaults } from '../src/core/enemyBalance';
 import { GameDirector } from '../src/core/GameDirector';
 import { SaveService, type StorageLike } from '../src/core/save';
 import { ERA_HIRE_KINDS, UNITS, nextEra, unitRole, victoryGold } from '../src/data/content';
@@ -43,6 +44,7 @@ it('unlocks after Renaissance and keeps its own wallet and eight approved models
 });
 
 it('deploys howitzers and the baron with approved shield art and final scaling',()=>{
+  expect(enemyBalanceDefaults('industrial')[3]).toEqual({ income: 55, startSupplies: 60, hpBonus: 62, damageBonus: 62 });
   const siege=new BattleSimulation(2,[],23,'steel',undefined,undefined,'industrial',undefined,10000);
   siege.enemyResource=500;for(let i=0;i<85;i++)siege.step();
   expect(siege.units.some(u=>u.kind==='industrialDemolition')).toBe(true);
@@ -52,8 +54,8 @@ it('deploys howitzers and the baron with approved shield art and final scaling',
   expect(finale.units.some(u=>u.kind==='industrialBaron')).toBe(false);
   finale.enemyFortressHp=50;finale.step();
   expect(finale.bossPhase).toBe('assault');
-  expect(finale.units.find(u=>u.kind==='industrialBaron')?.maxHp).toBe(Math.round(1400*1.55));
-  expect(UNITS.industrialBaron.damage*1.55).toBeCloseTo(43*1.55);
+  expect(finale.units.find(u=>u.kind==='industrialBaron')?.maxHp).toBe(Math.round(1400*1.62));
+  expect(UNITS.industrialBaron.damage*1.62).toBeCloseTo(69.66);
   expect(UNITS.industrialBaron.armor).toBe(.52);
 });
 
