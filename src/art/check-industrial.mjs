@@ -4,8 +4,9 @@ import { createHash } from 'node:crypto';
 import { Resvg } from '@resvg/resvg-js';
 import { industrialRig, industrialRoles } from './industrial-rig.mjs';
 
-const manifest = JSON.parse(readFileSync('public/drafts/industrial/manifest.json', 'utf8'));
-if (manifest.status !== 'draft-awaiting-approval' || manifest.gameIntegrated !== false || manifest.modelCount !== 8 || manifest.roles.join() !== industrialRoles.join() || manifest.sheets.length !== 16) throw Error('Industrial draft manifest is inconsistent');
+const manifest = JSON.parse(readFileSync('public/assets/industrial-manifest.json', 'utf8'));
+const gameManifest = JSON.parse(readFileSync('public/assets/sprite-manifest.json', 'utf8'));
+if (manifest.status !== 'approved' || manifest.gameIntegrated !== true || manifest.modelCount !== 8 || manifest.roles.join() !== industrialRoles.join() || manifest.sheets.length !== 16 || !gameManifest.eras.includes('industrial') || !manifest.sheets.every(sheet=>gameManifest.sheets.includes(sheet))) throw Error('Industrial manifest is inconsistent');
 for (const role of industrialRoles) {
  const sideHashes = [];
  for (const enemy of [false,true]) {

@@ -108,7 +108,7 @@ export class SaveService {
   }
 
   loadEraProgress(): { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges } {
-    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false, medieval: false, 'high-medieval': false, renaissance: false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0, medieval: 0, 'high-medieval': 0, renaissance: 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false, medieval: false, 'high-medieval': false, renaissance: false } };
+    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false, medieval: false, 'high-medieval': false, renaissance: false, industrial: false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0, medieval: 0, 'high-medieval': 0, renaissance: 0, industrial: 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false, medieval: false, 'high-medieval': false, renaissance: false, industrial: false } };
     if (!this.storage) return fallback;
     try {
       const raw: unknown = JSON.parse(this.storage.getItem(ERA_PROGRESS) ?? 'null');
@@ -129,9 +129,11 @@ export class SaveService {
       const highWins = Number.isInteger(data.wins['high-medieval']) && data.wins['high-medieval']! >= 0 ? data.wins['high-medieval']! : 0;
       const highUnlocked = medievalUnlocked && (data.unlocked['high-medieval'] === true || medievalWins >= 4);
       const renaissanceWins = Number.isInteger(data.wins.renaissance) && data.wins.renaissance! >= 0 ? data.wins.renaissance! : 0;
-      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: antiqueUnlocked, medieval: medievalUnlocked, 'high-medieval': highUnlocked, renaissance: highUnlocked && (data.unlocked.renaissance === true || highWins >= 4) },
-        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins, medieval: medievalWins, 'high-medieval': highWins, renaissance: renaissanceWins },
-        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true, medieval: challenges?.medieval === true, 'high-medieval': challenges?.['high-medieval'] === true, renaissance: challenges?.renaissance === true } };
+      const renaissanceUnlocked = highUnlocked && (data.unlocked.renaissance === true || highWins >= 4);
+      const industrialWins = Number.isInteger(data.wins.industrial) && data.wins.industrial! >= 0 ? data.wins.industrial! : 0;
+      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: antiqueUnlocked, medieval: medievalUnlocked, 'high-medieval': highUnlocked, renaissance: renaissanceUnlocked, industrial: renaissanceUnlocked && (data.unlocked.industrial === true || renaissanceWins >= 4) },
+        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins, medieval: medievalWins, 'high-medieval': highWins, renaissance: renaissanceWins, industrial: industrialWins },
+        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true, medieval: challenges?.medieval === true, 'high-medieval': challenges?.['high-medieval'] === true, renaissance: challenges?.renaissance === true, industrial: challenges?.industrial === true } };
     } catch { return fallback; }
   }
 
@@ -171,7 +173,7 @@ export class SaveService {
   }
 
   private loadTalentWallets(): Record<EraId, TalentProgress> {
-    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress(), medieval: emptyTalentProgress(), 'high-medieval': emptyTalentProgress(), renaissance: emptyTalentProgress() };
+    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress(), medieval: emptyTalentProgress(), 'high-medieval': emptyTalentProgress(), renaissance: emptyTalentProgress(), industrial: emptyTalentProgress() };
     if (!this.storage) return wallets;
     try {
       const current = this.storage.getItem(TALENT_PROGRESS);

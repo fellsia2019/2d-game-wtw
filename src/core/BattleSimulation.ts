@@ -46,6 +46,7 @@ export class BattleSimulation {
   private rangeBonuses = new Map<number, number>();
   private counterUntil = new Map<number, number>();
   private ambushUsed = new Set<number>();
+  private industrialHeat = new Map<number, { shots: number; lastShot: number }>();
   private reserveUsed = false;
   private bossDamagePool = 0;
 
@@ -132,6 +133,7 @@ export class BattleSimulation {
     }
     for (let i = this.units.length - 1; i >= 0; i--) {
       if (this.units[i].hp <= 0) {
+        this.industrialHeat.delete(this.units[i].id);
         // Count removed enemies, rather than hit events: splash and overkill
         // must award a bounty exactly once per unit.
         if (this.units[i].team === 'enemy') this.goldEarned += KILL_GOLD[this.eraId];
@@ -161,7 +163,7 @@ export class BattleSimulation {
           const defenders = battle.enemyDefenseRoster;
           kind = defenders[this.aiSequence % defenders.length];
         }
-        else if (plan === 'ranged') kind = ['iron','antique','medieval','high-medieval','renaissance'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
+        else if (plan === 'ranged') kind = ['iron','antique','medieval','high-medieval','renaissance','industrial'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
         if (isBoss(kind)) kind = enemies.find(id => id !== kind) ?? kind;
@@ -280,6 +282,15 @@ export class BattleSimulation {
     const banners = this.units.filter(u => u.team === unit.team && unitRole(u.kind) === 'banner' && u.id !== unit.id && Math.abs(u.x - unit.x) <= 110).length;
     unit.cooldown = def.period / ((1 + Math.min(2, banners) * (unit.team === 'ally' && this.upgrades.includes('standard') ? .24 : .16))
       * (unit.team === 'ally' ? talentMultiplier(this.talents.attackSpeed) : 1));
+    if (['industrialRifle', 'industrialCarbine', 'industrialHowitzer'].includes(unit.kind)) {
+      const previous = this.industrialHeat.get(unit.id);
+      const shots = (previous && this.elapsed - previous.lastShot < 12 ? previous.shots : 0) + 1;
+      if (shots >= 3) {
+        // The mechanic's standard vents a nearby firearm after every third shot.
+        unit.cooldown += def.period * (banners > 0 ? .15 : .5);
+        this.industrialHeat.set(unit.id, { shots: 0, lastShot: this.elapsed });
+      } else this.industrialHeat.set(unit.id, { shots, lastShot: this.elapsed });
+    }
     if (target) {
       let raw = def.damage;
       if (unit.kind === 'medievalBerserker') {

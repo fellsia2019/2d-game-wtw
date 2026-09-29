@@ -1,7 +1,7 @@
 {
   "era": "industrial",
-  "status": "draft-awaiting-approval",
-  "gameIntegrated": false,
+  "status": "approved",
+  "gameIntegrated": true,
   "modelCount": 8,
   "roles": [
     "shield",

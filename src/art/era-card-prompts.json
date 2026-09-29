@@ -2,7 +2,7 @@
   "generator": "Built-in image_gen",
   "generatedOn": "2026-09-29",
   "output": {
-    "format": "webp",
+    "format": "webp for eras 1-7; PNG for Industrial",
     "width": 768,
     "height": 512,
     "quality": 84
@@ -35,6 +35,10 @@
     {
       "era": "renaissance",
       "prompt": "Historical-scene game era-card background for Renaissance and Gunpowder, European 16th–17th century. Beautiful polished painterly environment illustration, landscape 3:2, atmospheric depth and rich texture, visually readable at 280px thumbnail. Main landmark: low angular brick star-fort bastions viewed diagonally from above ground, broad earthen ramparts and orderly artillery emplacement with two bronze field cannons and wooden powder wagons. Behind the rampart a Renaissance town of ochre terracotta roofs and a restrained civic dome. Distinct copper, dusty plum and muted indigo dusk palette, pink haze and pale smoke drifting sideways. NO tall medieval keep, no grey round castle towers, no arched Roman bridge, no river, no fantasy architecture, no industrial machinery. No text, no UI, no logos, no borders, no people. Upper two thirds detailed landmark, lower third dark quiet dry foreground for later cream title overlay. Full bleed, same high-quality hand-painted strategy game cover style."
+    },
+    {
+      "era": "industrial",
+      "prompt": "Use case: historical-scene. Asset type: wide 3:2 landscape background for the Industrial era selection card in a strategy game. A late-19th-century industrial fortress and rail foundry at dusk: brick workshops, iron chimneys with restrained smoke, a fortified wall, rail tracks, a grounded field howitzer in the middle distance, a few infantry silhouettes. Painterly realistic concept art with detailed warm light and cool teal shadows, visually consistent with a richly painted historical strategy-game map card. Wide readable composition, unobstructed lower third for UI text overlay. No bicycles, no modern tanks, no modern skyscrapers, no logos, no writing, no watermark."
     }
   ]
 }

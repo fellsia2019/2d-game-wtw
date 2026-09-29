@@ -3,17 +3,19 @@ import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {Resvg} from '@resvg/resvg-js';
 const manifest=JSON.parse(readFileSync('public/assets/sprite-manifest.json','utf8'));
 const output='output/sprite-size-review';mkdirSync(output,{recursive:true});
+const selectedEra=process.argv[2];
+if(selectedEra && !manifest.eras.includes(selectedEra))throw Error(`Unknown era ${selectedEra}`);
 const order=['shield','spear','archer','medic','raider','thrower','banner','siege','bulwark','boss'];
-const names={stone:'Каменный век',bronze:'Бронзовый век',iron:'Железный век',antique:'Античность',medieval:'Раннее Средневековье','high-medieval':'Высокое Средневековье',renaissance:'Ренессанс и порох'};
+const names={stone:'Каменный век',bronze:'Бронзовый век',iron:'Железный век',antique:'Античность',medieval:'Раннее Средневековье','high-medieval':'Высокое Средневековье',renaissance:'Ренессанс и порох',industrial:'Индустриальная эпоха'};
 const svg=(w,h,b)=>`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${b}</svg>`;
 const label=(x,y,s,size=14)=>`<text x="${x}" y="${y}" fill="#e9ddbd" font-size="${size}" font-family="sans-serif">${s}</text>`;
 const metrics=[];
-for(const era of manifest.eras){
+for(const era of manifest.eras.filter(era=>!selectedEra||era===selectedEra)){
  const roles=manifest.sheets.filter(s=>s.startsWith(`${era}-u-`)).map(s=>s.split('-u-')[1].replace('-sheet.png','')).sort((a,b)=>order.indexOf(a)-order.indexOf(b));
  const rows=[];
  for(const role of roles){
   const count=manifest.eraFrameCounts?.[era]?.[role]??(role==='banner'?48:16);
-  const action=role==='banner'?32:count===48?(era==='high-medieval'&&role==='siege'?26:23):13;
+  const action=role==='banner'&&count===48?32:count===48?(era==='high-medieval'&&role==='siege'?26:23):13;
   const cells=[];
   for(const enemy of [false,true]){
    const file=`${enemy?'enemy-':''}${era}-u-${role}-sheet.png`;
@@ -37,5 +39,5 @@ for(const era of manifest.eras){
   writeFileSync(`${output}/${era}-${Math.round(scale*100)}.png`,new Resvg(svg(w,h,body)).render().asPng());
  }
 }
-writeFileSync(`${output}/bounds.json`,JSON.stringify(metrics,null,2));
-console.log(`Reviewed assets: ${manifest.sheets.length} atlases; ${metrics.length} representative poses. Sheets at 100/52/34%: ${output}`);
+writeFileSync(`${output}/${selectedEra?`bounds-${selectedEra}`:'bounds'}.json`,JSON.stringify(metrics,null,2));
+console.log(`Reviewed ${selectedEra??'all eras'}: ${metrics.length} representative poses. Sheets at 100/52/34%: ${output}`);

@@ -1,10 +1,10 @@
-/** Export only the unapproved industrial workshop. Never touches the game manifest. */
-import { mkdirSync, writeFileSync } from 'node:fs';
+/** Export the approved Industrial models, scenery, and game manifest. */
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { Resvg } from '@resvg/resvg-js';
 import { industrialRig, industrialRoles, industrialNames } from './industrial-rig.mjs';
 
-const directory = 'public/drafts/industrial';
-const reviews = 'output/industrial-draft';
+const directory = 'public/assets';
+const reviews = 'output/industrial';
 mkdirSync(directory, { recursive: true });
 mkdirSync(reviews, { recursive: true });
 const svg = (width, height, body, viewBox = `0 0 ${width} ${height}`) => `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}">${body}</svg>`;
@@ -24,8 +24,13 @@ for (const enemy of [false,true]) for (const role of industrialRoles) {
  sheets.push(`${name}-sheet.png`);
  sources[name] = rig;
 }
-const manifest = { era:'industrial', status:'draft-awaiting-approval', gameIntegrated:false, modelCount:8, roles:industrialRoles, names:industrialNames, palettes:['ally','enemy'], frameWidth:320, frameHeight:192, framesPerModel:16, origin:[160,176], sheets };
-writeFileSync(`${directory}/manifest.json`,JSON.stringify(manifest,null,2));
+const manifest = { era:'industrial', status:'approved', gameIntegrated:true, modelCount:8, roles:industrialRoles, names:industrialNames, palettes:['ally','enemy'], frameWidth:320, frameHeight:192, framesPerModel:16, origin:[160,176], sheets };
+writeFileSync(`${directory}/industrial-manifest.json`,JSON.stringify(manifest,null,2));
+const gameManifest = JSON.parse(readFileSync(`${directory}/sprite-manifest.json`,'utf8'));
+gameManifest.eras = [...new Set([...gameManifest.eras,'industrial'])];
+gameManifest.sheets = [...new Set([...gameManifest.sheets,...sheets])].sort();
+gameManifest.eraFrameCounts = { ...gameManifest.eraFrameCounts, industrial: industrialFrames() };
+writeFileSync(`${directory}/sprite-manifest.json`,JSON.stringify(gameManifest,null,2));
 for(const scale of [1,.52,.34]) {
  const cellWidth=scale===1?320:300,rowHeight=scale===1?216:132;
  let body='<rect width="100%" height="100%" fill="#203239"/>';
@@ -45,4 +50,13 @@ for(const enemy of [false,true])for(const role of industrialRoles) {
  }
  writeFileSync(`${reviews}/${enemy?'enemy':'ally'}-${role}-frames.png`,new Resvg(svg(1280,880,body)).render().asPng());
 }
-console.log(`Industrial draft: ${industrialRoles.length} models, ${sheets.length} side atlases, 256 reviewed frames; separate manifest ${directory}/manifest.json`);
+const ink='#26343a';
+const tower=(enemy)=>svg(192,192,`<rect x="16" y="132" width="160" height="46" fill="#47585a" stroke="${ink}" stroke-width="4"/><path d="M22 132V84l22-16h103l23 16v48z" fill="#59696a" stroke="${ink}" stroke-width="4"/><path d="M42 70V39h18v31M132 70V26h19v44" fill="#6d5550" stroke="${ink}" stroke-width="4"/><path d="M34 91h124v20H34z" fill="${enemy?'#8b4f50':'#4b8581'}" stroke="${ink}" stroke-width="3"/><path d="M72 178v-43q24-21 48 0v43" fill="#28353a"/><path d="M82 100h28v20H82z" fill="#c8ae78"/><path d="M26 78h139" stroke="#c9b891" stroke-width="5"/><path d="M25 150h142M40 58h22M129 48h26" stroke="#26343a" stroke-width="4"/>`);
+for(const enemy of [false,true])writeFileSync(`${directory}/industrial-tower-${enemy?'enemy':'ally'}.svg`,tower(enemy));
+const scenery=`<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#90a5a4"/><stop offset="1" stop-color="#d4bd92"/></linearGradient></defs><rect width="1600" height="600" fill="url(#sky)"/><circle cx="1180" cy="106" r="53" fill="#eed1a0"/><path d="M0 305Q260 217 510 290T1100 278 1600 302V600H0" fill="#71847f"/>`+
+ [120,345,1080,1320].map((x,i)=>`<path d="M${x} 388V${211+i%2*24}h110v177z" fill="#6c6760"/><path d="M${x+7} ${211+i%2*24}l49-37 54 37" fill="#3e4b4c"/><path d="M${x+25} ${240+i%2*20}v33m26-33v33m26-33v33" stroke="#d9bb88" stroke-width="8"/>`).join('')+
+ `<path d="M0 435q480-30 800-6t800-4v175H0z" fill="#887a68"/><path d="M0 475q500-22 800-4t800-5" stroke="#b6a386" stroke-width="6" fill="none"/><path d="M0 545h1600M0 565h1600" stroke="#414b4c" stroke-width="5"/>`;
+writeFileSync(`${directory}/arena-industrial.svg`,svg(1600,600,scenery));
+console.log(`Industrial approved: ${industrialRoles.length} models, ${sheets.length} side atlases, 256 reviewed frames; game manifest updated`);
+
+function industrialFrames(){return Object.fromEntries(industrialRoles.map(role=>[role,16]));}

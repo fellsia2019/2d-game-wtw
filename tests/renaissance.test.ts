@@ -15,7 +15,7 @@ function figure(id:number,kind:UnitKind,team:Team,x:number,cooldown=0):UnitState
 it('unlocks after four High Medieval wins and preserves the previous wallet',()=>{
  const save=profile();save.writeEraProgress({unlocked:{stone:true,bronze:true,iron:true,antique:true,medieval:true},wins:{stone:4,bronze:4,iron:4,antique:4,medieval:4,'high-medieval':4},challenges:{}});
  save.writeTalents({gold:730,levels:{damage:2,health:3,supply:1,attackSpeed:2},baseLevel:8},'high-medieval');
- expect(nextEra('high-medieval')).toBe('renaissance');expect(nextEra('renaissance')).toBeUndefined();
+ expect(nextEra('high-medieval')).toBe('renaissance');expect(nextEra('renaissance')).toBe('industrial');
  expect(save.loadEraProgress().unlocked['renaissance']).toBe(true);
  expect(save.loadTalents('renaissance').gold).toBe(0);expect(save.loadTalents('high-medieval').gold).toBe(730);
  save.writeEraProgress({unlocked:{stone:true,bronze:true,iron:true,antique:true,medieval:true},wins:{stone:4,bronze:4,iron:4,antique:4,medieval:4,'high-medieval':3},challenges:{}});

@@ -82,7 +82,8 @@
     "antique",
     "medieval",
     "high-medieval",
-    "renaissance"
+    "renaissance",
+    "industrial"
   ],
   "standardFrames": {
     "first": 16,
@@ -135,6 +136,14 @@
     "enemy-high-medieval-u-siege-sheet.png",
     "enemy-high-medieval-u-spear-sheet.png",
     "enemy-high-medieval-u-thrower-sheet.png",
+    "enemy-industrial-u-archer-sheet.png",
+    "enemy-industrial-u-banner-sheet.png",
+    "enemy-industrial-u-medic-sheet.png",
+    "enemy-industrial-u-raider-sheet.png",
+    "enemy-industrial-u-shield-sheet.png",
+    "enemy-industrial-u-siege-sheet.png",
+    "enemy-industrial-u-spear-sheet.png",
+    "enemy-industrial-u-thrower-sheet.png",
     "enemy-iron-u-archer-sheet.png",
     "enemy-iron-u-banner-sheet.png",
     "enemy-iron-u-boss-sheet.png",
@@ -179,6 +188,14 @@
     "high-medieval-u-siege-sheet.png",
     "high-medieval-u-spear-sheet.png",
     "high-medieval-u-thrower-sheet.png",
+    "industrial-u-archer-sheet.png",
+    "industrial-u-banner-sheet.png",
+    "industrial-u-medic-sheet.png",
+    "industrial-u-raider-sheet.png",
+    "industrial-u-shield-sheet.png",
+    "industrial-u-siege-sheet.png",
+    "industrial-u-spear-sheet.png",
+    "industrial-u-thrower-sheet.png",
     "iron-u-archer-sheet.png",
     "iron-u-banner-sheet.png",
     "iron-u-boss-sheet.png",
@@ -272,6 +289,16 @@
       "thrower": 16,
       "banner": 48,
       "siege": 48
+    },
+    "industrial": {
+      "shield": 16,
+      "spear": 16,
+      "archer": 16,
+      "medic": 16,
+      "raider": 16,
+      "thrower": 16,
+      "banner": 16,
+      "siege": 16
     }
   }
 }

@@ -12,12 +12,12 @@ class MemoryStorage implements StorageLike {
   removeItem(key: string) { this.values.delete(key); }
 }
 
-it('contains only units and artwork belonging to the seven current eras', () => {
-  expect(ERA_ORDER).toEqual(['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance']);
-  expect(Object.keys(UNITS)).toHaveLength(72);
+it('contains only units and artwork belonging to the eight current eras', () => {
+  expect(ERA_ORDER).toEqual(['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance', 'industrial']);
+  expect(Object.keys(UNITS)).toHaveLength(81);
   expect(Object.keys(unitArt).sort()).toEqual(Object.keys(UNITS).sort());
   for (const era of ERA_ORDER) expect(ERA_HIRE_KINDS[era]).toHaveLength(8);
-  expect(Object.values(unitArt).every(asset => /^(stone|bronze|iron|antique|medieval|high-medieval|renaissance)-u-/.test(asset))).toBe(true);
+  expect(Object.values(unitArt).every(asset => /^(stone|bronze|iron|antique|medieval|high-medieval|renaissance|industrial)-u-/.test(asset))).toBe(true);
 });
 
 it('ignores a prototype checkpoint and selection while preserving current era progress and wallets', () => {
@@ -35,7 +35,7 @@ it('ignores a prototype checkpoint and selection while preserving current era pr
   expect(save.load()).toBeNull();
   expect(game.getState().eraId).toBe('bronze');
   expect(game.getState().canContinue).toBe(false);
-  expect(game.getState().eraProgress).toEqual({stone:4,bronze:2,iron:0,antique:0,medieval:0,'high-medieval':0,renaissance:0});
+  expect(game.getState().eraProgress).toEqual({stone:4,bronze:2,iron:0,antique:0,medieval:0,'high-medieval':0,renaissance:0,industrial:0});
   expect(save.loadTalents('stone')).toEqual({gold:120,levels,baseLevel:9});
   expect(save.loadTalents('bronze')).toEqual({gold:75,levels,baseLevel:4});
   expect(game.selectEra('legacy' as EraId)).toBe(false);

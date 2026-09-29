@@ -47,6 +47,15 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   renaissanceCaptain: { name: 'Капитан роты', role: 'Поддержка · знамя ускоряет союзников', cost: 104, hp: 72, damage: 0, range: 35, speed: 32, period: 1.2, armor: .28 },
   renaissanceCannon: { name: 'Полевая пушка', role: 'Осада · артиллерия против укреплений', cost: 160, hp: 95, damage: 76, range: 300, speed: 21, period: 5, armor: .3 },
   renaissanceGeneral: { name: 'Генерал Дымного фронта', role: 'Босс · кирасир с охраной', cost: 175, hp: 1200, damage: 36, range: 50, speed: 28, period: 1.7, armor: .5, archetype: 'shield' },
+  industrialShield: { name: 'Бронежилетчик', role: 'Защитник · бронепластина и щит', cost: 57, hp: 167, damage: 11, range: 31, speed: 31, period: 1.2, armor: .52 },
+  industrialBayonet: { name: 'Штыковик', role: 'Против брони · винтовка со штыком', cost: 73, hp: 88, damage: 25, range: 82, speed: 35, period: 1.3, armor: .3, antiArmor: 2.6 },
+  industrialRifle: { name: 'Винтовочник', role: 'Дальний бой · перегрев после 3 выстрелов', cost: 84, hp: 59, damage: 72, range: 260, speed: 34, period: 4.3, armor: .14 },
+  industrialMedic: { name: 'Санитар поезда', role: 'Лечение · перевязка и медицинский набор', cost: 104, hp: 69, damage: 2, heal: 27, range: 140, speed: 32, period: 2.2, armor: .14 },
+  industrialCarbine: { name: 'Штурмовой карабинер', role: 'Прорыв · атакует дальний ряд; перегрев после 3 выстрелов', cost: 91, hp: 108, damage: 30, range: 95, speed: 102, period: 1.35, armor: .22 },
+  industrialDemolition: { name: 'Подрывник', role: 'Площадь · заряд против группы', cost: 112, hp: 69, damage: 33, range: 180, speed: 33, period: 2.1, armor: .17 },
+  industrialMechanic: { name: 'Механик', role: 'Поддержка · ускоряет союзников и снижает перегрев', cost: 123, hp: 83, damage: 0, range: 35, speed: 32, period: 1.2, armor: .3 },
+  industrialHowitzer: { name: 'Полевая гаубица', role: 'Осада · тяжёлый выстрел; перегрев после 3 выстрелов', cost: 190, hp: 115, damage: 90, range: 320, speed: 20, period: 5, armor: .34 },
+  industrialBaron: { name: 'Барон Стального завода', role: 'Босс · бронежилетчик с охраной', cost: 210, hp: 1400, damage: 43, range: 48, speed: 28, period: 1.7, armor: .52, archetype: 'shield' },
   highKnight: { name: 'Рыцарь щита', role: 'Защитник · меч и щит', cost: 42, hp: 122, damage: 8, range: 29, speed: 31, period: 1.2, armor: .5 },
   highHalberd: { name: 'Алебардист', role: 'Против брони · двуручная алебарда', cost: 55, hp: 65, damage: 18, range: 68, speed: 34, period: 1.3, armor: .27, antiArmor: 2.6 },
   highCrossbow: { name: 'Арбалетчик', role: 'Дальний бой · выстрел и перезарядка', cost: 62, hp: 44, damage: 48, range: 215, speed: 35, period: 4, armor: .16 },
@@ -102,25 +111,26 @@ export const UPGRADES: Record<UpgradeId, { name: string; description: string; ca
 };
 
 export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; enemyStartingSupplies?: number; enemyHealthMultiplier?: number; enemyDamageMultiplier?: number; enemyRecruitRoster?: UnitKind[]; enemyDefenseRoster?: UnitKind[]; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
-export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance'];
-export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12, medieval: 14, 'high-medieval': 16, renaissance: 18 };
-export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4, medieval: 5, 'high-medieval': 6, renaissance: 7 };
+export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance', 'industrial'];
+export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12, medieval: 14, 'high-medieval': 16, renaissance: 18, industrial: 20 };
+export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4, medieval: 5, 'high-medieval': 6, renaissance: 7, industrial: 8 };
 export const victoryGold = (era: EraId): number => 25 * ERA_KILL_GOLD[era];
-export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan', renaissance: 'renaissanceGeneral' };
+export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan', renaissance: 'renaissanceGeneral', industrial: 'industrialBaron' };
 export const isBoss = (kind: UnitKind): boolean => Object.values(ERA_BOSSES).includes(kind);
 export const nextEra = (era: EraId): EraId | undefined => ERA_ORDER[ERA_ORDER.indexOf(era) + 1];
-export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох' };
+export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох', industrial: 'Индустриальная эпоха' };
 export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   stone: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'],
   bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam'],
   iron: ['ironShield', 'ironSpear', 'ironArcher', 'ironMedic', 'ironRaider', 'ironThrower', 'ironBanner', 'ironSiege'],
   renaissance: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceSurgeon', 'renaissanceDragoon', 'renaissanceGrenadier', 'renaissanceCaptain', 'renaissanceCannon'],
+  industrial: ['industrialShield', 'industrialBayonet', 'industrialRifle', 'industrialMedic', 'industrialCarbine', 'industrialDemolition', 'industrialMechanic', 'industrialHowitzer'],
   'high-medieval': ['highKnight', 'highHalberd', 'highCrossbow', 'highMonk', 'highRider', 'highPitch', 'highHerald', 'highTrebuchet'],
   medieval: ['medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalHealer', 'medievalBerserker', 'medievalThrower', 'medievalHorn', 'medievalRam'],
   antique: ['antiqueLegionary', 'antiqueHoplite', 'antiquePeltast', 'antiqueSurgeon', 'antiqueRider', 'antiqueScorpion', 'antiqueCenturion', 'antiqueBallista']
 };
 export const ERA_STARTER_KINDS: Record<EraId, HireKind[]> = {
-  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4), medieval: ERA_HIRE_KINDS.medieval.slice(0, 4), 'high-medieval': ERA_HIRE_KINDS['high-medieval'].slice(0, 4), renaissance: ERA_HIRE_KINDS.renaissance.slice(0, 4)
+  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4), medieval: ERA_HIRE_KINDS.medieval.slice(0, 4), 'high-medieval': ERA_HIRE_KINDS['high-medieval'].slice(0, 4), renaissance: ERA_HIRE_KINDS.renaissance.slice(0, 4), industrial: ERA_HIRE_KINDS.industrial.slice(0, 4)
 };
 const ROLES: UnitRole[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
 export function unitRole(kind: UnitKind): UnitRole {
@@ -160,6 +170,12 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
     { name: 'Пики и порох', threat: 'Пикинёрский строй прикрывает мушкетёров под ротным знаменем', ai: 'wall', enemyIncome: 40, enemyStartingSupplies: 40, enemyHealthMultiplier: 1.4, enemyDamageMultiplier: 1.4, roster: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceCaptain'], enemyRecruitRoster: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceCaptain'], arenaId: 'iron' },
     { name: 'Осада звёздного форта', threat: 'Кирасы прикрывают артиллерию; у бастиона выходят пикинёры', ai: 'ranged', enemyIncome: 43, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.5, enemyDamageMultiplier: 1.5, roster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceCuirassier', 'renaissanceGrenadier', 'renaissanceCannon'], enemyRecruitRoster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceCuirassier', 'renaissanceGrenadier', 'renaissanceCannon'], enemyDefenseRoster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceCuirassier', 'renaissancePikeman'], arenaId: 'arrows' },
     { name: 'Штаб Дымного фронта', threat: 'При половине прочности форта генерал выходит с прикрытием и хирургом', ai: 'boss', enemyIncome: 45, enemyStartingSupplies: 55, enemyHealthMultiplier: 1.5, enemyDamageMultiplier: 1.5, enemyRecruitRoster: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceGrenadier'], roster: ['renaissanceGeneral', 'renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceDragoon', 'renaissanceSurgeon'], arenaId: 'citadel' }
+  ],
+  industrial: [
+    { name: 'Рейд на железную дорогу', threat: 'Карабинеры обходят бронежилетчиков и атакуют стрелков', ai: 'rush', enemyIncome: 37, enemyStartingSupplies: 30, enemyHealthMultiplier: 1.25, enemyDamageMultiplier: 1.25, roster: ['industrialShield', 'industrialRifle', 'industrialCarbine'], arenaId: 'ash' },
+    { name: 'Заводской рубеж', threat: 'Штыковики и винтовочники держат фронт под поддержкой механиков', ai: 'wall', enemyIncome: 46, enemyStartingSupplies: 45, enemyHealthMultiplier: 1.42, enemyDamageMultiplier: 1.42, roster: ['industrialShield', 'industrialBayonet', 'industrialRifle', 'industrialMechanic'], arenaId: 'iron' },
+    { name: 'Осада литейного двора', threat: 'Подрывники и гаубица бьют из-за брони; у ворот встречают штыковики', ai: 'ranged', enemyIncome: 50, enemyStartingSupplies: 55, enemyHealthMultiplier: 1.52, enemyDamageMultiplier: 1.52, enemyRecruitRoster: ['industrialShield', 'industrialRifle', 'industrialShield', 'industrialDemolition', 'industrialHowitzer'], enemyDefenseRoster: ['industrialShield', 'industrialRifle', 'industrialShield', 'industrialBayonet'], roster: ['industrialShield', 'industrialRifle', 'industrialShield', 'industrialDemolition', 'industrialHowitzer'], arenaId: 'arrows' },
+    { name: 'Стальной завод', threat: 'На половине прочности форта барон выводит бронированную охрану и санитара', ai: 'boss', enemyIncome: 54, enemyStartingSupplies: 60, enemyHealthMultiplier: 1.55, enemyDamageMultiplier: 1.55, enemyRecruitRoster: ['industrialShield', 'industrialBayonet', 'industrialRifle', 'industrialDemolition'], roster: ['industrialBaron', 'industrialShield', 'industrialBayonet', 'industrialRifle', 'industrialCarbine', 'industrialMedic'], arenaId: 'citadel' }
   ],
   'high-medieval': [
     { name: 'Конная засада', threat: 'Конница прорывается к арбалетчикам; щиты держат фронт', ai: 'rush', enemyIncome: 30, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.2, roster: ['highKnight', 'highCrossbow', 'highRider'], arenaId: 'ash' },
