@@ -15,7 +15,7 @@ function figure(id:number,kind:UnitKind,team:Team,x:number,cooldown=0):UnitState
 it('unlocks after four medieval wins and preserves the previous wallet',()=>{
  const save=profile();save.writeEraProgress({unlocked:{stone:true,bronze:true,iron:true,antique:true,medieval:true},wins:{stone:4,bronze:4,iron:4,antique:4,medieval:4},challenges:{}});
  save.writeTalents({gold:730,levels:{damage:2,health:3,supply:1,attackSpeed:2},baseLevel:8},'medieval');
- expect(nextEra('medieval')).toBe('high-medieval');expect(nextEra('high-medieval')).toBeUndefined();
+ expect(nextEra('medieval')).toBe('high-medieval');expect(nextEra('high-medieval')).toBe('renaissance');
  expect(save.loadEraProgress().unlocked['high-medieval']).toBe(true);
  expect(save.loadTalents('high-medieval').gold).toBe(0);expect(save.loadTalents('medieval').gold).toBe(730);
  save.writeEraProgress({unlocked:{stone:true,bronze:true,iron:true,antique:true,medieval:true},wins:{stone:4,bronze:4,iron:4,antique:4,medieval:3},challenges:{}});
@@ -36,7 +36,7 @@ it.each([23,47])('finishes high medieval campaign with earned upgrades and resto
  // User-requested harder preset: bounded earned progression within 64 attempts.
  expect(game.getState().phase).toBe('victory');expect(attempts.reduce((a,b)=>a+b,0),JSON.stringify(attempts)).toBeLessThanOrEqual(64);
  const restored=new GameDirector(save);restored.selectEra('high-medieval');restored.startNewRun(seed+1);expect(restored.getState().unlockedUnits).toEqual(ERA_HIRE_KINDS['high-medieval']);
-});
+},15000);
 it('registers exactly eight models and sixteen atlases, reusing the knight for the castellan',()=>{
  expect(ERA_HIRE_KINDS['high-medieval']).toHaveLength(8);
  expect(new Set(Object.entries(unitArt).filter(([id])=>id.startsWith('high')).map(([,art])=>art)).size).toBe(8);

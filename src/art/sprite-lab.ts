@@ -6,14 +6,14 @@ import { medievalDraft } from './medieval-draft';
 import { medievalSignalFrame, medievalTreatmentFrame } from './medieval-motion';
 import { standardFrame } from '../view/SupportMotion';
 
-type Era = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval';
+type Era = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval' | 'renaissance';
 const draft = document.body.dataset.era === 'iron';
 const medieval = document.body.dataset.era === 'medieval';
 const antique = document.body.dataset.era === 'antique';
 const labEraName = (era: Era) => era === 'medieval' ? 'Раннее Средневековье' : era === 'antique' ? 'Античность' : eraName(era);
-const atlasFrames = (era: Era, role: string) => role === 'banner' || (era === 'high-medieval' && ['archer','siege'].includes(role)) ? 48 : 16;
+const atlasFrames = (era: Era, role: string) => role === 'banner' || (['high-medieval','renaissance'].includes(era) && ['archer','siege'].includes(role)) ? 48 : 16;
 type Pose = 'idle' | 'ready' | 'move' | 'attack';
-const entries = medieval ? medievalDraft : antique ? antiqueDraft : Object.entries(UNITS).filter(([id]) => !draft || id.startsWith('iron')).map(([id, unit]) => ({ id, unit, era: (id.startsWith('high') ? 'high-medieval' : id.startsWith('medieval') ? 'medieval' : id.startsWith('antique') ? 'antique' : id.startsWith('stone') ? 'stone' : id.startsWith('iron') ? 'iron' : 'bronze') as Era, art: unitArt[id], artRole: roleOf(id) }));
+const entries = medieval ? medievalDraft : antique ? antiqueDraft : Object.entries(UNITS).filter(([id]) => !draft || id.startsWith('iron')).map(([id, unit]) => ({ id, unit, era: (id.startsWith('renaissance') ? 'renaissance' : id.startsWith('high') ? 'high-medieval' : id.startsWith('medieval') ? 'medieval' : id.startsWith('antique') ? 'antique' : id.startsWith('stone') ? 'stone' : id.startsWith('iron') ? 'iron' : 'bronze') as Era, art: unitArt[id], artRole: roleOf(id) }));
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
@@ -111,7 +111,7 @@ pose.onchange = () => { manual = null; time = 0; };
 function currentFrame(role = displayRole, era = displayEra) {
  if (manual !== null) return Math.min(manual,atlasFrames(era, role) - 1);
  const state = pose.value as Pose;
- if (state === 'attack' && era === 'high-medieval' && ['archer','siege','banner'].includes(role)) return 16 + Math.floor(time * (role === 'banner' ? 16 : 8)) % 32;
+ if (state === 'attack' && ['high-medieval','renaissance'].includes(era) && ['archer','siege','banner'].includes(role)) return 16 + Math.floor(time * (role === 'banner' ? 16 : 8)) % 32;
  if (state === 'attack' && role === 'banner') return era === 'medieval' ? medievalSignalFrame(time) : standardFrame(time);
  if (era === 'medieval' && state === 'attack' && role === 'medic') return medievalTreatmentFrame(time);
  if (era === 'medieval' && state === 'move' && ['medic','raider'].includes(role)) return 2 + Math.floor(time * (role === 'medic' ? 8 : 10)) % 8;

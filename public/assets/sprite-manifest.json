@@ -81,7 +81,8 @@
     "iron",
     "antique",
     "medieval",
-    "high-medieval"
+    "high-medieval",
+    "renaissance"
   ],
   "standardFrames": {
     "first": 16,
@@ -152,6 +153,14 @@
     "enemy-medieval-u-siege-sheet.png",
     "enemy-medieval-u-spear-sheet.png",
     "enemy-medieval-u-thrower-sheet.png",
+    "enemy-renaissance-u-archer-sheet.png",
+    "enemy-renaissance-u-banner-sheet.png",
+    "enemy-renaissance-u-medic-sheet.png",
+    "enemy-renaissance-u-raider-sheet.png",
+    "enemy-renaissance-u-shield-sheet.png",
+    "enemy-renaissance-u-siege-sheet.png",
+    "enemy-renaissance-u-spear-sheet.png",
+    "enemy-renaissance-u-thrower-sheet.png",
     "enemy-stone-u-archer-sheet.png",
     "enemy-stone-u-banner-sheet.png",
     "enemy-stone-u-boss-sheet.png",
@@ -188,6 +197,14 @@
     "medieval-u-siege-sheet.png",
     "medieval-u-spear-sheet.png",
     "medieval-u-thrower-sheet.png",
+    "renaissance-u-archer-sheet.png",
+    "renaissance-u-banner-sheet.png",
+    "renaissance-u-medic-sheet.png",
+    "renaissance-u-raider-sheet.png",
+    "renaissance-u-shield-sheet.png",
+    "renaissance-u-siege-sheet.png",
+    "renaissance-u-spear-sheet.png",
+    "renaissance-u-thrower-sheet.png",
     "stone-u-archer-sheet.png",
     "stone-u-banner-sheet.png",
     "stone-u-boss-sheet.png",
@@ -216,10 +233,37 @@
         "count": 32,
         "fps": 16
       }
+    },
+    "renaissance": {
+      "archer": {
+        "first": 16,
+        "count": 32,
+        "fps": 8
+      },
+      "siege": {
+        "first": 16,
+        "count": 32,
+        "fps": 8
+      },
+      "banner": {
+        "first": 16,
+        "count": 32,
+        "fps": 16
+      }
     }
   },
   "eraFrameCounts": {
     "high-medieval": {
+      "shield": 16,
+      "spear": 16,
+      "archer": 48,
+      "medic": 16,
+      "raider": 16,
+      "thrower": 16,
+      "banner": 48,
+      "siege": 48
+    },
+    "renaissance": {
       "shield": 16,
       "spear": 16,
       "archer": 48,

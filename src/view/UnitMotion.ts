@@ -1,5 +1,5 @@
 import type { UnitState } from '../core/types';
-import { unitRole } from '../data/content';
+import { unitRole, UNITS } from '../data/content';
 import { medievalSignalFrame, medievalTreatmentFrame } from '../art/medieval-motion';
 import { standardFrame } from './SupportMotion';
 
@@ -49,7 +49,7 @@ export class UnitMotion {
     if (this.standard) return;
     // A splash can emit several events from one source. Never rewind an active strike.
     if (this.strikeAge >= 0) return;
-    this.strikeDuration = ['highCrossbow', 'highTrebuchet'].includes(this.kind) ? Math.max(.1, this.cooldown || 4) : this.kind === 'medievalHealer' ? 2 : .4;
+    this.strikeDuration = ['highCrossbow', 'highTrebuchet', 'renaissanceMusket', 'renaissanceCannon'].includes(this.kind) ? Math.max(.1, this.cooldown || UNITS[this.kind].period) : this.kind === 'medievalHealer' ? 2 : .4;
     this.strikeAge = 0; this.strikeFacing = this.facing;
   }
   advance(delta: number, paused = false): UnitPose {
@@ -66,11 +66,11 @@ export class UnitMotion {
     const alpha = interval > 0 ? Math.max(0, Math.min(1, (this.visualTime - this.previousTime) / interval)) : 1;
     const walkFps = this.kind === 'medievalHealer' ? 8 : this.kind === 'medievalBerserker' ? 10 : 12;
     let frame = this.action === 'attack' ? 1 : 0;
-    if (this.strikeAge >= 0) frame = ['highCrossbow', 'highTrebuchet'].includes(this.kind)
-      ? 16 + Math.min(31, Math.floor(this.strikeAge / this.strikeDuration * 32)) : this.kind === 'medievalHealer'
+    if (this.strikeAge >= 0) frame = ['highCrossbow', 'highTrebuchet', 'renaissanceMusket', 'renaissanceCannon'].includes(this.kind)
+      ? 16 + (Math.min(31, Math.floor(this.strikeAge / this.strikeDuration * 32)) + (this.kind.startsWith('renaissance') ? 7 : 0)) % 32 : this.kind === 'medievalHealer'
       ? medievalTreatmentFrame(this.strikeAge) : 10 + Math.min(5, Math.floor(this.strikeAge * 15));
     else if (this.action === 'move') frame = 2 + Math.floor(this.walkAge * walkFps) % 8;
-    else if (this.standard) frame = this.kind === 'highHerald' ? 16 + Math.floor(this.supportAge * 16) % 32 : this.kind === 'medievalHorn'
+    else if (this.standard) frame = ['highHerald','renaissanceCaptain'].includes(this.kind) ? 16 + Math.floor(this.supportAge * 16) % 32 : this.kind === 'medievalHorn'
       ? medievalSignalFrame(this.supportAge) : standardFrame(this.supportAge);
     this.pose = {
       x: this.previousX + (this.targetX - this.previousX) * alpha,

@@ -1,7 +1,7 @@
 import type { EnemyBalance } from './enemyBalance';
 import type { TalentId, TalentLevels } from './talents';
 export type Team = 'ally' | 'enemy';
-export type EraId = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval';
+export type EraId = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval' | 'renaissance';
 export type UnitRole = 'shield' | 'spear' | 'archer' | 'medic' | 'raider' | 'thrower' | 'banner' | 'siege';
 export type StoneHireKind = 'stoneShield' | 'stoneSpear' | 'stoneSlinger' | 'stoneShaman' | 'stoneScout' | 'stoneThrower' | 'stoneTotem' | 'stoneRam';
 export type BronzeHireKind = 'bronzeGuard' | 'bronzeSpear' | 'bronzeArcher' | 'bronzeHealer' | 'bronzeChariot' | 'bronzePitch' | 'bronzeHerald' | 'bronzeRam';
@@ -9,8 +9,9 @@ export type IronHireKind = 'ironShield' | 'ironSpear' | 'ironArcher' | 'ironMedi
 export type AntiqueHireKind = 'antiqueLegionary' | 'antiqueHoplite' | 'antiquePeltast' | 'antiqueSurgeon' | 'antiqueRider' | 'antiqueScorpion' | 'antiqueCenturion' | 'antiqueBallista';
 export type MedievalHireKind = 'medievalGuard' | 'medievalPikeman' | 'medievalLongbow' | 'medievalHealer' | 'medievalBerserker' | 'medievalThrower' | 'medievalHorn' | 'medievalRam';
 export type HighMedievalHireKind = 'highKnight' | 'highHalberd' | 'highCrossbow' | 'highMonk' | 'highRider' | 'highPitch' | 'highHerald' | 'highTrebuchet';
-export type HireKind = StoneHireKind | BronzeHireKind | IronHireKind | AntiqueHireKind | MedievalHireKind | HighMedievalHireKind;
-export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing' | 'ironGate' | 'ironCommandant' | 'antiqueLegate' | 'medievalJarl' | 'highCastellan';
+export type RenaissanceHireKind = 'renaissanceCuirassier' | 'renaissancePikeman' | 'renaissanceMusket' | 'renaissanceSurgeon' | 'renaissanceDragoon' | 'renaissanceGrenadier' | 'renaissanceCaptain' | 'renaissanceCannon';
+export type HireKind = StoneHireKind | BronzeHireKind | IronHireKind | AntiqueHireKind | MedievalHireKind | HighMedievalHireKind | RenaissanceHireKind;
+export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing' | 'ironGate' | 'ironCommandant' | 'antiqueLegate' | 'medievalJarl' | 'highCastellan' | 'renaissanceGeneral';
 export type UpgradeId = 'supply' | 'wagon' | 'banner' | 'arrows' | 'bandages' | 'contract' | 'pikes' | 'workshop' | 'boots' | 'siegecraft' | 'lastReserve' | 'standard';
 export type DoctrineId = 'steel' | 'arrow' | 'bargain';
 export type GamePhase = 'menu' | 'preparation' | 'contract' | 'battle' | 'reward' | 'victory' | 'defeat';

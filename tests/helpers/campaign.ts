@@ -9,6 +9,7 @@ export const CAMPAIGN_PLANS = {
   stone: [{ tier: 0, order: '012' }, { tier: 2, order: '0102' }, { tier: 5, order: '012' }, { tier: 8, order: '002' }],
   bronze: [{ tier: 2, order: '012' }, { tier: 3, order: '0112' }, { tier: 9, order: '0022' }, { tier: 10, order: '002' }],
   iron: [{ tier: 2, order: '0102' }, { tier: 4, order: '0112' }, { tier: 8, order: '012' }, { tier: 11, order: '002' }],
+  renaissance: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '02' }],
   'high-medieval': [{ tier: 8, order: '02' }, { tier: 16, order: '02' }, { tier: 22, order: '02' }, { tier: 25, order: '02' }],
   medieval: [{ tier: 7, order: '02' }, { tier: 11, order: '02' }, { tier: 16, order: '02' }, { tier: 18, order: '002' }],
   antique: [{ tier: 3, order: '012' }, { tier: 6, order: '02' }, { tier: 9, order: '002' }, { tier: 12, order: '002' }]

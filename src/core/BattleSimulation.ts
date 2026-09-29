@@ -161,7 +161,7 @@ export class BattleSimulation {
           const defenders = battle.enemyDefenseRoster;
           kind = defenders[this.aiSequence % defenders.length];
         }
-        else if (plan === 'ranged') kind = ['iron','antique','medieval','high-medieval'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
+        else if (plan === 'ranged') kind = ['iron','antique','medieval','high-medieval','renaissance'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
         if (isBoss(kind)) kind = enemies.find(id => id !== kind) ?? kind;

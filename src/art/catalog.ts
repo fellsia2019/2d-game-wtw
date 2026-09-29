@@ -7,6 +7,7 @@ export const descriptions = { shield: 'Держит фронт и поглоща
 export const rewardIcons: Record<string, string> = { supply: '◈', wagon: '✦', banner: '⚑', arrows: '➶', bandages: '✚', contract: '◇', pikes: '↟', workshop: '⚒' };
 
 export const unitRole: Record<string, string> = {
+ renaissanceCuirassier:'shield',renaissancePikeman:'spear',renaissanceMusket:'archer',renaissanceSurgeon:'medic',renaissanceDragoon:'raider',renaissanceGrenadier:'thrower',renaissanceCaptain:'banner',renaissanceCannon:'siege',renaissanceGeneral:'shield',
  highKnight:'shield',highHalberd:'spear',highCrossbow:'archer',highMonk:'medic',highRider:'raider',highPitch:'thrower',highHerald:'banner',highTrebuchet:'siege',highCastellan:'shield',
  medievalGuard:'shield',medievalPikeman:'spear',medievalLongbow:'archer',medievalHealer:'medic',medievalBerserker:'raider',medievalThrower:'thrower',medievalHorn:'banner',medievalRam:'siege',medievalJarl:'shield',
  stoneShield:'shield',stoneSpear:'spear',stoneSlinger:'archer',stoneShaman:'medic',stoneScout:'raider',stoneThrower:'thrower',stoneTotem:'banner',stoneRam:'siege',
@@ -15,7 +16,7 @@ export const unitRole: Record<string, string> = {
  bronzeGuard:'shield',bronzeSpear:'spear',bronzeArcher:'archer',bronzeHealer:'medic',bronzeChariot:'raider',bronzePitch:'thrower',bronzeHerald:'banner',bronzeRam:'siege',
  stoneHunter:'raider',stoneBone:'bulwark',stoneEnemySlinger:'archer',stoneWolf:'raider',stoneChief:'boss',bronzeEnemySpear:'spear',bronzeRaider:'raider',bronzeEnemyArcher:'archer',bronzeGate:'bulwark',bronzeKing:'boss'
 };
-for (const [kind, role] of Object.entries(unitRole)) unitArt[kind] = `${kind.startsWith('high') ? 'high-medieval' : kind.startsWith('medieval') ? 'medieval' : kind.startsWith('antique') ? 'antique' : kind.startsWith('stone') ? 'stone' : kind.startsWith('iron') ? 'iron' : 'bronze'}-u-${role}`;
+for (const [kind, role] of Object.entries(unitRole)) unitArt[kind] = `${kind.startsWith('renaissance') ? 'renaissance' : kind.startsWith('high') ? 'high-medieval' : kind.startsWith('medieval') ? 'medieval' : kind.startsWith('antique') ? 'antique' : kind.startsWith('stone') ? 'stone' : kind.startsWith('iron') ? 'iron' : 'bronze'}-u-${role}`;
 export const roleOf = (kind: string) => unitRole[kind] ?? kind;
 export const portrait = (kind: string, enemy = false) => asset(`${enemy ? 'enemy-' : ''}${unitArt[kind] ?? 'stone-u-shield'}`);
 export const eraName = (era: string) => ERA_NAMES[era as EraId] ?? 'Неизвестная эпоха';

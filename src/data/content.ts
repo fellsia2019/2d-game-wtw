@@ -38,6 +38,15 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   antiqueScorpion: { name: 'Скорпион', role: 'Площадь · болт пробивает тесную группу', cost: 65, hp: 38, damage: 18, range: 200, speed: 26, period: 1.85, armor: .12 },
   antiqueCenturion: { name: 'Центурион', role: 'Поддержка · командным жестом ускоряет строй', cost: 72, hp: 48, damage: 0, range: 35, speed: 31, period: 1.2, armor: .25 },
   antiqueBallista: { name: 'Баллиста', role: 'Осада · дальние удары по укреплениям', cost: 90, hp: 78, damage: 19, range: 210, speed: 22, period: 2.1, armor: .3 },
+  renaissanceCuirassier: { name: 'Кирасир', role: 'Защитник · кираса и щит', cost: 48, hp: 140, damage: 9, range: 30, speed: 31, period: 1.2, armor: .5 },
+  renaissancePikeman: { name: 'Пикинёр караула', role: 'Против брони · длинная пика', cost: 62, hp: 75, damage: 21, range: 78, speed: 34, period: 1.3, armor: .28, antiArmor: 2.6 },
+  renaissanceMusket: { name: 'Мушкетёр', role: 'Дальний бой · сильный выстрел, долгая перезарядка', cost: 70, hp: 50, damage: 62, range: 240, speed: 34, period: 4.5, armor: .12 },
+  renaissanceSurgeon: { name: 'Военный хирург', role: 'Лечение · перевязочный материал', cost: 88, hp: 59, damage: 2, heal: 23, range: 135, speed: 31, period: 2.2, armor: .12 },
+  renaissanceDragoon: { name: 'Лёгкий драгун', role: 'Прорыв · конница против дальнего ряда', cost: 74, hp: 94, damage: 26, range: 40, speed: 100, period: 1.15, armor: .2 },
+  renaissanceGrenadier: { name: 'Гренадер', role: 'Площадь · граната против группы', cost: 95, hp: 58, damage: 27, range: 175, speed: 33, period: 2, armor: .15 },
+  renaissanceCaptain: { name: 'Капитан роты', role: 'Поддержка · знамя ускоряет союзников', cost: 104, hp: 72, damage: 0, range: 35, speed: 32, period: 1.2, armor: .28 },
+  renaissanceCannon: { name: 'Полевая пушка', role: 'Осада · артиллерия против укреплений', cost: 160, hp: 95, damage: 76, range: 300, speed: 21, period: 5, armor: .3 },
+  renaissanceGeneral: { name: 'Генерал Дымного фронта', role: 'Босс · кирасир с охраной', cost: 175, hp: 1200, damage: 36, range: 50, speed: 28, period: 1.7, armor: .5, archetype: 'shield' },
   highKnight: { name: 'Рыцарь щита', role: 'Защитник · меч и щит', cost: 42, hp: 122, damage: 8, range: 29, speed: 31, period: 1.2, armor: .5 },
   highHalberd: { name: 'Алебардист', role: 'Против брони · двуручная алебарда', cost: 55, hp: 65, damage: 18, range: 68, speed: 34, period: 1.3, armor: .27, antiArmor: 2.6 },
   highCrossbow: { name: 'Арбалетчик', role: 'Дальний бой · выстрел и перезарядка', cost: 62, hp: 44, damage: 48, range: 215, speed: 35, period: 4, armor: .16 },
@@ -93,24 +102,25 @@ export const UPGRADES: Record<UpgradeId, { name: string; description: string; ca
 };
 
 export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; enemyStartingSupplies?: number; enemyHealthMultiplier?: number; enemyDamageMultiplier?: number; enemyRecruitRoster?: UnitKind[]; enemyDefenseRoster?: UnitKind[]; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
-export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval'];
-export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12, medieval: 14, 'high-medieval': 16 };
-export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4, medieval: 5, 'high-medieval': 6 };
+export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance'];
+export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12, medieval: 14, 'high-medieval': 16, renaissance: 18 };
+export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4, medieval: 5, 'high-medieval': 6, renaissance: 7 };
 export const victoryGold = (era: EraId): number => 25 * ERA_KILL_GOLD[era];
-export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan' };
+export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan', renaissance: 'renaissanceGeneral' };
 export const isBoss = (kind: UnitKind): boolean => Object.values(ERA_BOSSES).includes(kind);
 export const nextEra = (era: EraId): EraId | undefined => ERA_ORDER[ERA_ORDER.indexOf(era) + 1];
-export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье' };
+export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох' };
 export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   stone: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'],
   bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam'],
   iron: ['ironShield', 'ironSpear', 'ironArcher', 'ironMedic', 'ironRaider', 'ironThrower', 'ironBanner', 'ironSiege'],
+  renaissance: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceSurgeon', 'renaissanceDragoon', 'renaissanceGrenadier', 'renaissanceCaptain', 'renaissanceCannon'],
   'high-medieval': ['highKnight', 'highHalberd', 'highCrossbow', 'highMonk', 'highRider', 'highPitch', 'highHerald', 'highTrebuchet'],
   medieval: ['medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalHealer', 'medievalBerserker', 'medievalThrower', 'medievalHorn', 'medievalRam'],
   antique: ['antiqueLegionary', 'antiqueHoplite', 'antiquePeltast', 'antiqueSurgeon', 'antiqueRider', 'antiqueScorpion', 'antiqueCenturion', 'antiqueBallista']
 };
 export const ERA_STARTER_KINDS: Record<EraId, HireKind[]> = {
-  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4), medieval: ERA_HIRE_KINDS.medieval.slice(0, 4), 'high-medieval': ERA_HIRE_KINDS['high-medieval'].slice(0, 4)
+  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4), medieval: ERA_HIRE_KINDS.medieval.slice(0, 4), 'high-medieval': ERA_HIRE_KINDS['high-medieval'].slice(0, 4), renaissance: ERA_HIRE_KINDS.renaissance.slice(0, 4)
 };
 const ROLES: UnitRole[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
 export function unitRole(kind: UnitKind): UnitRole {
@@ -144,6 +154,12 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
     { name: 'Щитовой рубеж', threat: 'Пики и большие щиты под сигналом рога; длиннолучники разряжают строй', ai: 'wall', enemyIncome: 30, enemyStartingSupplies: 40, enemyHealthMultiplier: 1.33, enemyDamageMultiplier: 1.33, enemyRecruitRoster: ['medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalHorn'], roster: ['medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalHorn'], arenaId: 'iron' },
     { name: 'Осада северного посада', threat: 'Две линии щитов прикрывают длиннолучника, топорника и стенобитчик; у крепости выходят пики', ai: 'ranged', enemyIncome: 36, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.48, enemyDamageMultiplier: 1.48, enemyRecruitRoster: ['medievalGuard', 'medievalLongbow', 'medievalGuard', 'medievalThrower', 'medievalRam'], enemyDefenseRoster: ['medievalGuard', 'medievalLongbow', 'medievalGuard', 'medievalPikeman'], roster: ['medievalGuard', 'medievalLongbow', 'medievalGuard', 'medievalThrower', 'medievalRam'], arenaId: 'arrows' },
     { name: 'Северный форт', threat: 'Щиты, пики и дальний ряд держат форт; при 50% крепости ярл выходит с охраной и знахарем', ai: 'boss', enemyIncome: 36, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.36, enemyDamageMultiplier: 1.4, enemyRecruitRoster: ['medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalThrower'], roster: ['medievalJarl', 'medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalBerserker', 'medievalHealer'], arenaId: 'citadel' }
+  ],
+  renaissance: [
+    { name: 'Драгунский рейд', threat: 'Кирасы держат фронт, драгуны прорываются к мушкетёрам', ai: 'rush', enemyIncome: 32, enemyStartingSupplies: 25, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.2, roster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceDragoon'], arenaId: 'ash' },
+    { name: 'Пики и порох', threat: 'Пикинёрский строй прикрывает мушкетёров под ротным знаменем', ai: 'wall', enemyIncome: 36, enemyStartingSupplies: 40, enemyHealthMultiplier: 1.35, enemyDamageMultiplier: 1.35, roster: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceCaptain'], enemyRecruitRoster: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceCaptain'], arenaId: 'iron' },
+    { name: 'Осада звёздного форта', threat: 'Кирасы прикрывают артиллерию; у бастиона выходят пикинёры', ai: 'ranged', enemyIncome: 39, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.4, enemyDamageMultiplier: 1.4, roster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceCuirassier', 'renaissanceGrenadier', 'renaissanceCannon'], enemyRecruitRoster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceCuirassier', 'renaissanceGrenadier', 'renaissanceCannon'], enemyDefenseRoster: ['renaissanceCuirassier', 'renaissanceMusket', 'renaissanceCuirassier', 'renaissancePikeman'], arenaId: 'arrows' },
+    { name: 'Штаб Дымного фронта', threat: 'При половине прочности форта генерал выходит с прикрытием и хирургом', ai: 'boss', enemyIncome: 42, enemyStartingSupplies: 55, enemyHealthMultiplier: 1.45, enemyDamageMultiplier: 1.45, enemyRecruitRoster: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceGrenadier'], roster: ['renaissanceGeneral', 'renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceDragoon', 'renaissanceSurgeon'], arenaId: 'citadel' }
   ],
   'high-medieval': [
     { name: 'Конная засада', threat: 'Конница прорывается к арбалетчикам; щиты держат фронт', ai: 'rush', enemyIncome: 30, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.2, roster: ['highKnight', 'highCrossbow', 'highRider'], arenaId: 'ash' },
