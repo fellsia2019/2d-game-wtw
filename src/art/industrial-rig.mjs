@@ -1,7 +1,7 @@
 /** Standalone, unapproved eighth-era art. Nothing in this module registers game content. */
 import { walkLeg, walkBodyOffset } from './walk-cycle.mjs';
 export const industrialRoles = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
-export const industrialNames = ['Бронежилетчик', 'Штыковик', 'Винтовочник', 'Санитар поезда', 'Велосипедный разведчик', 'Подрывник', 'Механик', 'Паровая мортира'];
+export const industrialNames = ['Бронежилетчик', 'Штыковик', 'Винтовочник', 'Санитар поезда', 'Штурмовой карабинер', 'Подрывник', 'Механик', 'Полевая гаубица'];
 export const industrialFrames = Object.fromEntries(industrialRoles.map(role => [role, 16]));
 const ink = '#272b30';
 const path = (d, fill, stroke = ink, width = 2) => `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${width}" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -26,7 +26,10 @@ function head(role, c, bob = 0) {
  if (role === 'thrower') hair = path('M76 42q-4-23 21-27 25 2 24 28l-17-7-19 11z', c.darkMetal) + path('M75 42h47l-4 6H77z', c.brass);
  if (role === 'banner') hair = path('M74 40q2-23 22-23 21 1 25 25z', c.leather) + path('M68 40h62l-5 8H72z', c.coat) + ellipse(96, 38, 13, 5, c.lightMetal) + ellipse(96, 38, 8, 3, c.darkMetal);
  if (role === 'siege') hair = path('M74 41q5-21 24-22 20 1 24 23z', c.coat) + path('M69 42h61l-8 7H74z', c.shade);
- const face = path('M82 44q11-8 24-1l8 11 8 5-8 5-2 12q-18 9-31-7z', c.skin) + ellipse(82, 58, 4, 6, c.skin) + line('M104 50l10 1', c.leather, 2) + ellipse(110, 56, 2, 2, ink, 'none') + line('M108 68h7', c.skinShade, 2);
+ const face = path('M82 47q10-8 22-4 9 3 10 13l5 4-6 4-2 8q-12 9-25 1-8-7-4-26z', c.skin)
+  + ellipse(83, 59, 4, 6, c.skin) + line('M83 57q4 1 3 5', c.skinShade, 1.5)
+  + line('M101 51q5-2 9 0', c.leather, 1.6) + circle(107, 55, 1.6, ink, 'none')
+  + line('M111 68q-3 2-7 1', c.skinShade, 1.8);
  return group(`translate(0 ${bob})`, path('M89 72h18v16H89z', c.skinShade) + face + hair);
 }
 
@@ -54,6 +57,7 @@ function torso(role, c, bob) {
  if (medic) body += path('M76 95l18 15 22-13 8 45-29 19-26-17z', c.white) + path('M89 113h7v6h6v7h-6v6h-7v-6h-6v-7h6z', '#bc534a', 'none') + path('M62 117h22v26H62z', c.leather) + line('M67 124h12', c.brass, 2);
  if (role === 'archer' || role === 'spear') body += line('M79 82l35 38', c.leather, 6) + path('M70 109h15v27H70z', c.canvas);
  if (role === 'thrower') body += path('M65 105h25v33H65z', c.leather) + line('M68 113h18M68 120h18', c.brass, 2);
+ if (role === 'raider') body += line('M77 86l39 39', c.leather, 7) + line('M79 86l37 39', c.brass, 2) + path('M75 118h17v18H75zM104 121h16v16h-16z', c.leather) + line('M78 123h11M107 126h10', c.brass, 2);
  if (role === 'banner') body += path('M62 89h14v47H62z', c.brass) + path('M64 91h10v36H64z', c.darkMetal) + line('M72 94q10-8 15 0', c.rubber, 4) + circle(69, 94, 5, c.lightMetal) + line('M82 87l32 37', c.leather, 7);
  return group(`translate(0 ${bob})`, body);
 }
@@ -90,38 +94,57 @@ function person(role, c, frame) {
   art += circle(61,112,5,c.skin)+circle(151,113,5,c.skin);
   if (attack && k>=2 && k<=4) art += line(`M171 ${65-k}l7-6M170 ${69-k}l10 1M166 ${60-k}l-1-8`,c.brass,2);
  } else if (role === 'raider') {
-  art += hands(73,116,146,108);
+  const reach = attack ? [0,4,12,17,8,0][k] : 0;
+  const lift = attack ? [0,-4,-7,-5,-2,0][k] : moving ? -2 : 0;
+  art += limb(`M78 ${88+bob}L75 ${106+bob} ${112+reach} ${113+lift}`,c.shade,8)
+   + limb(`M111 ${88+bob}L125 ${104+bob} ${139+reach} ${106+lift}`,c.coat,8);
+  art += group(`translate(${reach} ${lift})`,
+   path('M83 105l-7 12 24 1 11-12z',c.wood)
+   + path('M103 102h58v8h-58z',c.darkMetal)
+   + line('M107 102h54',c.lightMetal,2)
+   + path('M117 110l-5 17 12-2 7-15z',c.leather)
+   + path('M155 99h9v13h-9z',c.metal)
+   + circle(118,108,2,c.brass));
+  art += circle(112+reach,113+lift,5,c.skin)+circle(139+reach,106+lift,5,c.skin);
+  if (attack && k===3) art += path(`M${164+reach} ${100+lift}l18-9-8 14 11 7-21-3z`,'#f0bb70','none');
  }
  return art;
 }
 
-function bicycle(c, frame) {
- const moving=frame>=2&&frame<10, spin=moving?(frame-2)*42:frame>=10?(frame-10)*64:0, radians=spin*Math.PI/180;
- const wheel=x=>circle(x,153,24,c.rubber)+circle(x,153,19,c.lightMetal)+group(`rotate(${spin} ${x} 153)`,line(`M${x-18} 153h36M${x} 135v36M${x-13} 140l26 26M${x-13} 166l26-26`,c.darkMetal,2))+circle(x,153,4,c.brass);
- const frameParts=limb('M53 153L95 118 118 153 53 153M95 118l32-20 38 55M118 153l9-55',c.metal,4)+line('M53 153L95 118 118 153M95 118l32-20 38 55',c.brass,2);
- const saddle=line('M83 113h23M125 99l17-7 12 10',c.rubber,5);
- const pedal=(offset)=>({x:118+15*Math.cos(radians+offset),y:153+15*Math.sin(radians+offset)});
- const rear=pedal(Math.PI),front=pedal(0);
- const leg=(startX,p,far)=>limb(`M${startX} 112L${far?83:126} ${far?133:130} ${p.x} ${p.y}`,far?c.shade:c.coat,8)+path(`M${p.x-6} ${p.y-4}h13l7 5h-20z`,c.leather);
- const jacket=path('M80 77q16-8 30 3l10 35-23 11-28-13z',c.coat)+path('M73 111l27 11 20-8 2 12-24 8-29-15z',c.shade)+line('M75 105l40 14',c.leather,5)+circle(96,121,3,c.brass);
- const backArm=limb('M79 84L91 99 130 101',c.shade,7),frontArm=limb('M108 83L126 91 145 99',c.coat,7);
- return wheel(53)+wheel(165)+frameParts+leg(88,rear,true)+saddle+jacket+head('raider',c,-1)+backArm+frontArm+leg(106,front,false)+circle(130,101,4,c.skin)+circle(145,99,4,c.skin)+circle(118,153,6,c.brass)+line(`M118 153L${rear.x} ${rear.y}M118 153L${front.x} ${front.y}`,c.darkMetal,4);
-}
-
-function mortar(c, frame) {
- const attack=frame>=10,k=attack?frame-10:0,recoil=attack?[0,-4,-10,-6,-2,1][k]:0;
- const wheel=x=>circle(x,153,19,c.wood)+circle(x,153,13,c.brass)+line(`M${x-12} 153h24M${x} 141v24`,c.darkMetal,3)+circle(x,153,4,c.lightMetal);
- const frameParts=path('M47 127h135l12 20-13 9H42z',c.darkMetal)+path('M59 130h117l5 15H53z',c.metal)+line('M49 131L84 91 150 134M180 135l-39-44',c.brass,5)+wheel(69)+wheel(158);
- const gun=group(`translate(${recoil} 0)`,path('M82 108l-8-13 49-55 16 6 8 14-49 58z',c.darkMetal)+path('M82 99l43-52 12 9-43 53z',c.metal)+ellipse(131,48,12,8,c.lightMetal)+ellipse(131,48,7,5,c.darkMetal)+circle(89,112,7,c.brass));
- const boiler=ellipse(141,120,23,17,c.wood)+ellipse(141,120,17,12,c.brass)+circle(141,120,7,c.darkMetal)+line('M141 103V75M141 75h9',c.metal,5)+circle(143,92,3,c.lightMetal);
- const steam=attack&&k>=2&&k<=4?ellipse(139+(k-2)*9,32-(k-2)*7,10+(k-2)*3,6+(k-2)*2,c.smoke,'none'):'';
- const flash=attack&&k===2?path('M125 37l-9-27 17 14 12-13-3 23z','#efb568','none'):'';
- const crew = () => legs(c,frame)+torso('siege',c,0)+head('siege',c)+limb('M78 88L92 107 109 124',c.shade,8)+limb('M111 88L127 108 143 124',c.coat,8)+circle(109,124,5,c.skin)+circle(143,124,5,c.skin);
- return group('translate(-55 0) scale(.97)',crew())+group('translate(286 0) scale(-.97 .97)',crew())+frameParts+boiler+gun+steam+flash;
+function howitzer(c, frame) {
+ const moving=frame>=2&&frame<10, attack=frame>=10, k=attack?frame-10:0;
+ const roll=moving?(frame-2)*23:0, recoil=attack?[0,-3,-12,-8,-3,0][k]:0;
+ const wheel=ellipse(117,146,30,30,c.rubber)+ellipse(117,146,25,25,c.wood)
+  + group(`rotate(${roll} 117 146)`,line('M92 146h50M117 121v50M99 128l36 36M99 164l36-36',c.brass,3))
+  + ellipse(117,146,9,9,c.metal)+circle(117,146,4,c.brass);
+ const trail=path('M117 139L25 166l-4-9 84-37 27 11z',c.darkMetal)
+  + line('M28 160l77-31',c.lightMetal,4)+path('M23 159l-9 3v9h24v-6z',c.wood);
+ const carriage=path('M91 111l28-8 27 29-17 12-35-15z',c.metal)
+  + line('M103 119l31 15',c.darkMetal,5)+circle(111,113,7,c.brass);
+ const barrel=group(`translate(${recoil} ${-recoil*.35})`,
+  path('M73 107l16-18 83-36 12 15-82 50-25 1z',c.darkMetal)
+  + path('M82 101l10-8 79-34 7 9-78 43-17 2z',c.metal)
+  + line('M104 101l70-36',c.lightMetal,3)
+  + ellipse(181,60,10,8,c.lightMetal)+ellipse(182,60,5,4,c.darkMetal)
+  + path('M71 103h11l7 12-10 6-12-6z',c.brass));
+ const shield=path('M101 79l16-4 13 56-32 9-10-10z',c.darkMetal)
+  + path('M105 85l9-3 10 44-20 6-9-6z',c.metal)
+  + line('M99 117l25-6',c.lightMetal,2)+circle(111,105,3,c.brass);
+ const crew=(front)=>{
+  const shell=attack&&k<3&&front;
+  let body=legs(c,frame)+torso('siege',c,moving?walkBodyOffset(frame-2):0)+head('siege',c);
+  body+=limb('M78 88L76 108 104 119',c.shade,8)+limb('M111 88L126 103 140 115',c.coat,8)
+   +circle(104,119,5,c.skin)+circle(140,115,5,c.skin);
+  if(shell)body+=group(`translate(${122+(k*4)} ${101-k*5}) rotate(24)`,path('M-5-13h10v26H-5z',c.brass)+path('M-5-13l5-9 5 9z',c.lightMetal));
+  return group(`translate(${front?-40:-99} 0) scale(.92)`,body);
+ };
+ const flash=attack&&k===2?path('M179 51l16-22-3 18 20-8-11 20 12 7-23 1z','#f0bd73','none'):'';
+ const smoke=attack&&k>=3&&k<=4?ellipse(197+(k-3)*9,35-(k-3)*7,10+(k-3)*4,6+(k-3)*2,c.smoke,'none'):'';
+ return trail+carriage+barrel+wheel+shield+crew(false)+crew(true)+flash+smoke;
 }
 
 export function industrialRig(role, enemy, frame) {
  if (!industrialRoles.includes(role) || !Number.isInteger(frame) || frame < 0 || frame >= 16) throw Error(`Invalid industrial frame ${role}/${frame}`);
  const c=colors(enemy);
- return role==='raider' ? bicycle(c,frame) : role==='siege' ? mortar(c,frame) : person(role,c,frame);
+ return role==='siege' ? howitzer(c,frame) : person(role,c,frame);
 }
