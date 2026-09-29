@@ -71,7 +71,8 @@ function person(role, c, frame) {
   const reach = attack ? [0,6,15,17,10,3][k] : 0, y = attack ? [0,-3,-12,-14,-7,0][k] : 0;
   art += hands(67,111,145+reach,103+y) + path(`M${128+reach} ${72+y}h34l6 15v57l-8 11h-33z`, c.metal) + path(`M${133+reach} ${77+y}h27v65h-27z`, c.darkMetal) + path(`M${137+reach} ${89+y}h18v18h-18z`, c.lightMetal) + line(`M${144+reach} ${113+y}v21`, c.brass, 3);
  } else if (role === 'spear' || role === 'archer') {
-  const thrust = attack ? [0,4,15,21,9,1][k] : 0, lift = role === 'spear' ? -11 : attack ? [0,-4,-8,-5,0,1][k] : 0;
+  const thrust = attack ? role === 'spear' ? [0,4,15,21,9,1][k] : [0,0,-10,-7,-3,0][k] : 0;
+  const lift = role === 'spear' ? -11 : attack ? [0,-4,-8,-5,0,1][k] : 0;
   art += limb(`M78 ${88+bob}L91 ${106+bob} ${105+thrust} ${105+lift}`, c.shade, 8) + limb(`M111 ${88+bob}L126 ${105+bob} ${139+thrust} ${104+lift}`, c.coat, 8);
   let weapon = path(`M83 ${101+lift}h92l10 6-10 5H83z`, c.wood) + line(`M107 ${98+lift}h76`, c.darkMetal, 6) + line(`M110 ${97+lift}h74`, c.lightMetal, 2);
   weapon += path(`M94 ${107+lift}l-6 19 19-5 8-14z`, c.leather) + circle(119,103+lift,3,c.brass);
@@ -94,7 +95,7 @@ function person(role, c, frame) {
   art += circle(61,112,5,c.skin)+circle(151,113,5,c.skin);
   if (attack && k>=2 && k<=4) art += line(`M171 ${65-k}l7-6M170 ${69-k}l10 1M166 ${60-k}l-1-8`,c.brass,2);
  } else if (role === 'raider') {
-  const reach = attack ? [0,4,12,17,8,0][k] : 0;
+  const reach = attack ? [0,0,-3,-10,-5,0][k] : 0;
   const lift = attack ? [0,-4,-7,-5,-2,0][k] : moving ? -2 : 0;
   art += limb(`M78 ${88+bob}L75 ${106+bob} ${112+reach} ${113+lift}`,c.shade,8)
    + limb(`M111 ${88+bob}L125 ${104+bob} ${139+reach} ${106+lift}`,c.coat,8);
