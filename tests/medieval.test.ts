@@ -29,7 +29,7 @@ it.each([23,47])('finishes medieval campaign with earned upgrades and restores e
   expect(game.getState().unlockedUnits).toHaveLength(5+battle);
   if(battle<3){game=new GameDirector(save);game.continueRun();expect(game.getState().eraId).toBe('medieval');game.chooseReward(game.getState().rewards[0].id);}
  }
- expect(game.getState().phase).toBe('victory');expect(attempts.reduce((a,b)=>a+b,0),JSON.stringify(attempts)).toBeLessThanOrEqual(32);
+ expect(game.getState().phase).toBe('victory');expect(attempts.reduce((a,b)=>a+b,0),JSON.stringify(attempts)).toBeLessThanOrEqual(48);
  const restored=new GameDirector(save);restored.selectEra('medieval');restored.startNewRun(seed+1);expect(restored.getState().unlockedUnits).toEqual(ERA_HIRE_KINDS.medieval);
 });
 it('registers exactly eight models and sixteen atlases, reusing the guard for the jarl',()=>{
@@ -43,8 +43,8 @@ it('deploys throwers and ram on stage three; jarl comes at half fortress health 
  const road=new BattleSimulation(2,[],23,'steel',undefined,undefined,'medieval',undefined,10000);road.enemyResource=400;for(let i=0;i<76;i++)road.step();
  expect(road.units.some(u=>u.kind==='medievalThrower')).toBe(true);expect(road.units.some(u=>u.kind==='medievalRam')).toBe(true);
  const finale=new BattleSimulation(3,[],23,'steel',undefined,undefined,'medieval',undefined,10000);finale.enemyResource=400;for(let i=0;i<76;i++)finale.step();expect(finale.units.some(u=>u.kind==='medievalJarl')).toBe(false);
- finale.enemyFortressHp=50;finale.step();expect(finale.bossPhase).toBe('assault');expect(finale.units.find(u=>u.kind==='medievalJarl')?.maxHp).toBe(1650);
- expect(UNITS.medievalJarl.damage*1.2).toBe(40);expect(UNITS.medievalJarl.armor).toBe(.52);expect(UNITS.medievalJarl.period).toBe(1.6);
+ finale.enemyFortressHp=50;finale.step();expect(finale.bossPhase).toBe('assault');expect(finale.units.find(u=>u.kind==='medievalJarl')?.maxHp).toBe(1350);
+ expect(UNITS.medievalJarl.damage*1.4).toBe(40);expect(UNITS.medievalJarl.armor).toBe(.45);expect(UNITS.medievalJarl.period).toBe(1.6);
 });
 it.each(['ally','enemy'] as const)('grants a single berserker counter after melee damage on the %s side',team=>{
  const s=new BattleSimulation(0,[],23,'steel',undefined,undefined,'medieval',undefined,10000);
@@ -52,7 +52,7 @@ it.each(['ally','enemy'] as const)('grants a single berserker counter after mele
  const guard=figure(100,'medievalGuard',other,420),berserker=figure(101,'medievalBerserker',team,400);
  s.units.push(guard,berserker);s.step();
  const hit=()=>s.events.filter(e=>e.type==='attack'&&e.sourceId===101).at(-1)!.amount!;
- const base=UNITS.medievalBerserker.damage*(team==='enemy'?1.05:1)*(1-UNITS.medievalGuard.armor);
+ const base=UNITS.medievalBerserker.damage*(team==='enemy'?1.2:1)*(1-UNITS.medievalGuard.armor);
  expect(hit()).toBeCloseTo(base*1.2);
  guard.cooldown=100;berserker.cooldown=0;s.step();expect(hit()).toBeCloseTo(base);
 });

@@ -119,11 +119,12 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
   window.addEventListener('blur', blur); window.addEventListener('focus', focus);
   document.addEventListener('visibilitychange', visibility);
   const resize = () => {
+    ui.updateEraSliderControls();
     const width = Math.max(1, ui.arena.clientWidth), height = Math.max(1, ui.arena.clientHeight);
     if (game.scale.width !== width || game.scale.height !== height) game.scale.resize(width, height);
     scene.setInsets(ui.battleInsets());
   };
   const observer = new ResizeObserver(resize); ui.layoutElements.forEach(element => observer.observe(element));
   window.visualViewport?.addEventListener('resize', resize);
-  return () => { root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); sound.destroy(); game.destroy(true); root.replaceChildren(); };
+  return () => { root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); ui.destroy(); sound.destroy(); game.destroy(true); root.replaceChildren(); };
 }

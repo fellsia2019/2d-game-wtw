@@ -1,0 +1,32 @@
+{
+  "generator": "Built-in image_gen",
+  "generatedOn": "2026-09-29",
+  "output": {
+    "format": "webp",
+    "width": 768,
+    "height": 512,
+    "quality": 84
+  },
+  "prompts": [
+    {
+      "era": "stone",
+      "prompt": "Create one landscape 3:2 historical strategy game era-card background illustration for 'Знамёна эпох'. Painterly handcrafted 2D concept art, strong readable silhouettes, atmospheric depth, restrained teal shadows and warm amber sunlight, beautiful polished environment painting. No text, no lettering, no UI, no borders, no watermarks, no people or character models. Environment is main subject. Composition: landmarks concentrated in upper two thirds; lower third darker quiet foreground suitable for later overlaid cream title and status. Should be distinct and readable as a 280px wide thumbnail. Full bleed. Scene: Stone Age. A prehistoric wooded valley with a sheltered cave, rough animal-hide tents around a small campfire, standing stones, pine forest, distant rugged mountains. Dawn mist, earthy moss greens and amber embers. No metal, no masonry castle, no modern objects."
+    },
+    {
+      "era": "bronze",
+      "prompt": "Create one landscape 3:2 historical strategy game era-card background illustration for 'Знамёна эпох'. Painterly handcrafted 2D concept art, strong readable silhouettes, atmospheric depth, restrained teal shadows and warm amber sunlight, beautiful polished environment painting. No text, no lettering, no UI, no borders, no watermarks, no people or character models. Environment is main subject. Composition: landmarks concentrated in upper two thirds; lower third darker quiet foreground suitable for later overlaid cream title and status. Should be distinct and readable as a 280px wide thumbnail. Full bleed. Scene: Bronze Age. Sunlit ancient Near Eastern fortified mudbrick city and stepped ziggurat, broad gate with bronze fittings, adobe dwellings, date palms and ochre desert hills. Warm copper and terracotta palette, turquoise dusk shadows. No classical marble columns, no medieval architecture."
+    },
+    {
+      "era": "iron",
+      "prompt": "Create one landscape 3:2 historical strategy game era-card background illustration for 'Знамёна эпох'. Painterly handcrafted 2D concept art, strong readable silhouettes, atmospheric depth, restrained teal shadows and warm amber sunlight, beautiful polished environment painting. No text, no lettering, no UI, no borders, no watermarks, no people or character models. Environment is main subject. Composition: landmarks concentrated in upper two thirds; lower third darker quiet foreground suitable for later overlaid cream title and status. Should be distinct and readable as a 280px wide thumbnail. Full bleed. Scene: Iron Age. A rugged hillfort of stone and wooden palisades, timber gate, stone ramparts, smoky forge glow below, rocky hills and misty pine woods, iron-dark banners without symbols. Slate blue and rust-orange palette. No Roman marble temples, no medieval turreted fantasy castle."
+    },
+    {
+      "era": "antique",
+      "prompt": "Create one landscape 3:2 historical strategy game era-card background illustration for 'Знамёна эпох'. Painterly handcrafted 2D concept art, strong readable silhouettes, atmospheric depth, restrained teal shadows and warm amber sunlight, beautiful polished environment painting. No text, no lettering, no UI, no borders, no watermarks, no people or character models. Environment is main subject. Composition: landmarks concentrated in upper two thirds; lower third darker quiet foreground suitable for later overlaid cream title and status. Should be distinct and readable as a 280px wide thumbnail. Full bleed. Scene: Classical Antiquity. A beautiful Greco-Roman provincial city with marble colonnade and temple, aqueduct spanning a river, tiled roofs, cypress trees and warm Mediterranean distant hills. Cream limestone and olive-green, warm late afternoon sunshine. No medieval buildings or modern objects."
+    },
+    {
+      "era": "medieval",
+      "prompt": "Create one landscape 3:2 historical strategy game era-card background illustration for 'Знамёна эпох'. Painterly handcrafted 2D concept art, strong readable silhouettes, atmospheric depth, restrained teal shadows and warm amber sunlight, beautiful polished environment painting. No text, no lettering, no UI, no borders, no watermarks, no people or character models. Environment is main subject. Composition: landmarks concentrated in upper two thirds; lower third darker quiet foreground suitable for later overlaid cream title and status. Should be distinct and readable as a 280px wide thumbnail. Full bleed. Scene: Early Medieval era, northern Europe circa 8th-10th century. Timber longhouses with thatched and wooden roofs inside a wooden stockade, a modest square stone watchtower, river ford and autumn forest, distant misty hills. Mossy green and amber palette. No high-medieval Gothic cathedral, no huge fantasy castle, no modern objects."
+    }
+  ]
+}

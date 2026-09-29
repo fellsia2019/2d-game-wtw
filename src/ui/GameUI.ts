@@ -5,6 +5,12 @@ import { ERA_HIRE_KINDS, UNITS, UPGRADES, ERA_BATTLES, ERA_ORDER, nextEra, victo
 import type { SoundStatus } from '../view/Sound';
 import type { BattleInsets } from '../view/BattleLayout';
 import { TALENTS, talentCost, globalTalentCost, baseHealth, baseHealthCost, type TalentId } from '../core/talents';
+import { enemyBalanceDefaults } from '../core/enemyBalance';
+import Swiper from 'swiper';
+import { A11y, Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/a11y';
+import { eraThemeStyle } from './eraThemes';
 
 const esc = (text: string) => text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 const tacticalTraits: Record<string, string> = { shield: 'Держит фронт', spear: 'Против брони', archer: 'Дальний урон', medic: 'Лечение', raider: 'Быстрый прорыв', thrower: 'Урон по группе', banner: 'Ускоряет союзников', siege: 'Бьёт крепость' };
@@ -33,6 +39,13 @@ export class GameUI {
   private previousPhase = '';
   private overlayContext = '';
   private audioStatus: SoundStatus = 'locked';
+  private eraSwiper: Swiper | null = null;
+  destroy() {
+    // A11y can have a pending focus callback; retain the destroyed instance's
+    // fields until that callback finishes instead of deleting them underneath it.
+    this.eraSwiper?.destroy(false, true);
+    this.eraSwiper = null;
+  }
   setAudioStatus(status: SoundStatus) { this.audioStatus = status; if (this.state) this.updateSoundControls(); }
   private updateSoundControls() {
     for (const action of ['mute', 'music'] as const) {
@@ -66,7 +79,10 @@ export class GameUI {
     return ERA_HIRE_KINDS[state.eraId];
   }
   private eraMap(state: GameState) {
-    return `<div class="era-map" aria-label="Карта эпох">${ERA_ORDER.map((era,i) => `<button data-action="era" data-era="${era}" class="era-choice ${state.eraId === era ? 'selected' : ''}" aria-pressed="${state.eraId === era}" ${!state.unlockedEras[era] ? 'disabled' : ''}><span class="era-number">0${i+1}</span><b>${eraName(era)}</b><small>${state.eraId === era ? `Выбрана · ${Math.min(4,state.eraProgress[era])} / 4 этапов` : state.unlockedEras[era] ? 'Доступна · выбрать →' : `Пройди ${eraName(ERA_ORDER[i - 1]).toLocaleLowerCase('ru')}`}</small></button>`).join('')}<p>Следующие эпохи появятся в будущих обновлениях.</p></div>`;
+    return `<div class="era-map" role="region" aria-label="Карта эпох"><div class="era-slider"><button type="button" class="era-slide-arrow era-prev" aria-label="Предыдущие эпохи" aria-controls="era-track">←</button><div class="era-track swiper" id="era-track" tabindex="0" aria-label="Эпохи · перетаскивай влево и вправо"><div class="swiper-wrapper">${ERA_ORDER.map((era,i) => `<div class="swiper-slide"><button data-action="era" data-era="${era}" style="${eraThemeStyle(era)}" class="era-choice ${state.eraId === era ? 'selected' : ''} ${state.eraProgress[era] >= 4 ? 'is-complete' : ''}" aria-pressed="${state.eraId === era}" ${!state.unlockedEras[era] ? 'disabled' : ''}><img class="era-backdrop" src="${import.meta.env.BASE_URL}assets/era-cards/${era}.webp" alt="" draggable="false" loading="lazy" width="768" height="512"/><span class="era-card-status ${state.eraProgress[era] >= 4 ? 'is-complete' : !state.unlockedEras[era] ? 'is-locked' : ''}">${state.eraProgress[era] >= 4 ? '✓ Пройдена' : state.unlockedEras[era] ? 'Не пройдена' : 'Закрыта'}</span><span class="era-card-copy"><span class="era-number">0${i+1}</span><b>${eraName(era)}</b><small>${state.eraId === era ? `Выбрана · ${Math.min(4,state.eraProgress[era])} / 4 этапов` : state.unlockedEras[era] ? 'Доступна · выбрать →' : `Пройди ${eraName(ERA_ORDER[i - 1]).toLocaleLowerCase('ru')}`}</small></span></button></div>`).join('')}</div></div><button type="button" class="era-slide-arrow era-next" aria-label="Следующие эпохи" aria-controls="era-track">→</button></div><div class="era-pagination" aria-label="Навигация по эпохам"></div><p>Следующие эпохи появятся в будущих обновлениях.</p></div>`;
+  }
+  updateEraSliderControls() {
+    this.eraSwiper?.update();
   }
   private menuIntro(state: GameState) {
     if (state.eraId === 'stone') return 'Пройди четыре сражения и одолей вождя эпохи.<br/>Открой бронзовый век с новым войском и тактикой.';
@@ -88,7 +104,7 @@ export class GameUI {
     const play = state.canContinue
       ? '<button class="hero-play" data-action="continue"><span>▶</span> Продолжить игру →</button>'
       : '<button class="hero-play" data-action="start"><span>▶</span> Играть →</button>';
-    return `<div class="menu-hero"><div class="menu-art"><span class="hero-era-tag">${eraName(state.eraId)}</span><img src="${portrait(kinds[1])}" alt=""/><img src="${portrait(kinds[0])}" alt=""/><img src="${portrait(kinds[2])}" alt=""/></div><div class="menu-hero-copy"><div class="eyebrow">ЗНАМЁНА ЭПОХ</div><h2 id="dialog-title">${headline}</h2><p class="modal-intro">${this.menuIntro(state)}</p><div class="menu-hero-actions">${play}${state.canContinue ? '<button class="hero-play hero-new-run" data-action="start">Начать эпоху заново →</button>' : ''}</div></div></div><div class="menu-section-title"><h3>Развитие и история</h3></div>${this.menuFeaturesHTML(state)}<div class="menu-section-title"><h3>Карта эпох</h3></div>${this.eraMap(state)}`;
+    return `<div class="menu-hero" style="${eraThemeStyle(state.eraId)}"><div class="menu-art"><span class="hero-era-tag">${eraName(state.eraId)}</span><img src="${portrait(kinds[1])}" alt=""/><img src="${portrait(kinds[0])}" alt=""/><img src="${portrait(kinds[2])}" alt=""/></div><div class="menu-hero-copy"><div class="eyebrow">ЗНАМЁНА ЭПОХ</div><h2 id="dialog-title">${headline}</h2><p class="modal-intro">${this.menuIntro(state)}</p><div class="menu-hero-actions">${play}${state.canContinue ? '<button class="hero-play hero-new-run" data-action="start">Начать эпоху заново →</button>' : ''}</div></div></div><div class="menu-section-title"><h3>Развитие и история</h3></div>${this.menuFeaturesHTML(state)}<div class="menu-section-title"><h3>Карта эпох</h3></div>${this.eraMap(state)}`;
   }
   private unlockLabel(kind: HireKind, state: GameState) {
     const index = this.eraKinds(state).indexOf(kind);
@@ -160,7 +176,7 @@ export class GameUI {
     const currency = global ? state.globalTalentPoints : state.gold;
     let cards = (Object.keys(TALENTS) as TalentId[]).map(id => {
       const talent = TALENTS[id], level = levels[id];
-      const cost = global ? globalTalentCost(level) : talentCost(level);
+      const cost = global ? globalTalentCost() : talentCost(level);
       return `<article class="talent-card talent-${id}"><span class="talent-icon">${uiIcon(id)}</span><h3>${talent.name}</h3><span class="talent-level" aria-label="Уровень ${level}">Ур. ${level}</span><div class="talent-stat" aria-label="Текущий бонус +${level * 5}%, следующий +${(level + 1) * 5}%"><strong>+${level * 5}%</strong><span class="talent-arrow" aria-hidden="true">→</span><span class="talent-next">+${(level + 1) * 5}%</span></div><button class="talent-buy" data-action="${global ? 'buy-global-talent' : 'buy-talent'}" data-talent="${id}" ${currency < cost ? 'disabled' : ''} aria-label="Купить ${talent.name}, уровень ${level + 1}, цена ${cost} ${global ? 'очков' : 'золота'}">${uiIcon(global ? 'point' : 'gold')} ${cost}</button></article>`;
     }).join('');
     if (!global) {
@@ -196,7 +212,8 @@ export class GameUI {
     const columns = [{ key: 'income', label: 'Доход/с', max: 1000 }, { key: 'startSupplies', label: 'Старт', max: 10000 }, { key: 'hpBonus', label: 'HP +%', max: 1000 }, { key: 'damageBonus', label: 'Урон +%', max: 1000 }] as const;
     if (this.debugEra !== state.eraId) {
       this.debugEra = state.eraId;
-      debug.innerHTML = `<table><caption>Враг · ${eraName(state.eraId)}</caption><thead><tr><th>Бой</th>${columns.map(c => `<th>${c.label}</th>`).join('')}</tr></thead><tbody>${state.debugEnemyBalance.map((_, index) => `<tr data-debug-row="${index}"><th title="${esc(ERA_BATTLES[state.eraId][index].name)}">${index + 1}</th>${columns.map(c => `<td><input type="number" min="0" max="${c.max}" step="1" data-debug-param="${c.key}" aria-label="Бой ${index + 1}: ${c.label}"/></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      const defaults = enemyBalanceDefaults(state.eraId);
+      debug.innerHTML = `<table><caption>Враг · ${eraName(state.eraId)}</caption><thead><tr><th>Бой</th>${columns.map(c => `<th>${c.label}</th>`).join('')}</tr></thead><tbody>${state.debugEnemyBalance.map((_, index) => `<tr data-debug-row="${index}"><th title="${esc(ERA_BATTLES[state.eraId][index].name)}">${index + 1}</th>${columns.map(c => `<td><input type="number" min="0" max="${c.max}" step="1" data-debug-param="${c.key}" aria-label="Бой ${index + 1}: ${c.label}"/><span class="debug-default">В коде: ${defaults[index][c.key]}</span></td>`).join('')}</tr>`).join('')}</tbody></table>`;
     }
     for (const input of debug.querySelectorAll<HTMLInputElement>('[data-debug-param]')) {
       if (document.activeElement === input) continue;
@@ -263,12 +280,15 @@ export class GameUI {
     const context = `${this.panel ?? state.phase}:${state.phase === 'preparation' ? this.preparationStep : ''}:${state.paused}`;
     const sameScreen = this.overlayContext === context;
     const scrollTop = sameScreen ? this.overlay.querySelector('.modal')?.scrollTop ?? 0 : 0;
+    const oldEraMap = sameScreen && state.phase === 'menu' && this.panel === null
+      ? this.overlay.querySelector<HTMLElement>('.era-map') : null;
     const previousButton = sameScreen && document.activeElement instanceof HTMLButtonElement ? document.activeElement : null;
     const previousAction = previousButton?.dataset.action;
     const previousKind = previousButton?.dataset.kind;
     const previousDoctrine = previousButton?.dataset.doctrine;
     const previousTalent = previousButton?.dataset.talent;
     const previousSlot = previousButton?.dataset.slot;
+    const previousEra = previousButton?.dataset.era;
     this.overlayContext = context;
     let content = '';
     if (this.panel === 'talents' || this.panel === 'globalTalents') content = this.talentsHTML(state, this.panel === 'globalTalents');
@@ -305,7 +325,46 @@ export class GameUI {
       : state.platform.sdk === 'available' ? 'SDK Яндекс Игр подключён · сохранение пока локально' : 'Локальный режим · прогресс в этом браузере';
     const topbar = isMainMenu || isResult ? '' : `<div class="modal-topbar ${isPreparation ? 'prep-topbar' : ''}">${backButton}</div>`;
     const footer = isPreparation || isResult || isBattleReady ? '' : `<div class="modal-platform">${talentLink}${platformLabel}</div>`;
+    if (!oldEraMap) this.destroy();
     this.overlay.innerHTML = content ? `<div class="scrim ${isPreparation && this.preparationStep === 'roster' ? 'roster-scrim' : ''}">${audioControls()}<section class="modal ${modalClasses}" role="dialog" aria-modal="true" aria-labelledby="dialog-title">${topbar}${content}${footer}</section></div>` : '';
+    if (oldEraMap) {
+      // Keep the live slider, including its exact translate and active index.
+      // Update only card state while the banner and other menu content change.
+      const newEraMap = this.overlay.querySelector<HTMLElement>('.era-map')!;
+      for (const card of oldEraMap.querySelectorAll<HTMLButtonElement>('.era-choice')) {
+        const updated = newEraMap.querySelector<HTMLButtonElement>(`[data-era="${card.dataset.era}"]`)!;
+        card.className = updated.className;
+        card.disabled = updated.disabled;
+        card.setAttribute('aria-pressed', updated.getAttribute('aria-pressed')!);
+        for (const selector of ['.era-card-status', '.era-card-copy']) card.querySelector(selector)!.replaceWith(updated.querySelector(selector)!);
+      }
+      newEraMap.replaceWith(oldEraMap);
+    }
+    const eraTrack = this.overlay.querySelector<HTMLElement>('.era-track');
+    if (eraTrack && !this.eraSwiper) {
+      this.eraSwiper = new Swiper(eraTrack, {
+        modules: [Navigation, Pagination, A11y], cssMode: false,
+        slidesPerView: 1, spaceBetween: 12, grabCursor: true,
+        breakpointsBase: 'container',
+        breakpoints: {
+          520: { slidesPerView: 2 },
+          800: { slidesPerView: 3 },
+        },
+        initialSlide: ERA_ORDER.indexOf(state.eraId),
+        speed: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 300,
+        watchOverflow: true, touchStartPreventDefault: false,
+        focusableElements: 'input, select, textarea, video, label',
+        navigation: { prevEl: this.overlay.querySelector<HTMLElement>('.era-prev'), nextEl: this.overlay.querySelector<HTMLElement>('.era-next') },
+        pagination: { el: this.overlay.querySelector<HTMLElement>('.era-pagination'), clickable: true, bulletElement: 'button' },
+        a11y: { scrollOnFocus: false, prevSlideMessage: 'Предыдущие эпохи', nextSlideMessage: 'Следующие эпохи', firstSlideMessage: 'Начало карты эпох', lastSlideMessage: 'Конец карты эпох', paginationBulletMessage: 'Показать группу эпох {{index}}', slideLabelMessage: 'Эпоха {{index}} из {{slidesLength}}' }
+      });
+      eraTrack.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault();
+          if (event.key === 'ArrowLeft') this.eraSwiper?.slidePrev(); else this.eraSwiper?.slideNext();
+        }
+      });
+    }
     const pickFooter = this.overlay.querySelector('.roster-screen .pick-footer');
     if (pickFooter) this.overlay.querySelector('.scrim')!.append(pickFooter);
     this.updateSoundControls();
@@ -313,7 +372,7 @@ export class GameUI {
     for (const child of Array.from(shell.children)) if (child !== this.overlay) (child as HTMLElement).inert = Boolean(content);
     if (content) {
       const buttons = Array.from(this.overlay.querySelectorAll<HTMLButtonElement>('button:not(:disabled)'));
-      const focus = buttons.find(b => previousAction && b.dataset.action === previousAction && b.dataset.kind === previousKind && b.dataset.doctrine === previousDoctrine && b.dataset.talent === previousTalent && b.dataset.slot === previousSlot) ?? buttons.find(b => b.dataset.resultPrimary)
+      const focus = buttons.find(b => previousAction && b.dataset.action === previousAction && b.dataset.kind === previousKind && b.dataset.doctrine === previousDoctrine && b.dataset.talent === previousTalent && b.dataset.slot === previousSlot && b.dataset.era === previousEra) ?? buttons.find(b => b.dataset.resultPrimary)
         ?? buttons.find(b => ['reward', 'continue', 'start', 'begin', 'pause'].includes(b.dataset.action ?? '')) ?? buttons[0];
       focus?.focus({ preventScroll: true });
       const modal = this.overlay.querySelector<HTMLElement>('.modal'); if (modal) modal.scrollTop = scrollTop;

@@ -7,6 +7,15 @@ import {ERA_HIRE_KINDS,UNITS,nextEra,unitRole,victoryGold} from '../src/data/con
 import {unitArt} from '../src/art/catalog';
 import type {UnitKind,Team,UnitState} from '../src/core/types';
 import {completeCampaignBattle} from './helpers/campaign';
+import {enemyBalanceDefaults} from '../src/core/enemyBalance';
+it('uses the approved Antiquity balance for all four stages',()=>{
+ expect(enemyBalanceDefaults('antique')).toEqual([
+  {income:18,startSupplies:10,hpBonus:10,damageBonus:5},
+  {income:28,startSupplies:30,hpBonus:20,damageBonus:15},
+  {income:28,startSupplies:30,hpBonus:20,damageBonus:15},
+  {income:28,startSupplies:30,hpBonus:30,damageBonus:20}
+ ]);
+});
 class MemoryStorage implements StorageLike {
  values=new Map<string,string>();getItem(k:string){return this.values.get(k)??null;}setItem(k:string,v:string){this.values.set(k,v);}removeItem(k:string){this.values.delete(k);}
 }
@@ -43,6 +52,15 @@ it('fields both engines on the third stage and triggers the legate only at half 
  expect(road.units.some(u=>u.kind==='antiqueScorpion')).toBe(true);expect(road.units.some(u=>u.kind==='antiqueBallista')).toBe(true);
  const finale=new BattleSimulation(3,[],23,'steel',undefined,undefined,'antique',undefined,10000);finale.enemyResource=400;for(let i=0;i<76;i++)finale.step();expect(finale.units.some(u=>u.kind==='antiqueLegate')).toBe(false);
  finale.enemyFortressHp=50;finale.step();expect(finale.bossPhase).toBe('assault');expect(finale.units.find(u=>u.kind==='antiqueLegate')?.maxHp).toBe(1450);
+});
+it('recruits ranged support between the hoplite and centurion on the second stage',()=>{
+ const sim=new BattleSimulation(1,[],23,'steel',undefined,undefined,'antique');
+ sim.enemyResource=200;for(let i=0;i<76;i++)sim.step();
+ expect(sim.units.filter(u=>u.team==='enemy').slice(0,4).map(u=>u.kind)).toEqual(['antiqueLegionary','antiqueHoplite','antiquePeltast','antiqueCenturion']);
+ const peltast=sim.units.find(u=>u.kind==='antiquePeltast')!;
+ sim.units.push(figure(100,'antiqueLegionary','ally',peltast.x-150,100));
+ peltast.cooldown=0;sim.step();
+ expect(sim.events.some(e=>e.type==='attack'&&e.sourceId===peltast.id&&e.targetId===100)).toBe(true);
 });
 it('adds formation armor symmetrically and removes it when the partner dies',()=>{
  const hit=(formed:boolean,dead=false)=>{const s=new BattleSimulation(0,[],23,'steel',undefined,undefined,'antique');s.units.push(figure(100,'antiquePeltast','ally',400),figure(101,'antiqueLegionary','enemy',500,100));if(formed)s.units.push({...figure(102,'antiqueHoplite','enemy',560,100),hp:dead?0:500});s.step();return s.events.find(e=>e.type==='attack'&&e.sourceId===100)?.amount!;};

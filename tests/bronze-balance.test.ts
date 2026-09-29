@@ -52,7 +52,7 @@ it('uses the approved bronze debug configuration as the default balance', () => 
   expect(enemyBalanceDefaults('bronze')).toEqual([
     { income: 13, startSupplies: 10, hpBonus: 10, damageBonus: 5 },
     { income: 15, startSupplies: 20, hpBonus: 15, damageBonus: 10 },
-    { income: 16, startSupplies: 20, hpBonus: 20, damageBonus: 15 },
+    { income: 20, startSupplies: 23, hpBonus: 20, damageBonus: 15 },
     { income: 17, startSupplies: 25, hpBonus: 28, damageBonus: 15 }
   ]);
 });

@@ -375,7 +375,7 @@ export class GameDirector implements GameApp {
   buyGlobalTalent(id: TalentId): boolean {
     if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase)
       || !Object.hasOwn(this.globalTalentProgress.levels, id)) return false;
-    const cost = globalTalentCost(this.globalTalentProgress.levels[id]);
+    const cost = globalTalentCost();
     if (!Number.isSafeInteger(cost) || this.globalTalentProgress.points < cost) return false;
     this.globalTalentProgress.points -= cost;
     this.globalTalentProgress.levels[id]++;

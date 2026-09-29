@@ -154,8 +154,14 @@ export class BattleSimulation {
     // Spend the available budget; a single purchase per turn capped effective income.
     while (true) {
       let kind: UnitKind;
-        const enemies = ERA_BATTLES[this.eraId][this.battleIndex].enemyRecruitRoster ?? this.contract.roster;
-        if (plan === 'ranged') kind = ['iron','antique','medieval'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
+        const battle = ERA_BATTLES[this.eraId][this.battleIndex];
+        const enemies = battle.enemyRecruitRoster ?? this.contract.roster;
+        if (plan === 'ranged' && allyNearFort && battle.enemyDefenseRoster) {
+          // Keep ranged and anti-armor support when the siege line falls back.
+          const defenders = battle.enemyDefenseRoster;
+          kind = defenders[this.aiSequence % defenders.length];
+        }
+        else if (plan === 'ranged') kind = ['iron','antique','medieval'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
         if (isBoss(kind)) kind = enemies.find(id => id !== kind) ?? kind;

@@ -379,3 +379,4 @@ small{font-size:16px}
  .game-shell .card-key{display:grid;place-items:center;left:auto;right:8px;top:8px;width:24px;height:24px;line-height:20px;font-size:16px;font-weight:700;color:#f4dfac;background:#102a2f;border:1px solid #c1a974;border-radius:4px}
  .game-shell .unit-card .card-copy{padding-right:28px}
 }
+.modal.menu-modal{touch-action:pan-x pan-y}

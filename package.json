@@ -14,7 +14,8 @@
     "art:medieval": "node src/art/check-walk.mjs && node src/art/generate-medieval-sprites.mjs && node src/art/check-medieval.mjs"
   },
   "dependencies": {
-    "phaser": "^3.90.0"
+    "phaser": "^3.90.0",
+    "swiper": "^14.3.0"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

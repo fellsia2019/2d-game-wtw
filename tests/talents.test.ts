@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BattleSimulation } from '../src/core/BattleSimulation';
 import { GameDirector } from '../src/core/GameDirector';
 import { SaveService, type StorageLike } from '../src/core/save';
-import { emptyTalentProgress, talentCost, combinedTalents, type TalentLevels } from '../src/core/talents';
+import { emptyTalentProgress, talentCost, combinedTalents, type TalentId, type TalentLevels } from '../src/core/talents';
 
 class MemoryStorage implements StorageLike {
   values = new Map<string, string>();
@@ -132,6 +132,27 @@ describe('permanent talents', () => {
     const normal = new BattleSimulation(0, [], 97, 'steel', undefined, undefined, 'bronze');
     expect(game.getState().income).toBeCloseTo(normal.income * 1.05);
     expect(combinedTalents({ ...emptyTalentProgress().levels, supply: 3 }, game.getState().globalTalents).supply).toBe(4);
+  });
+
+  it('charges one point for every global talent rank and preserves purchases after reload', () => {
+    const save = new SaveService(new MemoryStorage());
+    const levels = { damage: 0, attackSpeed: 1, health: 5, supply: 20 };
+    save.writeGlobalTalents({ points: 8, levels: { ...levels }, advancedEras: [] });
+    let game = new GameDirector(save);
+    let points = 8;
+    for (const id of Object.keys(levels) as TalentId[]) {
+      for (let rank = 0; rank < 2; rank++) {
+        expect(game.buyGlobalTalent(id)).toBe(true);
+        expect(game.getState().globalTalentPoints).toBe(--points);
+        expect(game.getState().globalTalents[id]).toBe(++levels[id]);
+        game = new GameDirector(save);
+        expect(game.getState().globalTalentPoints).toBe(points);
+        expect(game.getState().globalTalents).toEqual(levels);
+      }
+    }
+    expect(game.buyGlobalTalent('supply')).toBe(false);
+    expect(game.getState().globalTalents).toEqual(levels);
+    expect(game.getState().globalTalentPoints).toBe(0);
   });
 
   it('loads safely when the talent record is malformed', () => {

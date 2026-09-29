@@ -12,7 +12,7 @@ export const baseHealth = (level: number): number => 1 + level * 10;
 export const baseHealthCost = (level: number): number => 10 + level * 5;
 export interface GlobalTalentProgress { points: number; levels: TalentLevels; advancedEras: string[]; }
 export const emptyGlobalTalents = (): GlobalTalentProgress => ({ points: 0, levels: emptyTalentProgress().levels, advancedEras: [] });
-export const globalTalentCost = (level: number): number => level + 1;
+export const globalTalentCost = (): number => 1;
 export const combinedTalents = (local: TalentLevels, global: TalentLevels): TalentLevels => ({
   damage: local.damage + global.damage, attackSpeed: local.attackSpeed + global.attackSpeed,
   health: local.health + global.health, supply: local.supply + global.supply
