@@ -1,0 +1,55 @@
+{
+  "era": "industrial",
+  "status": "draft-awaiting-approval",
+  "gameIntegrated": false,
+  "modelCount": 8,
+  "roles": [
+    "shield",
+    "spear",
+    "archer",
+    "medic",
+    "raider",
+    "thrower",
+    "banner",
+    "siege"
+  ],
+  "names": [
+    "Бронежилетчик",
+    "Штыковик",
+    "Винтовочник",
+    "Санитар поезда",
+    "Велосипедный разведчик",
+    "Подрывник",
+    "Механик",
+    "Паровая мортира"
+  ],
+  "palettes": [
+    "ally",
+    "enemy"
+  ],
+  "frameWidth": 320,
+  "frameHeight": 192,
+  "framesPerModel": 16,
+  "origin": [
+    160,
+    176
+  ],
+  "sheets": [
+    "industrial-u-shield-sheet.png",
+    "industrial-u-spear-sheet.png",
+    "industrial-u-archer-sheet.png",
+    "industrial-u-medic-sheet.png",
+    "industrial-u-raider-sheet.png",
+    "industrial-u-thrower-sheet.png",
+    "industrial-u-banner-sheet.png",
+    "industrial-u-siege-sheet.png",
+    "enemy-industrial-u-shield-sheet.png",
+    "enemy-industrial-u-spear-sheet.png",
+    "enemy-industrial-u-archer-sheet.png",
+    "enemy-industrial-u-medic-sheet.png",
+    "enemy-industrial-u-raider-sheet.png",
+    "enemy-industrial-u-thrower-sheet.png",
+    "enemy-industrial-u-banner-sheet.png",
+    "enemy-industrial-u-siege-sheet.png"
+  ]
+}
