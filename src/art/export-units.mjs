@@ -19,6 +19,9 @@ function writeFileSync(path, content) {
 }
 export function exportUnits(eras, { manifestPath = 'public/assets/sprite-manifest.json', manifestEras = ['stone','bronze','iron','antique','medieval','high-medieval'], customRig, customRoles, frameCounts } = {}) {
  let count=0;
+ // Rebuilding a subset must retain the approved long action cycles of other eras.
+ let cycleMetadata = {};
+ try { const previous = JSON.parse(readFileSync(manifestPath,'utf8')); cycleMetadata = {eraActionCycles:previous.eraActionCycles,eraFrameCounts:previous.eraFrameCounts}; } catch (error) { if (error.code !== 'ENOENT') throw error; }
  for(const era of eras) {
   const available=customRoles ?? (era==='high-medieval'?highMedievalRoles:era==='medieval'?medievalRoles:era==='antique'?antiqueRoles:roles);
   for(const enemy of [false,true]) {
@@ -26,7 +29,9 @@ export function exportUnits(eras, { manifestPath = 'public/assets/sprite-manifes
    for(const [r,role] of available.entries()) {
     const name=`${enemy?'enemy-':''}${era+'-'}u-${role}`;
     const rig=frame=>customRig?customRig(role,enemy,frame):era==='high-medieval'?highMedievalRig(role,enemy,frame):era==='medieval'?medievalRig(role,enemy,frame):era==='antique'?antiqueRig(role,enemy,frame):unitRig(era,role,enemy,frame);
-    writeFileSync(`public/assets/${name}.svg`,svg(192,192,rig(0)));
+    const wide = role==='siege' || (era==='antique' && role==='thrower');
+    const portrait = svg(192,192,rig(0)).replace('viewBox="0 0 192 192"',wide ? 'viewBox="-64 0 320 192"' : 'viewBox="0 0 192 192"');
+    writeFileSync(`public/assets/${name}.svg`,portrait);
     const frameCount=frameCounts?.[role] ?? (era==='high-medieval'?highMedievalFrameCounts[role]:undefined) ?? (role==='banner'?48:16), height=frameCount/4*192;
     const frames=Array.from({length:frameCount},(_,i)=>`<svg x="${i%4*320}" y="${Math.floor(i/4)*192}" width="320" height="192"><g transform="translate(64 0)">${rig(i)}</g></svg>`).join('');
     const rendered=new Resvg(svg(1280,height,frames)).render(), pixels=rendered.pixels;
@@ -44,12 +49,12 @@ export function exportUnits(eras, { manifestPath = 'public/assets/sprite-manifes
      if(new Set(hashes.slice(16,48)).size<16)throw Error(`Insufficient standard motion: ${name}`);
     }
     writeFileSync(`public/assets/${name}-sheet.png`,rendered.asPng());
-    contact+=`<svg x="${r%5*192}" y="${Math.floor(r/5)*216+24}" width="192" height="192">${rig(0)}</svg><text x="${r%5*192+96}" y="${Math.floor(r/5)*216+20}" text-anchor="middle" fill="#eee0bc" font-family="Segoe UI" font-size="16">${role}</text>`;
+    contact+=`<svg x="${r%5*192}" y="${Math.floor(r/5)*216+24}" width="192" height="192" ${wide ? 'viewBox="-64 0 320 192"' : ''}>${rig(0)}</svg><text x="${r%5*192+96}" y="${Math.floor(r/5)*216+20}" text-anchor="middle" fill="#eee0bc" font-family="Segoe UI" font-size="16">${role}</text>`;
     count++;
    }
    writeFileSync(`public/assets/${era}${enemy?'-enemy':''}-contact.png`,new Resvg(svg(960,456,'<rect width="960" height="456" fill="#203239"/>'+contact)).render().asPng());
   }
  }
- writeFileSync(manifestPath,JSON.stringify({frameWidth:320,frameHeight:192,columns:4,rows:4,originX:.5,originY:176/192,frames:{idle:0,ready:1,move:[2,3,4,5,6,7,8,9],attack:[10,11,12,13,14,15],standardLift:Array.from({length:32},(_,i)=>16+i)},moveFps:12,attackFps:15,roles:customRoles ?? (manifestEras.length===1&&manifestEras[0]==='antique'?antiqueRoles:roles),eras:manifestEras,standardFrames:{first:16,count:32,fps:40},artVersion:3,sheets:readdirSync('public/assets').filter(name=>manifestEras.some(era=>name.startsWith(`${era}-u-`)||name.startsWith(`enemy-${era}-u-`))&&name.endsWith('-sheet.png')&&(!name.includes('medieval-u-')||medievalRoles.some(role=>name.endsWith(`-u-${role}-sheet.png`)))&&(!name.includes('antique-u-')||antiqueRoles.some(role=>name.endsWith(`-u-${role}-sheet.png`)))).sort()},null,2));
+ writeFileSync(manifestPath,JSON.stringify({frameWidth:320,frameHeight:192,columns:4,rows:4,originX:.5,originY:176/192,frames:{idle:0,ready:1,move:[2,3,4,5,6,7,8,9],attack:[10,11,12,13,14,15],standardLift:Array.from({length:32},(_,i)=>16+i)},moveFps:12,attackFps:15,roles:customRoles ?? (manifestEras.length===1&&manifestEras[0]==='antique'?antiqueRoles:roles),eras:manifestEras,standardFrames:{first:16,count:32,fps:40},artVersion:3,sheets:readdirSync('public/assets').filter(name=>manifestEras.some(era=>name.startsWith(`${era}-u-`)||name.startsWith(`enemy-${era}-u-`))&&name.endsWith('-sheet.png')&&(!name.includes('medieval-u-')||medievalRoles.some(role=>name.endsWith(`-u-${role}-sheet.png`)))&&(!name.includes('antique-u-')||antiqueRoles.some(role=>name.endsWith(`-u-${role}-sheet.png`)))).sort(),...cycleMetadata},null,2));
  console.log(`${count} atlases: bounds, walk/action poses and smooth standard cycles verified.`);
 }

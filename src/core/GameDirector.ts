@@ -317,12 +317,15 @@ export class GameDirector implements GameApp {
   }
 
   addDebugGold(amount: number): boolean {
-    if (this.phase !== 'battle' || !this.simulation || this.simulation.report || ![50, 100, 200].includes(amount)
+    const activeBattle = this.phase === 'battle' && this.simulation && !this.simulation.report ? this.simulation : null;
+    if (![50, 100, 200, 500, 2000].includes(amount)
       || !Number.isSafeInteger(this.talentProgress.gold + amount)
-      || !Number.isSafeInteger(this.simulation.goldEarned + amount)) return false;
+      || (activeBattle && !Number.isSafeInteger(activeBattle.goldEarned + amount))) return false;
     this.talentProgress.gold += amount;
-    this.simulation.goldEarned += amount;
-    this.creditedBattleGold += amount;
+    if (activeBattle) {
+      activeBattle.goldEarned += amount;
+      this.creditedBattleGold += amount;
+    }
     this.save.writeTalents(this.talentProgress, this.eraId);
     this.emit();
     return true;

@@ -48,8 +48,8 @@ it('deploys grenadiers and cannon on stage three; general comes at half fortress
  const road=new BattleSimulation(2,[],23,'steel',undefined,undefined,'renaissance',undefined,10000);road.enemyResource=400;for(let i=0;i<76;i++)road.step();
  expect(road.units.some(u=>u.kind==='renaissanceGrenadier')).toBe(true);expect(road.units.some(u=>u.kind==='renaissanceCannon')).toBe(true);
  const finale=new BattleSimulation(3,[],23,'steel',undefined,undefined,'renaissance',undefined,10000);finale.enemyResource=400;for(let i=0;i<76;i++)finale.step();expect(finale.units.some(u=>u.kind==='renaissanceGeneral')).toBe(false);
- finale.enemyFortressHp=50;finale.step();expect(finale.bossPhase).toBe('assault');expect(finale.units.find(u=>u.kind==='renaissanceGeneral')?.maxHp).toBe(Math.round(1200 * 1.45));
- expect(UNITS.renaissanceGeneral.damage*1.45).toBeCloseTo(36 * 1.45);expect(UNITS.renaissanceGeneral.armor).toBe(.5);expect(UNITS.renaissanceGeneral.period).toBe(1.7);
+ finale.enemyFortressHp=50;finale.step();expect(finale.bossPhase).toBe('assault');expect(finale.units.find(u=>u.kind==='renaissanceGeneral')?.maxHp).toBe(Math.round(1200 * 1.5));
+ expect(UNITS.renaissanceGeneral.damage*1.5).toBeCloseTo(36 * 1.5);expect(UNITS.renaissanceGeneral.armor).toBe(.5);expect(UNITS.renaissanceGeneral.period).toBe(1.7);
 });
 
 it('supports healing, passive captain aura, cavalry pressure and bounded grenade splash',()=>{

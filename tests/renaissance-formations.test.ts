@@ -13,10 +13,10 @@ const formations: UnitKind[][] = [
 
 it('uses the requested Renaissance enemy balance for all four battles', () => {
   expect(enemyBalanceDefaults('renaissance')).toEqual([
-    { income: 32, startSupplies: 25, hpBonus: 20, damageBonus: 20 },
-    { income: 36, startSupplies: 40, hpBonus: 35, damageBonus: 35 },
-    { income: 39, startSupplies: 50, hpBonus: 40, damageBonus: 40 },
-    { income: 42, startSupplies: 55, hpBonus: 45, damageBonus: 45 },
+    { income: 32, startSupplies: 25, hpBonus: 22, damageBonus: 22 },
+    { income: 40, startSupplies: 40, hpBonus: 40, damageBonus: 40 },
+    { income: 43, startSupplies: 50, hpBonus: 50, damageBonus: 50 },
+    { income: 45, startSupplies: 55, hpBonus: 50, damageBonus: 50 },
   ]);
 });
 

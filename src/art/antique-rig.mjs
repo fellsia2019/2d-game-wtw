@@ -179,6 +179,6 @@ export function antiqueRig(role,enemy,frame,layer='full') {
  if(role==='banner'&&[1,16,47].includes(frame))frame=0;
  const c=pal(enemy);
  if(role==='raider')return horse(c,frame,layer);
- if(['thrower','siege'].includes(role))return engine(role,c,frame,layer);
+ if(['thrower','siege'].includes(role))return g('translate(100 176) scale(1.45) translate(-100 -176)',engine(role,c,frame,layer));
  return infantry(role,c,frame,layer);
 }

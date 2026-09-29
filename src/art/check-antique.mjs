@@ -47,7 +47,7 @@ for(const enemy of [false,true])for(const role of roles){
   assert(!overlap(pixels('eyes'),pixels('headgear')),`${role}/${enemy}/${f}: headwear obscures eye`);
   count++;
  }
- const portrait=render(antiqueRig(role,enemy,0),192);
+ const portrait=new Resvg(readFileSync(`public/assets/${enemy?'enemy-':''}antique-u-${role}.svg`,'utf8'),{font:{loadSystemFonts:false}}).render().pixels;
  if(!enemy)silhouettes.add(alphaHash(portrait));
  for(let y=0;y<192;y++)for(let x=0;x<192;x++)if(x<2||x>189||y<2||y>189)assert.equal(portrait[(y*192+x)*4+3],0,`${role}/${enemy}: portrait clips at ${x},${y}`);
 }

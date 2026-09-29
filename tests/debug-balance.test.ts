@@ -93,9 +93,8 @@ it('rejects invalid debug battle indices without disturbing active combat', () =
   expect(game.getState().battleIndex).toBe(1);
 });
 
-it.each([50,100,200])('adds %i upgrade gold during battle without adding supplies or crediting it twice', amount => {
+it.each([50,100,200,500,2000])('adds %i upgrade gold during battle without adding supplies or crediting it twice', amount => {
   const {save,game}=setup();
-  expect(game.addDebugGold(amount)).toBe(false);
   game.startDebugBattle(0);
   const before=game.getState();
   expect(game.addDebugGold(amount)).toBe(true);
@@ -112,6 +111,39 @@ it.each([50,100,200])('adds %i upgrade gold during battle without adding supplie
   expect(restored.getState().gold).toBe(amount-10);
   expect(restored.getState().talents.damage).toBe(1);
   expect(save.loadTalents('stone').gold).toBe(0);
+});
+it.each([50,100,200,500,2000])('adds %i upgrade gold outside battle, saves it and permits immediate upgrades', amount => {
+  const {save,game}=setup();
+  expect(game.getState().phase).toBe('menu');
+  expect(game.addDebugGold(amount)).toBe(true);
+  expect(game.getState().battleGold).toBe(0);
+  expect(game.buyTalent('damage')).toBe(true);
+  game.startNewRun();
+  expect(game.getState().phase).toBe('preparation');
+  const before=game.getState();
+  expect(game.addDebugGold(amount)).toBe(true);
+  expect(game.getState().gold).toBe(before.gold+amount);
+  expect(game.getState().resource).toBe(before.resource);
+  expect(game.getState().battleGold).toBe(0);
+  const restored=new GameDirector(save);
+  expect(restored.getState().gold).toBe(amount*2-10);
+  expect(restored.getState().talents.damage).toBe(1);
+  restored.selectEra('stone');
+  expect(restored.getState().gold).toBe(0);
+});
+it('adds debug gold after defeat without changing the completed battle report', () => {
+  const {save,game}=setup();
+  game.startDebugBattle(0);
+  for(let i=0;i<10000&&game.getState().phase==='battle';i++)game.tick();
+  expect(game.getState().phase).toBe('defeat');
+  const before=game.getState();
+  expect(game.addDebugGold(2000)).toBe(true);
+  const after=game.getState();
+  expect(after.gold).toBe(before.gold+2000);
+  expect(after.battleGold).toBe(before.battleGold);
+  expect(after.report).toEqual(before.report);
+  expect(after.resource).toBe(before.resource);
+  expect(save.loadTalents(after.eraId).gold).toBe(after.gold);
 });
 it('allows debug gold on a paused battle and rejects all other amounts', () => {
   const {game}=setup();game.startDebugBattle(0);game.togglePause();

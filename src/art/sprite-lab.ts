@@ -1,26 +1,50 @@
-import { UNITS, ERA_ORDER } from '../data/content';
+import { UNITS, ERA_ORDER, isBoss } from '../data/content';
 import { unitArt, eraName, asset, roleOf } from './catalog';
 import './sprite-lab.css';
-import { antiqueDraft } from './antique-draft';
-import { medievalDraft } from './medieval-draft';
+import type { EraId } from '../core/types';
+import manifest from '../../public/assets/sprite-manifest.json';
 import { medievalSignalFrame, medievalTreatmentFrame } from './medieval-motion';
 import { standardFrame } from '../view/SupportMotion';
 
-type Era = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval' | 'renaissance';
-const draft = document.body.dataset.era === 'iron';
-const medieval = document.body.dataset.era === 'medieval';
-const antique = document.body.dataset.era === 'antique';
-const labEraName = (era: Era) => era === 'medieval' ? 'Раннее Средневековье' : era === 'antique' ? 'Античность' : eraName(era);
-const atlasFrames = (era: Era, role: string) => role === 'banner' || (['high-medieval','renaissance'].includes(era) && ['archer','siege'].includes(role)) ? 48 : 16;
+type Era = EraId;
+const labEraName = eraName;
+// Findings from docs/SPRITE_SIZE_REVIEW.md; keyed by art so aliases share the tag.
+const smallModels: Record<string, string> = {
+ 'bronze-u-raider': 'Мелкий конь колесницы; возница ×0,8.',
+ 'antique-u-raider': 'Мелкий всадник: ×0,63 относительно пехоты.',
+ 'high-medieval-u-raider': 'Мелкий всадник: ×0,65 относительно пехоты.',
+ 'renaissance-u-raider': 'Мелкий всадник драгуна: ×0,65 относительно пехоты.'
+};
+const correctedModels: Record<string, string> = {
+ 'stone-u-siege': 'Таран увеличен ×1,3; полный рост оператора ×0,95.',
+ 'bronze-u-siege': 'Таран увеличен ×1,3; полный рост оператора ×0,95.',
+ 'iron-u-siege': 'Машина и расчёт увеличены ×1,5.',
+ 'antique-u-thrower': 'Скорпион и расчёт увеличены ×1,45.',
+ 'antique-u-siege': 'Баллиста и расчёт увеличены ×1,45.',
+ 'medieval-u-siege': 'Таран и расчёт увеличены ×1,5.',
+ 'high-medieval-u-siege': 'Расчёт увеличен с ×0,48 до ×0,9; механика ×1,06.',
+ 'renaissance-u-siege': 'Расчёт увеличен с ×0,52 до ×0,9; пушка ×1,3.'
+};
+const atlasFrames = (era: Era, role: string) => {
+ const counts = (manifest.eraFrameCounts ?? {}) as Partial<Record<Era, Record<string, number>>>;
+ return counts[era]?.[role] ?? (role === 'banner' ? 48 : 16);
+};
 type Pose = 'idle' | 'ready' | 'move' | 'attack';
-const entries = medieval ? medievalDraft : antique ? antiqueDraft : Object.entries(UNITS).filter(([id]) => !draft || id.startsWith('iron')).map(([id, unit]) => ({ id, unit, era: (id.startsWith('renaissance') ? 'renaissance' : id.startsWith('high') ? 'high-medieval' : id.startsWith('medieval') ? 'medieval' : id.startsWith('antique') ? 'antique' : id.startsWith('stone') ? 'stone' : id.startsWith('iron') ? 'iron' : 'bronze') as Era, art: unitArt[id], artRole: roleOf(id) }));
+const entries = Object.entries(UNITS).map(([id, unit]) => ({
+ id, unit, era: unitArt[id].split('-u-')[0] as Era, art: unitArt[id], artRole: roleOf(id), boss: isBoss(id as keyof typeof UNITS)
+})).sort((a,b) => ERA_ORDER.indexOf(a.era)-ERA_ORDER.indexOf(b.era));
+const models = new Set(entries.map(entry => entry.art));
+const primaryIds = new Set<string>();
+const seen = new Set<string>();
+for (const entry of entries) if (!seen.has(entry.art)) { primaryIds.add(entry.id); seen.add(entry.art); }
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
- <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">МАСТЕРСКАЯ / РАЗРАБОТКА</span><h1>${medieval ? 'Пятая эра · Раннее Средневековье' : antique ? 'Четвёртая эра · Античность' : draft ? 'Третья эра · Железный век' : 'Лаборатория спрайтов'}</h1><p>${medieval ? 'Принятый набор в игре: ровно восемь моделей, две цветовые стороны. Проверьте стойку, ходьбу и действия в игровых масштабах.' : antique ? 'Принятый набор Античности в игре: ровно восемь моделей для восьми ролей. Союзники, противники и босс используют эти модели.' : draft ? 'Принятый набор Железного века: восемь бойцов, воротный страж и комендант. Модели и атласы совпадают с игрой; доступны обе стороны.' : 'Все бойцы, враги и боссы. Те же портреты и атласы, которые загружает игра.'}</p><div class="summary"><b>${entries.length} юнитов</b><span>${medieval ? '8 моделей · 16 атласов обеих сторон' : antique ? '8 моделей · 16 атласов обеих сторон' : draft ? '10 разных моделей · 20 атласов' : '5 эпох'}</span><span>${medieval ? '16 кадров · у трубача 48' : antique ? '16 кадров · у центуриона 48' : '16 кадров · у знаменосцев 48'}</span></div></header>
- ${medieval ? `<div class="draft-plan"><h2>Раннее Средневековье в игре</h2><p>Дружинник, пикинёр, длиннолучник, знахарь, берсерк, топорник, роговой трубач и стенобитчик. У каждой роли свой силуэт и снаряжение; у тарана два бойца расчёта.</p><p>Трубач подносит рог к губам, удерживает сигнал и опускает. Берсерк получил новую модель и двуручную секиру; знахарь спокойно протягивает повязку.</p><img class="draft-review" src="assets/medieval-rework-review.png" alt="Переработанные берсерк, знахарь и трубач в действии"/><p>Четыре боя: Лесная засада → Щитовой рубеж → Осада северного посада → Северный форт. Доход: 14 припасов/сек. Убийство: 5 золота, победа: 125. Эра открывается после Девятого легиона. Берсерк после ближнего удара получает +20% к следующей атаке по юниту в течение 2 секунд; эффект не складывается. Ярл использует модель дружинника.</p><img class="draft-review" src="assets/medieval-contact.png" alt="Восемь моделей Раннего Средневековья"/><p><a href="assets/medieval-contact.png">Союзный контактный лист</a> · <a href="assets/medieval-enemy-contact.png">Вражеский контактный лист</a> · <a href="assets/medieval-draft-manifest.json">Манифест</a></p><div class="draft-scenery"><img src="assets/arena-medieval.svg" alt="Лесная арена"/><img src="assets/medieval-tower-ally.svg" alt="Союзный форт"/><img src="assets/medieval-tower-enemy.svg" alt="Вражеский форт"/></div></div>` : antique ? `<div class="draft-plan"><h2>Античность в игре</h2><p>Направление: строй, дальний бой, конница и торсионная осада. Четыре боя: Пограничный лагерь → Фаланга у переправы → Стены провинции → Девятый легион. Доход: 12 припасов/сек. За убийство: 4 золота, за победу: 100. Эра открывается после коменданта Железной цитадели.</p><p>Легионер выделяется большим скутумом; гоплит — круглым щитом и длинным копьём; пельтаст — серповидной пельтой; центурион — поперечным гребнем и командным жезлом. Всего восемь моделей. Легат Девятого легиона использует модель легионера с увеличенным размером и полосой босса. Легионеры и гоплиты рядом получают +8% брони, центурион ускоряет союзников. Скорпион — лёгкий стреломёт на треноге с одним бойцом расчёта. Баллиста — большая машина на колёсах с двумя бойцами и двумя торсионными стойками. Конь имеет четыре суставные ноги, всадник сидит над седлом.</p><img class="draft-review" src="assets/antique-command-review.png" alt="Переработанные всадник, скорпион и баллиста"/><p><a href="assets/antique-contact.png">Союзный контактный лист</a> · <a href="assets/antique-enemy-contact.png">Вражеский контактный лист</a> · <a href="assets/antique-draft-manifest.json">Манифест атласов</a> · <a href="sprite-lab.html">Эпохи в игре</a></p><div class="draft-scenery"><img src="assets/arena-antique.svg" alt="Арена Античности"/><img src="assets/antique-tower-ally.svg" alt="Союзная крепость"/><img src="assets/antique-tower-enemy.svg" alt="Вражеская крепость"/></div></div>` : draft ? `<div class="draft-plan"><h2>Железный век в игре</h2><p>Направление: броня, пробитие и ранняя осада. Бои: Железная застава → Дружинный заслон → Осадная дорога → Железная цитадель. Доход: 10 припасов/сек. За убийство: 3 золота, за победу: 75. Эра открывается после царя Медных ворот.</p><p>Стрелок использует лук, налётчик — топор, метатель — дротик, осадник — открытый таран с двумя бойцами расчёта. Метатель поражает до трёх дополнительных целей в радиусе 45 с половинным уроном. Лекарь лечит; знаменосец только усиливает союзников.</p><p>Три разных защитника: щитоносец с большим щитом; воротный страж с двуручным молотом и тяжёлым доспехом; комендант с саблей, командирским плащом и открытой головой.</p><img class="draft-review" src="assets/iron-defenders-review.png" alt="Сравнение щитоносца, воротного стража и коменданта"/><p><a href="assets/iron-contact.png">Союзный контактный лист</a> · <a href="assets/iron-enemy-contact.png">Вражеский контактный лист</a> · <a href="assets/iron-draft-manifest.json">Манифест атласов</a> · <a href="sprite-lab.html">Все эпохи</a></p><div class="draft-scenery"><img src="assets/arena-iron.svg" alt="Арена Железного века"/><img src="assets/iron-tower-ally.svg" alt="Союзная крепость"/><img src="assets/iron-tower-enemy.svg" alt="Вражеская крепость"/></div></div>` : `<p class="draft-plan"><a href="iron-era-lab.html">Мастерская Железного века →</a> · <a href="antique-era-lab.html">Мастерская Античности →</a> · <a href="medieval-era-lab.html">Пятая эра →</a></p>`}
+ <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Все игровые модели, обе стороны и полные циклы движения и действия. Одинаковый масштаб и линия опоры позволяют сравнивать размеры. Боссы показаны с игровым увеличением ×1,5.</p><div class="summary"><b>${ERA_ORDER.length} эпох</b><span>${models.size} моделей · ${manifest.sheets.length} атласов</span><span>${entries.length} игровых ID · 16 / 48 кадров</span></div></header>
  <form class="controls" onsubmit="return false">
-  <label>Эпоха<select id="era">${medieval ? '<option value="medieval">Раннее Средневековье</option>' : antique ? '<option value="antique">Античность</option><option value="medieval">Раннее Средневековье</option>' : draft ? '<option value="iron">Железный век</option>' : '<option value="all">Все эпохи</option><option value="stone">Каменный век</option><option value="bronze">Бронзовый век</option><option value="iron">Железный век</option><option value="antique">Античность</option><option value="medieval">Раннее Средневековье</option>'}</select></label>
+  <label>Эпоха<select id="era"><option value="all">Все эпохи</option>${ERA_ORDER.map(id => `<option value="${id}">${eraName(id)}</option>`).join('')}</select></label>
+  <label>Каталог<select id="catalog"><option value="models">Уникальные модели</option><option value="ids">Все игровые ID / боссы</option></select></label>
+  <label>Роль<select id="role"><option value="all">Все роли</option>${[['shield','Защитник'],['spear','Против брони'],['archer','Дальний бой'],['medic','Лечение'],['raider','Прорыв / конница'],['thrower','Урон по группе'],['banner','Поддержка'],['siege','Осада'],['bulwark','Страж'],['boss','Особая модель босса']].map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></label>
   <label>Сторона<select id="team"><option value="both">Обе стороны</option><option value="ally">Союзники</option><option value="enemy">Противники</option></select></label>
   <label>Поза<select id="pose"><option value="move">Ходьба</option><option value="attack">Действие роли</option><option value="idle">Стойка</option><option value="ready">Готовность</option></select></label>
   <label>Направление<select id="facing"><option value="natural">Навстречу</option><option value="right">Вправо</option><option value="left">Влево</option></select></label>
@@ -28,6 +52,9 @@ root.innerHTML = `
   <label>Фон<select id="background"><option value="dark">Тёмный</option><option value="light">Светлый</option><option value="checker">Прозрачность</option><option value="arena">Арена эпохи</option></select></label>
   <label>Скорость<select id="speed"><option value="1">100%</option><option value="0.5">50%</option><option value="0.25">25%</option></select></label>
   <label class="search">Поиск<input id="search" type="search" placeholder="Имя, роль или ID"/></label>
+  <label class="check size-filter"><input id="small" type="checkbox"/>Мелкие модели · ${Object.keys(smallModels).length}</label>
+  <label class="check corrected-filter"><input id="corrected" type="checkbox"/>Исправленная осада · ${Object.keys(correctedModels).length}</label>
+  <label class="check"><input id="compact" type="checkbox"/>Сравнение размеров</label>
   <label class="check"><input id="guides" type="checkbox" checked/>Опора и границы</label>
   <button type="button" id="pause">Пауза</button><button type="button" id="step">Следующий кадр</button>
   <label class="scrubber">Кадр<input id="frame" type="range" min="0" max="15" value="2"/><output id="frame-value">2 / 15</output></label>
@@ -35,10 +62,12 @@ root.innerHTML = `
  <div class="result-line"><span id="count"></span><span id="status" role="status">Загрузка ассетов…</span></div><main id="units"></main><p id="empty" hidden>По этому запросу юнитов нет.</p>
  <dialog id="inspector"><div class="dialog-heading"><h2 id="detail-title"></h2><button id="close" type="button">Закрыть</button></div><p>Все кадры одного атласа, включая плавное действие командиров поддержки. Портрет и PNG можно открыть отдельно в карточке.</p><div id="frames"></div></dialog>`;
 const select = (id: string) => document.querySelector<HTMLSelectElement>(`#${id}`)!;
+const catalog = select('catalog'), roleFilter = select('role');
 const era = select('era'), team = select('team'), pose = select('pose'), facing = select('facing'), zoom = select('zoom'), background = select('background'), speed = select('speed');
 const search = document.querySelector<HTMLInputElement>('#search')!, guides = document.querySelector<HTMLInputElement>('#guides')!, slider = document.querySelector<HTMLInputElement>('#frame')!;
+const small = document.querySelector<HTMLInputElement>('#small')!, corrected = document.querySelector<HTMLInputElement>('#corrected')!;
 const pause = document.querySelector<HTMLButtonElement>('#pause')!, status = document.querySelector<HTMLElement>('#status')!;
-const canvasList: { canvas: HTMLCanvasElement; image: HTMLImageElement; enemy: boolean; arena: Era; role: string; frame?: number }[] = [];
+const canvasList: { canvas: HTMLCanvasElement; image: HTMLImageElement; enemy: boolean; arena: Era; role: string; period: number; boss: boolean; inView?: boolean; frame?: number }[] = [];
 let displayRole = '';
 let displayEra: Era = 'stone';
 const images = new Map<string, HTMLImageElement>();
@@ -57,49 +86,85 @@ function loadStatus() { status.textContent = pending ? `Загрузка: ост
 const units = document.querySelector<HTMLElement>('#units')!;
 for (const entry of entries) {
  const article = document.createElement('article');
- article.dataset.era = entry.era; article.dataset.search = `${entry.id} ${entry.unit.name} ${entry.unit.role}`.toLocaleLowerCase('ru');
+ article.dataset.small = String(Boolean(smallModels[entry.art]));
+ article.dataset.corrected = String(Boolean(correctedModels[entry.art]));
+ article.dataset.era = entry.era; article.dataset.id = entry.id; article.dataset.role = entry.artRole;
+ article.dataset.searchId = `${entry.id} ${entry.unit.name} ${entry.unit.role} ${entry.artRole} ${eraName(entry.era)}`.toLocaleLowerCase('ru');
+ const aliases = entries.filter(other => other.art === entry.art);
+ article.dataset.search = aliases.map(other => `${other.id} ${other.unit.name} ${other.unit.role}`).join(' ').concat(` ${eraName(entry.era)} ${entry.artRole}`).toLocaleLowerCase('ru');
  const role = entry.art;
- article.innerHTML = `<div class="unit-heading"><div><span class="eyebrow">${labEraName(entry.era)}</span><h2>${entry.unit.name}</h2><p>${entry.unit.role}</p></div><code>${entry.id}</code></div><div class="variants"></div><footer><span>320 × 192 · опора 160,176</span><span>${role}</span></footer>`;
+ article.innerHTML = `<div class="unit-heading"><div><span class="eyebrow">${labEraName(entry.era)}</span><h2>${entry.unit.name}</h2>${smallModels[entry.art] ? `<div class="size-warning"><span>Мелкая модель</span><p>${smallModels[entry.art]}</p></div>` : ''}${correctedModels[entry.art] ? `<div class="size-warning size-corrected"><span>Размер исправлен</span><p>${correctedModels[entry.art]}</p></div>` : ''}<p>${entry.unit.role}</p></div><code>${entry.id}</code></div><div class="variants"></div><footer><span>320 × 192 · опора 160,176</span><span>${role}${entry.boss ? ' · босс ×1,5' : ''}</span></footer>`;
  const variants = article.querySelector('.variants')!;
  for (const enemy of [false, true]) {
   const key = `${enemy ? 'enemy-' : ''}${role}`, portrait = asset(key), sheet = portrait.replace('.svg', '-sheet.png');
   const block = document.createElement('section'); block.dataset.team = enemy ? 'enemy' : 'ally';
   block.innerHTML = `<div class="team-label ${enemy ? 'enemy' : ''}">${enemy ? 'ПРОТИВНИК' : 'СОЮЗНИК'}</div><div class="stage"><canvas width="480" height="288" aria-label="${entry.unit.name}, ${enemy ? 'противник' : 'союзник'}"></canvas></div><div class="links"><button type="button">${atlasFrames(entry.era, labRole(entry.id))} кадров ↗</button><a href="${portrait}" target="_blank" rel="noopener">SVG</a><a href="${sheet}" target="_blank" rel="noopener">PNG-атлас</a></div>`;
   const image = imageFor(sheet);
-  canvasList.push({ canvas: block.querySelector('canvas')!, image, enemy, arena: entry.era, role: labRole(entry.id) });
-  block.querySelector('button')!.onclick = () => inspect(entry.unit.name, image, enemy, entry.era, labRole(entry.id));
+  canvasList.push({ canvas: block.querySelector('canvas')!, image, enemy, arena: entry.era, role: labRole(entry.id), period: entry.unit.period, boss: entry.boss });
+  block.querySelector('button')!.onclick = () => inspect(entry.unit.name, image, enemy, entry.era, labRole(entry.id), entry.unit.period, entry.boss);
   variants.append(block);
  }
  units.append(article);
 }
 const arenas = new Map<Era, HTMLImageElement>();
-for (const value of (medieval ? ['medieval'] : antique ? ['antique'] : draft ? ['iron'] : ERA_ORDER) as Era[]) arenas.set(value, imageFor(asset(`arena-${value}`)));
+for (const value of ERA_ORDER) arenas.set(value, imageFor(asset(`arena-${value}`)));
 function filter() {
  let count = 0, hasBanner = false;
  displayRole = '';
  for (const article of units.querySelectorAll<HTMLElement>('article')) {
-  article.hidden = (era.value !== 'all' && era.value !== article.dataset.era) || !article.dataset.search!.includes(search.value.toLocaleLowerCase('ru').trim());
+  article.hidden = (small.checked && article.dataset.small !== 'true') || (corrected.checked && article.dataset.corrected !== 'true') || (era.value !== 'all' && era.value !== article.dataset.era) || (catalog.value === 'models' && !primaryIds.has(article.dataset.id!)) || (roleFilter.value !== 'all' && roleFilter.value !== article.dataset.role) || !(catalog.value === 'models' ? article.dataset.search! : article.dataset.searchId!).includes(search.value.toLocaleLowerCase('ru').trim());
   if (!article.hidden) { if (atlasFrames(article.dataset.era as Era, labRole(article.querySelector('code')!.textContent!)) === 48) hasBanner = true; if (count === 0) { displayRole = labRole(article.querySelector('code')!.textContent!); displayEra = article.dataset.era as Era; } count++; }
   article.querySelector<HTMLElement>('.variants')!.style.gridTemplateColumns = team.value === 'both' ? '' : '1fr';
   for (const section of article.querySelectorAll<HTMLElement>('section')) section.hidden = team.value !== 'both' && team.value !== section.dataset.team;
  }
  slider.max = hasBanner ? '47' : '15';
  if (manual !== null) manual = Math.min(manual, Number(slider.max));
- document.querySelector('#count')!.textContent = `Показано ${count} из ${entries.length} юнитов`;
+ document.querySelector('#count')!.textContent = `Показано ${count} из ${catalog.value === 'models' ? models.size : entries.length} ${catalog.value === 'models' ? 'моделей' : 'игровых ID'}`;
  document.querySelector<HTMLElement>('#empty')!.hidden = count > 0;
+ const query = new URLSearchParams();
+ if (small.checked) query.set('size','small');
+ if (corrected.checked) query.set('size','corrected');
+ if (era.value !== 'all') query.set('era',era.value);
+ if (roleFilter.value !== 'all') query.set('role',roleFilter.value);
+ if (catalog.value !== 'models') query.set('catalog',catalog.value);
+ if (search.value.trim()) query.set('search',search.value.trim());
+ history.replaceState(null,'',`${location.pathname}${query.size ? '?' + query : ''}`);
 }
-era.onchange = filter; team.onchange = filter; search.oninput = filter; filter();
+const params = new URLSearchParams(location.search);
+if (ERA_ORDER.includes(params.get('era') as Era)) era.value = params.get('era')!;
+search.value = params.get('search') ?? '';
+small.checked = params.get('size') === 'small';
+corrected.checked = params.get('size') === 'corrected';
+if ([...roleFilter.options].some(option=>option.value === params.get('role'))) roleFilter.value = params.get('role')!;
+if (params.get('catalog') === 'ids') catalog.value = 'ids';
+era.onchange = filter; catalog.onchange = filter; roleFilter.onchange = filter; team.onchange = filter; search.oninput = filter; filter();
+const compact = document.querySelector<HTMLInputElement>('#compact')!;
+compact.onchange = () => { units.classList.toggle('compare', compact.checked); if (compact.checked && Number(zoom.value) > .52) zoom.value = '0.52'; };
+function sizeFilter(active: HTMLInputElement, other: HTMLInputElement) {
+ if (active.checked) {
+  other.checked = false;
+  era.value = 'all'; roleFilter.value = 'all'; search.value = ''; catalog.value = 'models';
+  compact.checked = true; units.classList.add('compare'); if (Number(zoom.value) > .52) zoom.value = '0.52';
+ }
+ filter();
+}
+small.onchange = () => sizeFilter(small,corrected);
+corrected.onchange = () => sizeFilter(corrected,small);
+if (small.checked || corrected.checked) { compact.checked = true; units.classList.add('compare'); zoom.value = '0.52'; }
+
 const dialog = document.querySelector<HTMLDialogElement>('#inspector')!;
 document.querySelector<HTMLButtonElement>('#close')!.onclick = () => dialog.close();
-function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: Era, role: string) {
+function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: Era, role: string, period: number, boss: boolean) {
  document.querySelector('#detail-title')!.textContent = `${name} · ${enemy ? 'противник' : 'союзник'}`;
  const frames = document.querySelector('#frames')!; frames.replaceChildren();
  const items: typeof canvasList = [];
  for (let frame = 0; frame < atlasFrames(arena, role); frame++) {
-  const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 192;
+  const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = boss ? 480 : 320; canvas.height = boss ? 300 : 220;
   const walkLabel = ['контакт','амортизация','пронос стопы','отталкивание'][(frame-2)%4];
-  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : 'атака'}`;
-  figure.append(canvas, caption); frames.append(figure); items.push({ canvas, image, enemy, arena, role, frame });
+  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
+  const stage = document.createElement('div'); stage.className = 'stage';
+  canvas.style.width = `${canvas.width}px`; canvas.style.height = `${canvas.height}px`; stage.append(canvas);
+  figure.append(stage, caption); frames.append(figure); items.push({ canvas, image, enemy, arena, role, frame, period, boss });
  }
  dialog.showModal();
  for (const item of items) draw(item, item.frame!, 1);
@@ -108,11 +173,11 @@ pause.onclick = () => { paused = !paused; manual = null; pause.textContent = pau
 document.querySelector<HTMLButtonElement>('#step')!.onclick = () => { manual = ((manual ?? currentFrame()) + 1) % (Number(slider.max) + 1); paused = true; pause.textContent = 'Продолжить'; };
 slider.oninput = () => { manual = Number(slider.value); paused = true; pause.textContent = 'Продолжить'; };
 pose.onchange = () => { manual = null; time = 0; };
-function currentFrame(role = displayRole, era = displayEra) {
+function currentFrame(role = displayRole, era = displayEra, period = entries.find(entry=>entry.era === era && entry.artRole === role)?.unit.period ?? 1.2) {
  if (manual !== null) return Math.min(manual,atlasFrames(era, role) - 1);
  const state = pose.value as Pose;
- if (state === 'attack' && ['high-medieval','renaissance'].includes(era) && ['archer','siege','banner'].includes(role)) return 16 + Math.floor(time * (role === 'banner' ? 16 : 8)) % 32;
- if (state === 'attack' && role === 'banner') return era === 'medieval' ? medievalSignalFrame(time) : standardFrame(time);
+ if (state === 'attack' && role === 'banner') return era === 'medieval' ? medievalSignalFrame(time) : ['high-medieval','renaissance'].includes(era) ? 16 + Math.floor(time * 16) % 32 : standardFrame(time);
+ if (state === 'attack' && atlasFrames(era,role) === 48) return 16 + (Math.floor(time / period * 32) + (era === 'renaissance' ? 7 : 0)) % 32;
  if (era === 'medieval' && state === 'attack' && role === 'medic') return medievalTreatmentFrame(time);
  if (era === 'medieval' && state === 'move' && ['medic','raider'].includes(role)) return 2 + Math.floor(time * (role === 'medic' ? 8 : 10)) % 8;
  return state === 'idle' ? 0 : state === 'ready' ? 1 : state === 'move' ? 2 + Math.floor(time * 12) % 8 : time % 1.2 < .4 ? 10 + Math.min(5, Math.floor((time % 1.2) * 15)) : 1;
@@ -120,9 +185,10 @@ function currentFrame(role = displayRole, era = displayEra) {
 function draw(item: typeof canvasList[number], frame: number, scale: number) {
  const { canvas, image, enemy, arena } = item;
  // Canvas pixels track CSS pixels so the game-size presets really are 52% and 34%.
- const width = Math.round(canvas.clientWidth);
+ const effectiveScale = scale * (item.boss ? 1.5 : 1);
+ const width = item.frame === undefined ? Math.max(Math.round(canvas.parentElement!.clientWidth), Math.ceil(320 * effectiveScale)) : canvas.width;
  if (width && canvas.width !== width) canvas.width = width;
- if (item.frame === undefined && canvas.height !== 304) canvas.height = 304;
+ if (item.frame === undefined) { const height = Math.max(compact.checked ? 156 : 236, Math.ceil(192 * effectiveScale + 24)); if (canvas.height !== height) canvas.height = height; if (canvas.style.width !== `${width}px`) canvas.style.width = `${width}px`; if (canvas.style.height !== `${height}px`) canvas.style.height = `${height}px`; }
  const ctx = canvas.getContext('2d')!, w = canvas.width, h = canvas.height, base = h - 24;
  ctx.clearRect(0, 0, w, h);
  ctx.fillStyle = background.value === 'light' ? '#e8ddc4' : '#20353c'; ctx.fillRect(0, 0, w, h);
@@ -130,18 +196,22 @@ function draw(item: typeof canvasList[number], frame: number, scale: number) {
  const arenaImage = arenas.get(arena);
  if (background.value === 'arena' && arenaImage?.complete && arenaImage.naturalWidth) ctx.drawImage(arenaImage,0,0,w,h);
  ctx.save(); ctx.translate(w / 2, base); const flip = facing.value === 'left' || (facing.value === 'natural' && enemy) ? -1 : 1;
- ctx.scale(scale * flip, scale);
+ ctx.scale(effectiveScale * flip, effectiveScale);
  if (guides.checked) { ctx.strokeStyle = '#dbbe7277'; ctx.strokeRect(-160,-176,320,192); }
  if (image.complete && image.naturalWidth) ctx.drawImage(image,frame % 4 * 320,Math.floor(frame / 4) * 192,320,192,-160,-176,320,192);
  else { ctx.fillStyle = '#e99978'; ctx.font = '16px sans-serif'; ctx.fillText('Ассет недоступен',-70,-70); }
  ctx.restore();
  if (guides.checked) { ctx.strokeStyle = background.value === 'light' ? '#735d3d' : '#e4cb8a'; ctx.beginPath(); ctx.moveTo(0,base); ctx.lineTo(w,base); ctx.moveTo(w/2-5,base); ctx.lineTo(w/2+5,base); ctx.moveTo(w/2,base-5); ctx.lineTo(w/2,base+5); ctx.stroke(); }
 }
+const visible = new IntersectionObserver(changes => {
+ for (const change of changes) { const item = canvasList.find(item => item.canvas === change.target); if (item) item.inView = change.isIntersecting; }
+}, {rootMargin:'200px'});
+for (const item of canvasList) visible.observe(item.canvas);
 function loop(now: number) {
  const dt = Math.min(.05, (now-last)/1000); last = now;
  if (!paused && !document.hidden) time += dt * Number(speed.value);
  const frame = manual ?? currentFrame(); slider.value = String(frame); document.querySelector('#frame-value')!.textContent = `${frame} / ${slider.max}`;
- for (const item of canvasList) if (!item.canvas.closest('article')!.hidden && !item.canvas.closest('section')!.hidden) draw(item, currentFrame(item.role, item.arena), Number(zoom.value));
+ for (const item of canvasList) if (item.inView && !item.canvas.closest('article')!.hidden && !item.canvas.closest('section')!.hidden) draw(item, currentFrame(item.role, item.arena, item.period), Number(zoom.value));
  requestAnimationFrame(loop);
 }
 loadStatus(); requestAnimationFrame(loop);

@@ -75,16 +75,17 @@ function horse(c,f,layer){const move=f>=2&&f<10,t=move?(f-2)*Math.PI/4:0,b=move?
  return body+carbine+l(`M163 ${88+b}Q140 ${85+b} 106.6 ${94.8+b}`,c.leather,2)+g(rt,rider);
 }
 export function cannonPose(f){const q=phase(f);return {q,recoil:q===7?-10:q===8?-7:q===9?-4:0,flash:q===7,ram:q>=17&&q<25,load:q>=13&&q<17};}
-function cannon(c,f,layer){const moving=f>=2&&f<10,q=phase(f),state=cannonPose(f);const crewX=[-37,160],crewScale=.52;
- if(['face','eyes','headgear'].includes(layer))return crewX.map(x=>g(`translate(${x} 84.5) scale(${crewScale})`,masks('siege',c,layer))).join('');
+function cannon(c,f,layer){const moving=f>=2&&f<10,q=phase(f),state=cannonPose(f);const crewX=[-68,125],crewScale=.9;
+ if(['face','eyes','headgear'].includes(layer))return crewX.map(x=>g(`translate(${x} 17.6) scale(${crewScale})`,masks('siege',c,layer))).join('');
  const wheel=(x,y,far=false)=>e(x,y,18,18,c.wood)+e(x,y,13,13,far?c.dark:c.gold)+g(`rotate(${moving?(f-2)*21:state.recoil*3} ${x} ${y})`,[0,45,90,135].map(a=>g(`rotate(${a} ${x} ${y})`,l(`M${x-13} ${y}h26`,c.wood,3))).join(''))+e(x,y,4,4,c.steel);
  let machine=wheel(125,151,true)+p('M27 159l39-35h73l12 18-66-2-40 23z',c.wood)+p('M61 132l12-16h61l12 16z',c.cloth)+l('M74 140l-31 18',c.gold,3)+e(142,137,5,5,c.steel);
  machine+=g(`translate(0 0)`,p('M73 113q-6-10 4-15l73-9 10 5 1 17-11 7-69 8q-12 1-8-13z',c.steel)+l('M85 101l64-8',c.metal,3)+e(155,103,5,11,ink)+l('M89 99v25M134 94v27',c.gold,3)+e(110,116,5,5,c.gold))+wheel(89,154);machine=g(`translate(${state.recoil} 0)`,machine);
- if(state.flash)machine+=g(`translate(${state.recoil} 0)`,p('M165 94l19-10-6 14 19 2-18 7 7 13-21-11z','#efc070','none'));if(q>=8&&q<=11)machine+=e(184+(q-8)*7,103-(q-8)*6,13+(q-8)*3,6+(q-8),'#b8bdb9','none');
+ if(state.flash)machine+=g(`translate(${state.recoil} 0)`,p('M165 94l11-6-4 9 9 3-10 4 5 7-11-7z','#efc070','none'));if(q>=8&&q<=11)machine+=e(184+(q-8)*4,74-(q-8)*4,13+(q-8)*1.5,6+(q-8),'#b8bdb9','none');
+ machine=g('translate(100 176) scale(1.3) translate(-100 -176)',machine);
  if(layer==='equipment')return machine;
- const crew=crewX.map((x,i)=>{const walk=moving?f:0;let hx=(i?136:126)+(q===0||q===31?0:Math.sin(q*Math.PI/31)*3),hy=119;let gear='';if(moving&&!i){hx=124;hy=139;}if(i&&state.ram){hx=95+(q%4)*3;hy=24;gear='';}else if(i&&state.load){hx=70;hy=35;gear=e(hx-5,hy-3,6,6,ink);}else if(!i&&q>=5&&q<8){hx=130;hy=94;gear=l(`M${hx} ${hy}l17-17`,c.wood,3)+e(hx+17,hy-17,2,3,'#f0b666','none');}return g(`translate(${x} 84.5) scale(${crewScale})`,legs(c,walk)+torso('siege',c)+face(c)+hat('siege',c)+limb(`M77 89L82 112 ${hx-15} ${hy+3}`,c.dark)+limb(`M111 89L${i&&state.ram?130:127} ${i&&state.ram?45:102} ${hx} ${hy}`,c.cloth)+gear+e(hx,hy,5,5,c.skin)+e(hx-15,hy+3,5,5,c.skin));}).join('');
+ const crew=crewX.map((x,i)=>{const walk=moving?f:0;let hx=(i?48:143)+(q===0||q===31?0:Math.sin(q*Math.PI/31)*3),hy=i?100:104;let gear='';if(moving&&!i){hx=124;hy=139;}if(i&&state.ram){hx=45+(q%4)*3;hy=73;gear='';}else if(i&&state.load){hx=43;hy=78;gear=e(hx-5,hy-3,6,6,ink);}else if(!i&&q>=5&&q<8){hx=148;hy=84;gear=l(`M${hx} ${hy}l17-17`,c.wood,3)+e(hx+17,hy-17,2,3,'#f0b666','none');}return g(`translate(${x} 17.6) scale(${crewScale})`,legs(c,walk)+torso('siege',c)+face(c)+hat('siege',c)+limb(`M77 89L82 112 ${hx-15} ${hy+3}`,c.dark)+limb(`M111 89L${i?70:127} ${i?94:102} ${hx} ${hy}`,c.cloth)+gear+e(hx,hy,5,5,c.skin)+e(hx-15,hy+3,5,5,c.skin));}).join('');
  // Rammer belongs to the right loader; extend it to the muzzle in world space.
- const rod=state.ram?l(`M${209.4+(q%4)*1.56} 96.98L${147+(q%4)*1.56} 104.8`,c.wood,3)+e(148+(q%4)*1.56,104.8,4,4,c.linen):'';
+ const rod=state.ram?l(`M${165.5+(q%4)*2.7} 83.3L${145+(q%4)*2.7} 83.4`,c.wood,3)+e(145+(q%4)*2.7,83.4,4,4,c.linen):'';
  return crew+machine+rod;
 }
 export function renaissanceRig(role,enemy,f,layer='full'){if(!renaissanceRoles.includes(role)||!Number.isInteger(f)||f<0||f>=renaissanceFrameCounts[role])throw Error(`Invalid Renaissance pose ${role}/${f}`);if(role==='banner'&&[1,16,47].includes(f))f=0;const c=pal(enemy);return role==='raider'?horse(c,f,layer):role==='siege'?cannon(c,f,layer):role==='archer'?musketeer(c,f,layer):infantry(role,c,f,layer);}

@@ -111,7 +111,7 @@
 .debug-controls .debug-battle-label{margin:16px 0 8px}.debug-battles button{min-width:44px}
 
 
-.debug-gold button{flex:1;color:#f4dc9c;border-color:#b59b68}.debug-gold button:disabled{opacity:.45}
+.debug-gold{flex-wrap:wrap}.debug-gold button{flex:1;min-width:64px;color:#f4dc9c;border-color:#b59b68}
 
 .debug-balance .debug-default{display:block;margin-top:4px;font-size:16px;line-height:1.25;color:#a9bdb3;white-space:nowrap}
 /* Swiper moves this track with JS transforms; the viewport clips slides. */

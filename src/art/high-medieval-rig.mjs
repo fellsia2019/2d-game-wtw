@@ -150,12 +150,12 @@ function crossbowman(c,f,layer) {
  return feet+g(`translate(0 ${bounce})`,body);
 }
 function crew(c,f,x,layer) {
- const bounce=f>=2&&f<10?walkBodyOffset(f-2):0,transform=`translate(${x} 91) scale(.48)`;
+ const bounce=f>=2&&f<10?walkBodyOffset(f-2):0,transform=`translate(${x} 17.6) scale(.9)`;
  if(layer==='face')return g(transform,g(`translate(0 ${bounce})`,p('M91 46h24v27H91z','#fff','none')));
  if(layer==='eyes')return g(transform,g(`translate(0 ${bounce})`,e(109,54,4,3,'#fff','none')));
  if(layer==='headgear')return g(transform,g(`translate(0 ${bounce})`,head('siege',c,true)));
- const q=phaseOf(f,[0,5,9,12,22,29]),winding=q>=16&&q<31,handY=winding?119+Math.sin(f*.8)*7:122;
- return g(transform,legs(c,f)+g(`translate(0 ${bounce})`,p('M76 82h36l7 42-44 9z',c.cloth)+head('siege',c)+limb(`M77 88L97 110 143 ${handY}`,c.dark,7)+limb(`M111 88L128 106 151 ${handY}`,c.cloth,7)+e(151,handY,4,4,c.skin)+e(143,handY,4,4,c.skin)));
+ const q=phaseOf(f,[0,5,9,12,22,29]),winding=q>=16&&q<31,handY=x<0?(winding?138+Math.sin(f*.8)*5:138):144,handX=x<0?151:75;
+ return g(transform,legs(c,f)+g(`translate(0 ${bounce})`,p('M76 82h36l7 42-44 9z',c.cloth)+head('siege',c)+limb(`M77 88L${x<0?97:82} 117 ${handX-8} ${handY}`,c.dark,7)+limb(`M111 88L${x<0?128:92} 114 ${handX} ${handY}`,c.cloth,7)+e(handX,handY,4,4,c.skin)+e(handX-8,handY,4,4,c.skin)));
 }
 export function trebuchetPose(f) {
  const q=phaseOf(f,[0,5,9,12,22,29]),moving=f>=2&&f<10;
@@ -170,7 +170,7 @@ export function trebuchetPose(f) {
  return {q,angle,slingAngle,pivot,tip,hinge,pouch,released:q>=10&&q<29,loaded:!moving&&(q<10||q>=29),winding:q>=16&&q<31};
 }
 function trebuchet(c,f,layer) {
- if(['face','eyes','headgear'].includes(layer))return [-40,95].map(x=>crew(c,f,x,layer)).join('');
+ if(['face','eyes','headgear'].includes(layer))return [-100,100].map(x=>crew(c,f,x,layer)).join('');
  const moving=f>=2&&f<10,pose=trebuchetPose(f),{q,angle,pivot,tip,hinge,pouch,loaded,winding}=pose;
  let machine=p('M35 151h124v10H35z',c.wood)+p('M45 143h99v5H45z',c.woodLight)+l('M51 150L96 91 144 150',c.woodLight,9)+l('M66 150L96 91 128 150',c.wood,6)+l('M53 140h81',c.steel,2);
  machine+=p('M20 171h80v5H20z',c.wood)+l('M23 170h73',c.woodLight,2);
@@ -187,8 +187,9 @@ function trebuchet(c,f,layer) {
  machine+=e(96,91,6,6,c.steel)+e(96,91,2.5,2.5,c.gold)+l('M37 148v-8h16M151 149v-9h15',c.woodLight,4);
  for(const x of [45,148])machine+=e(x,163,12,12,c.wood)+e(x,163,8,8,c.woodLight)+g(`rotate(${moving?(f-2)*27:0} ${x} 163)`,l(`M${x-7} 163h14M${x} 156v14`,c.wood,2))+e(x,163,2.5,2.5,c.steel);
  machine+=e(44,143,5,5,c.steel)+g(`rotate(${winding?q*35:0} 44 143)`,l('M44 143l-7-6',c.gold,3));
+ machine=g('translate(96 176) scale(1.06) translate(-96 -176)',machine);
  if(layer==='equipment')return machine;
- return [-40,95].map(x=>crew(c,f,x,'full')).join('')+machine;
+ return [-100,100].map(x=>crew(c,f,x,'full')).join('')+machine;
 }
 export function highMedievalRig(role,enemy,frame,layer='full') {
  if(!highMedievalRoles.includes(role))throw Error(`Unknown role ${role}`);

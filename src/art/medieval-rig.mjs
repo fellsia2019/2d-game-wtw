@@ -223,5 +223,5 @@ export function medievalRig(role,enemy,frame,layer='full') {
  if(!Number.isInteger(frame)||frame<0||frame>=(role==='banner'?48:16))throw Error(`Invalid ${role} frame ${frame}`);
  if(role==='banner'&&[1,16,47].includes(frame))frame=0;
  const c=palette(enemy);
- return role==='siege'?ram(c,frame,layer):role==='raider'?berserker(c,frame,layer):role==='medic'?herbalist(c,frame,layer):infantry(role,c,frame,layer);
+ return role==='siege'?g('translate(100 176) scale(1.5) translate(-100 -176)',ram(c,frame,layer)):role==='raider'?berserker(c,frame,layer):role==='medic'?herbalist(c,frame,layer):infantry(role,c,frame,layer);
 }

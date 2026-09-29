@@ -105,7 +105,7 @@ const dart=c=>limb('M0 25V-39',c.woodLight,3)+path('M0-53l-5 15 5 5 5-5z',c.stee
 export function ironRig(role,enemy,frame,layer='full') {
  if(role==='banner'&&(frame===1||frame===16||frame===47))frame=0;
  const c=palette(enemy), moving=frame>=2&&frame<10, attack=frame>=10,step=frame-2,wave=moving?Math.sin(step*Math.PI/4):0,heavy=['bulwark','boss'].includes(role),bounce=moving?walkBodyOffset(step,heavy):0,k=attack?frame-10:0;
- if(role==='siege')return siege(c,frame,layer);
+ if(role==='siege')return group('translate(100 176) scale(1.5) translate(-100 -176)',siege(c,frame,layer));
  if(layer==='face')return group(`translate(0 ${bounce})`,faceClearance());
  if(layer==='eyes')return group(`translate(0 ${bounce})`,eyeClearance());
  if(layer==='headgear')return group(`translate(0 ${bounce})`,head(role,c,'headgear'));

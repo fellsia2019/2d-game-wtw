@@ -139,11 +139,20 @@ function wheel(x,y,c,frame) {
 }
 function siegeRig(era,c,frame,wave) {
  const attack=frame>=10, k=attack?frame-10:0, recoil=attack?[0,-5,12,16,6,1][k]:wave;
- let s=limb('M48 148l17-51M141 148l-18-51',c.wood,7)+shape('M33 137h118l8 14H27z',c.wood)+line('M38 140h107',c.woodLight,3);
- s+=limb('M89 138V79',c.wood,4)+line('M83 79h12',c.metal,4);
- s+=g('translate(-8 9) scale(.68)',face(era,'spear',c)+shape('M76 79h34l12 41H67z',c.cloth)+limb('M109 88l18 18 16-3',c.skin,8)+ellipse(143,103,5,5,c.skin));
- s+=g(`translate(${recoil} 0)`,shape('M28 95h116l22 10-22 17H28z',c.wood)+line('M34 103h105',c.woodLight,4)+shape('M139 95l23 10-3 8-20 9z',era==='stone'?c.flint:c.metal)+line('M55 95v26M113 95v26',c.metalShade,7)+line('M56 97v22M114 97v22',c.metalLight,2));
- return s+wheel(45,158,c,frame)+wheel(138,158,c,frame);
+ // A standing operator uses the same anatomy as infantry, with feet on the shared ground.
+ let crew='';
+ for(const back of [true,false]) {
+  if(frame>=2&&frame<10) {
+   const {hip,knee,ankle,foot}=walkLeg(frame-2,back);
+   crew+=limb(`M${hip.x} ${hip.y}L${knee.x} ${knee.y} ${ankle.x} ${ankle.y}`,back?c.dark:c.trousers,10)+line(`M${foot.x-6} ${foot.y}h17`,c.dark,6);
+  } else crew+=limb(back?'M85 120L79 145 78 172':'M106 120L112 145 112 172',back?c.dark:c.trousers,10)+line(back?'M71 173h18':'M106 173h18',c.dark,6);
+ }
+ crew+=g(`translate(0 ${frame>=2&&frame<10?walkBodyOffset(frame-2):0})`,face(era,'spear',c)+shape('M76 79h34l12 41H67z',c.cloth)+limb('M79 88L90 104 139 102',c.dark,8)+limb('M109 88L126 100 148 100',c.skin,8)+ellipse(139,102,5,5,c.skin)+ellipse(148,100,5,5,c.skin));
+ let machine=limb('M48 148l17-51M141 148l-18-51',c.wood,7)+shape('M33 137h118l8 14H27z',c.wood)+line('M38 140h107',c.woodLight,3);
+ machine+=limb('M89 138V79',c.wood,4)+line('M83 79h12',c.metal,4);
+ machine+=g(`translate(${recoil} 0)`,shape('M28 95h116l22 10-22 17H28z',c.wood)+line('M34 103h105',c.woodLight,4)+shape('M139 95l23 10-3 8-20 9z',era==='stone'?c.flint:c.metal)+line('M55 95v26M113 95v26',c.metalShade,7)+line('M56 97v22M114 97v22',c.metalLight,2));
+ machine+=wheel(45,158,c,frame)+wheel(138,158,c,frame);
+ return g('translate(-115 9) scale(.95)',crew)+g('translate(100 176) scale(1.3) translate(-100 -176)',machine);
 }
 function chariotRig(c,frame,wave) {
  const lean=frame>=10?[0,-4,8,12,5,1][frame-10]:wave;
