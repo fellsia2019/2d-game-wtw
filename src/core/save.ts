@@ -108,7 +108,7 @@ export class SaveService {
   }
 
   loadEraProgress(): { unlocked: EraUnlocks; wins: EraProgress; challenges: EraChallenges } {
-    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false, medieval: false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0, medieval: 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false, medieval: false } };
+    const fallback = { unlocked: { stone: true, bronze: false, iron: false, antique: false, medieval: false, 'high-medieval': false }, wins: { stone: 0, bronze: 0, iron: 0, antique: 0, medieval: 0, 'high-medieval': 0 }, challenges: { stone: false, bronze: false, iron: false, antique: false, medieval: false, 'high-medieval': false } };
     if (!this.storage) return fallback;
     try {
       const raw: unknown = JSON.parse(this.storage.getItem(ERA_PROGRESS) ?? 'null');
@@ -125,9 +125,11 @@ export class SaveService {
       const ironWins = Number.isInteger(data.wins.iron) && data.wins.iron! >= 0 ? data.wins.iron! : 0;
       const antiqueUnlocked = ironUnlocked && (data.unlocked.antique === true || ironWins >= 4);
       const medievalWins = Number.isInteger(data.wins.medieval) && data.wins.medieval! >= 0 ? data.wins.medieval! : 0;
-      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: antiqueUnlocked, medieval: antiqueUnlocked && (data.unlocked.medieval === true || antiqueWins >= 4) },
-        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins, medieval: medievalWins },
-        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true, medieval: challenges?.medieval === true } };
+      const medievalUnlocked = antiqueUnlocked && (data.unlocked.medieval === true || antiqueWins >= 4);
+      const highWins = Number.isInteger(data.wins['high-medieval']) && data.wins['high-medieval']! >= 0 ? data.wins['high-medieval']! : 0;
+      return { unlocked: { stone: true, bronze: data.unlocked.bronze!, iron: ironUnlocked, antique: antiqueUnlocked, medieval: medievalUnlocked, 'high-medieval': medievalUnlocked && (data.unlocked['high-medieval'] === true || medievalWins >= 4) },
+        wins: { stone: data.wins.stone!, bronze: data.wins.bronze!, iron: ironWins, antique: antiqueWins, medieval: medievalWins, 'high-medieval': highWins },
+        challenges: { stone: challenges?.stone === true, bronze: challenges?.bronze === true, iron: challenges?.iron === true, antique: challenges?.antique === true, medieval: challenges?.medieval === true, 'high-medieval': challenges?.['high-medieval'] === true } };
     } catch { return fallback; }
   }
 
@@ -167,7 +169,7 @@ export class SaveService {
   }
 
   private loadTalentWallets(): Record<EraId, TalentProgress> {
-    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress(), medieval: emptyTalentProgress() };
+    const wallets = { stone: emptyTalentProgress(), bronze: emptyTalentProgress(), iron: emptyTalentProgress(), antique: emptyTalentProgress(), medieval: emptyTalentProgress(), 'high-medieval': emptyTalentProgress() };
     if (!this.storage) return wallets;
     try {
       const current = this.storage.getItem(TALENT_PROGRESS);
@@ -244,8 +246,8 @@ function valid(value: unknown): value is Checkpoint {
     && Array.isArray(v.upgrades) && v.upgrades.every(id => ids.includes(id))
     && Array.isArray(v.rewards) && v.rewards.every(id => ids.includes(id))
     && (v.contractRisk === undefined || v.contractRisk === null || v.contractRisk === 'standard' || v.contractRisk === 'daring')
-    && Array.isArray(v.contracts) && v.contracts.every(c => !!c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.roster) && c.roster.every(id => Object.hasOwn(UNITS,id) && id.startsWith(v.eraId!)))
-    && (!v.selectedContract || (typeof v.selectedContract.id === 'string' && Array.isArray(v.selectedContract.roster) && v.selectedContract.roster.every(id => Object.hasOwn(UNITS,id) && id.startsWith(v.eraId!))))
+    && Array.isArray(v.contracts) && v.contracts.every(c => !!c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.roster) && c.roster.every(id => Object.hasOwn(UNITS,id) && id.startsWith(v.eraId === 'high-medieval' ? 'high' : v.eraId!)))
+    && (!v.selectedContract || (typeof v.selectedContract.id === 'string' && Array.isArray(v.selectedContract.roster) && v.selectedContract.roster.every(id => Object.hasOwn(UNITS,id) && id.startsWith(v.eraId === 'high-medieval' ? 'high' : v.eraId!))))
     && Number.isFinite(v.runTime) && v.runTime! >= 0
     && (v.phase !== 'reward' || (v.rewards.length === 3 && !!v.report));
 }

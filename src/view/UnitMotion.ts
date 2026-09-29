@@ -16,6 +16,8 @@ export class UnitMotion {
   private strikeAge = -1;
   private supportAge = 0;
   private standard = false;
+  private strikeDuration = .4;
+  private cooldown = 0;
   private kind: UnitState['kind'];
   private action: UnitState['action'];
   private facing: 1 | -1;
@@ -39,6 +41,7 @@ export class UnitMotion {
     }
     if (this.action !== unit.action && unit.action !== 'move') this.walkAge = 0;
     if (unit.action === 'move' && this.kind === 'medievalHealer') this.strikeAge = -1;
+    this.cooldown = unit.cooldown;
     this.action = unit.action;
     this.facing = unit.facing;
   }
@@ -46,6 +49,7 @@ export class UnitMotion {
     if (this.standard) return;
     // A splash can emit several events from one source. Never rewind an active strike.
     if (this.strikeAge >= 0) return;
+    this.strikeDuration = ['highCrossbow', 'highTrebuchet'].includes(this.kind) ? Math.max(.1, this.cooldown || 4) : this.kind === 'medievalHealer' ? 2 : .4;
     this.strikeAge = 0; this.strikeFacing = this.facing;
   }
   advance(delta: number, paused = false): UnitPose {
@@ -56,16 +60,17 @@ export class UnitMotion {
     if (this.standard) this.supportAge = this.action === 'move' ? 0 : this.supportAge + dt;
     if (this.strikeAge >= 0) {
       this.strikeAge += dt;
-      if (this.strikeAge >= (this.kind === 'medievalHealer' ? 2 : .4)) this.strikeAge = -1;
+      if (this.strikeAge >= this.strikeDuration) this.strikeAge = -1;
     }
     const interval = this.tickTime - this.previousTime;
     const alpha = interval > 0 ? Math.max(0, Math.min(1, (this.visualTime - this.previousTime) / interval)) : 1;
     const walkFps = this.kind === 'medievalHealer' ? 8 : this.kind === 'medievalBerserker' ? 10 : 12;
     let frame = this.action === 'attack' ? 1 : 0;
-    if (this.strikeAge >= 0) frame = this.kind === 'medievalHealer'
+    if (this.strikeAge >= 0) frame = ['highCrossbow', 'highTrebuchet'].includes(this.kind)
+      ? 16 + Math.min(31, Math.floor(this.strikeAge / this.strikeDuration * 32)) : this.kind === 'medievalHealer'
       ? medievalTreatmentFrame(this.strikeAge) : 10 + Math.min(5, Math.floor(this.strikeAge * 15));
     else if (this.action === 'move') frame = 2 + Math.floor(this.walkAge * walkFps) % 8;
-    else if (this.standard) frame = this.kind === 'medievalHorn'
+    else if (this.standard) frame = this.kind === 'highHerald' ? 16 + Math.floor(this.supportAge * 16) % 32 : this.kind === 'medievalHorn'
       ? medievalSignalFrame(this.supportAge) : standardFrame(this.supportAge);
     this.pose = {
       x: this.previousX + (this.targetX - this.previousX) * alpha,

@@ -6,13 +6,14 @@ import { medievalDraft } from './medieval-draft';
 import { medievalSignalFrame, medievalTreatmentFrame } from './medieval-motion';
 import { standardFrame } from '../view/SupportMotion';
 
-type Era = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval';
+type Era = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval';
 const draft = document.body.dataset.era === 'iron';
 const medieval = document.body.dataset.era === 'medieval';
 const antique = document.body.dataset.era === 'antique';
 const labEraName = (era: Era) => era === 'medieval' ? 'Раннее Средневековье' : era === 'antique' ? 'Античность' : eraName(era);
+const atlasFrames = (era: Era, role: string) => role === 'banner' || (era === 'high-medieval' && ['archer','siege'].includes(role)) ? 48 : 16;
 type Pose = 'idle' | 'ready' | 'move' | 'attack';
-const entries = medieval ? medievalDraft : antique ? antiqueDraft : Object.entries(UNITS).filter(([id]) => !draft || id.startsWith('iron')).map(([id, unit]) => ({ id, unit, era: (id.startsWith('medieval') ? 'medieval' : id.startsWith('antique') ? 'antique' : id.startsWith('stone') ? 'stone' : id.startsWith('iron') ? 'iron' : 'bronze') as Era, art: unitArt[id], artRole: roleOf(id) }));
+const entries = medieval ? medievalDraft : antique ? antiqueDraft : Object.entries(UNITS).filter(([id]) => !draft || id.startsWith('iron')).map(([id, unit]) => ({ id, unit, era: (id.startsWith('high') ? 'high-medieval' : id.startsWith('medieval') ? 'medieval' : id.startsWith('antique') ? 'antique' : id.startsWith('stone') ? 'stone' : id.startsWith('iron') ? 'iron' : 'bronze') as Era, art: unitArt[id], artRole: roleOf(id) }));
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
@@ -63,7 +64,7 @@ for (const entry of entries) {
  for (const enemy of [false, true]) {
   const key = `${enemy ? 'enemy-' : ''}${role}`, portrait = asset(key), sheet = portrait.replace('.svg', '-sheet.png');
   const block = document.createElement('section'); block.dataset.team = enemy ? 'enemy' : 'ally';
-  block.innerHTML = `<div class="team-label ${enemy ? 'enemy' : ''}">${enemy ? 'ПРОТИВНИК' : 'СОЮЗНИК'}</div><div class="stage"><canvas width="480" height="288" aria-label="${entry.unit.name}, ${enemy ? 'противник' : 'союзник'}"></canvas></div><div class="links"><button type="button">${labRole(entry.id) === 'banner' ? 48 : 16} кадров ↗</button><a href="${portrait}" target="_blank" rel="noopener">SVG</a><a href="${sheet}" target="_blank" rel="noopener">PNG-атлас</a></div>`;
+  block.innerHTML = `<div class="team-label ${enemy ? 'enemy' : ''}">${enemy ? 'ПРОТИВНИК' : 'СОЮЗНИК'}</div><div class="stage"><canvas width="480" height="288" aria-label="${entry.unit.name}, ${enemy ? 'противник' : 'союзник'}"></canvas></div><div class="links"><button type="button">${atlasFrames(entry.era, labRole(entry.id))} кадров ↗</button><a href="${portrait}" target="_blank" rel="noopener">SVG</a><a href="${sheet}" target="_blank" rel="noopener">PNG-атлас</a></div>`;
   const image = imageFor(sheet);
   canvasList.push({ canvas: block.querySelector('canvas')!, image, enemy, arena: entry.era, role: labRole(entry.id) });
   block.querySelector('button')!.onclick = () => inspect(entry.unit.name, image, enemy, entry.era, labRole(entry.id));
@@ -78,7 +79,7 @@ function filter() {
  displayRole = '';
  for (const article of units.querySelectorAll<HTMLElement>('article')) {
   article.hidden = (era.value !== 'all' && era.value !== article.dataset.era) || !article.dataset.search!.includes(search.value.toLocaleLowerCase('ru').trim());
-  if (!article.hidden) { if (labRole(article.querySelector('code')!.textContent!) === 'banner') hasBanner = true; if (count === 0) { displayRole = labRole(article.querySelector('code')!.textContent!); displayEra = article.dataset.era as Era; } count++; }
+  if (!article.hidden) { if (atlasFrames(article.dataset.era as Era, labRole(article.querySelector('code')!.textContent!)) === 48) hasBanner = true; if (count === 0) { displayRole = labRole(article.querySelector('code')!.textContent!); displayEra = article.dataset.era as Era; } count++; }
   article.querySelector<HTMLElement>('.variants')!.style.gridTemplateColumns = team.value === 'both' ? '' : '1fr';
   for (const section of article.querySelectorAll<HTMLElement>('section')) section.hidden = team.value !== 'both' && team.value !== section.dataset.team;
  }
@@ -94,7 +95,7 @@ function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: E
  document.querySelector('#detail-title')!.textContent = `${name} · ${enemy ? 'противник' : 'союзник'}`;
  const frames = document.querySelector('#frames')!; frames.replaceChildren();
  const items: typeof canvasList = [];
- for (let frame = 0; frame < (role === 'banner' ? 48 : 16); frame++) {
+ for (let frame = 0; frame < atlasFrames(arena, role); frame++) {
   const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 192;
   const walkLabel = ['контакт','амортизация','пронос стопы','отталкивание'][(frame-2)%4];
   const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : 'атака'}`;
@@ -108,8 +109,9 @@ document.querySelector<HTMLButtonElement>('#step')!.onclick = () => { manual = (
 slider.oninput = () => { manual = Number(slider.value); paused = true; pause.textContent = 'Продолжить'; };
 pose.onchange = () => { manual = null; time = 0; };
 function currentFrame(role = displayRole, era = displayEra) {
- if (manual !== null) return Math.min(manual,role === 'banner' ? 47 : 15);
+ if (manual !== null) return Math.min(manual,atlasFrames(era, role) - 1);
  const state = pose.value as Pose;
+ if (state === 'attack' && era === 'high-medieval' && ['archer','siege','banner'].includes(role)) return 16 + Math.floor(time * (role === 'banner' ? 16 : 8)) % 32;
  if (state === 'attack' && role === 'banner') return era === 'medieval' ? medievalSignalFrame(time) : standardFrame(time);
  if (era === 'medieval' && state === 'attack' && role === 'medic') return medievalTreatmentFrame(time);
  if (era === 'medieval' && state === 'move' && ['medic','raider'].includes(role)) return 2 + Math.floor(time * (role === 'medic' ? 8 : 10)) % 8;

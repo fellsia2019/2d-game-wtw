@@ -3,6 +3,7 @@ import { writeFileSync as writeBytes, readFileSync, readdirSync } from 'node:fs'
 import { createHash } from 'node:crypto';
 import { svg, unitRig } from './unit-rig.mjs';
 import { antiqueRig, antiqueRoles } from './antique-rig.mjs';
+import {highMedievalRig,highMedievalRoles,highMedievalFrameCounts} from './high-medieval-rig.mjs';
 import { medievalRig, medievalRoles } from './medieval-rig.mjs';
 export const roles=['shield','spear','archer','medic','raider','thrower','banner','siege','bulwark','boss'];
 function writeFileSync(path, content) {
@@ -16,17 +17,17 @@ function writeFileSync(path, content) {
   }
  }
 }
-export function exportUnits(eras, { manifestPath = 'public/assets/sprite-manifest.json', manifestEras = ['stone','bronze','iron','antique','medieval'], customRig, customRoles } = {}) {
+export function exportUnits(eras, { manifestPath = 'public/assets/sprite-manifest.json', manifestEras = ['stone','bronze','iron','antique','medieval','high-medieval'], customRig, customRoles, frameCounts } = {}) {
  let count=0;
  for(const era of eras) {
-  const available=customRoles ?? (era==='medieval'?medievalRoles:era==='antique'?antiqueRoles:roles);
+  const available=customRoles ?? (era==='high-medieval'?highMedievalRoles:era==='medieval'?medievalRoles:era==='antique'?antiqueRoles:roles);
   for(const enemy of [false,true]) {
    let contact='';
    for(const [r,role] of available.entries()) {
     const name=`${enemy?'enemy-':''}${era+'-'}u-${role}`;
-    const rig=frame=>customRig?customRig(role,enemy,frame):era==='medieval'?medievalRig(role,enemy,frame):era==='antique'?antiqueRig(role,enemy,frame):unitRig(era,role,enemy,frame);
+    const rig=frame=>customRig?customRig(role,enemy,frame):era==='high-medieval'?highMedievalRig(role,enemy,frame):era==='medieval'?medievalRig(role,enemy,frame):era==='antique'?antiqueRig(role,enemy,frame):unitRig(era,role,enemy,frame);
     writeFileSync(`public/assets/${name}.svg`,svg(192,192,rig(0)));
-    const frameCount=role==='banner'?48:16, height=frameCount/4*192;
+    const frameCount=frameCounts?.[role] ?? (era==='high-medieval'?highMedievalFrameCounts[role]:undefined) ?? (role==='banner'?48:16), height=frameCount/4*192;
     const frames=Array.from({length:frameCount},(_,i)=>`<svg x="${i%4*320}" y="${Math.floor(i/4)*192}" width="320" height="192"><g transform="translate(64 0)">${rig(i)}</g></svg>`).join('');
     const rendered=new Resvg(svg(1280,height,frames)).render(), pixels=rendered.pixels;
     for(let y=0;y<height;y++)for(let x=0;x<1280;x++)if((x%320<2||x%320>317||y%192<2||y%192>189)&&pixels[(y*1280+x)*4+3])throw Error(`Clipped ${name} at ${x%320},${y%192}`);

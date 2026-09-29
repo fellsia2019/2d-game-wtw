@@ -14,7 +14,7 @@ function profile(wins=4){const save=new SaveService(new MemoryStorage());save.wr
 function figure(id:number,kind:UnitKind,team:Team,x:number,cooldown=0):UnitState{return {id,kind,team,x,cooldown,hp:500,maxHp:500,action:'idle',facing:team==='ally'?1:-1};}
 it('migrates completed four-era profiles with an empty medieval wallet and one point on first entry',()=>{
  const save=profile(),levels={damage:2,health:3,supply:1,attackSpeed:2};save.writeTalents({gold:730,levels,baseLevel:8},'antique');
- const game=new GameDirector(save);expect(nextEra('antique')).toBe('medieval');expect(nextEra('medieval')).toBeUndefined();
+ const game=new GameDirector(save);expect(nextEra('antique')).toBe('medieval');expect(nextEra('medieval')).toBe('high-medieval');
  expect(game.getState().unlockedEras.medieval).toBe(true);expect(save.loadTalents('antique')).toEqual({gold:730,levels,baseLevel:8});
  expect(save.loadTalents('medieval')).toMatchObject({gold:0,levels:{damage:0,health:0,supply:0,attackSpeed:0}});
  game.selectEra('medieval');const points=game.getState().globalTalentPoints;game.startNewRun(23);expect(game.getState().globalTalentPoints).toBe(points+1);
@@ -36,7 +36,7 @@ it('registers exactly eight models and sixteen atlases, reusing the guard for th
  expect(ERA_HIRE_KINDS.medieval).toHaveLength(8);
  expect(new Set(Object.entries(unitArt).filter(([id])=>id.startsWith('medieval')).map(([,art])=>art)).size).toBe(8);
  expect(unitArt.medievalJarl).toBe(unitArt.medievalGuard);expect(unitRole('medievalJarl')).toBe('shield');
- expect(manifest.sheets.filter(name=>name.includes('medieval-u-'))).toHaveLength(16);
+ expect(manifest.sheets.filter(name=>/^(enemy-)?medieval-u-/.test(name))).toHaveLength(16);
  for(const id of ERA_HIRE_KINDS.medieval)for(const prefix of ['','enemy-'])expect(manifest.sheets).toContain(`${prefix}${unitArt[id]}-sheet.png`);
 });
 it('deploys throwers and ram on stage three; jarl comes at half fortress health with final stats',()=>{
