@@ -32,7 +32,7 @@ const atlasFrames = (era: Era, role: string) => {
  return counts[era]?.[role] ?? (era === 'industrial' ? 16 : role === 'banner' ? 48 : 16);
 };
 type Pose = 'idle' | 'ready' | 'move' | 'attack';
-const entries: LabEntry[] = Object.entries(UNITS).map(([id, unit]) => ({ id, unit, era: unitArt[id].split('-u-')[0] as Era, art: unitArt[id], artRole: roleOf(id), boss: isBoss(id as keyof typeof UNITS) }))
+const entries: LabEntry[] = Object.entries(UNITS).map(([id, unit]) => ({ id, unit, era: (id === 'worldWarsCommander' ? 'world-wars' : unitArt[id].split('-u-')[0]) as Era, art: unitArt[id], artRole: id === 'worldWarsCommander' ? 'boss' : roleOf(id), boss: isBoss(id as keyof typeof UNITS) }))
  .sort((a,b) => labEraOrder.indexOf(a.era)-labEraOrder.indexOf(b.era));
 const models = new Set(entries.map(entry => entry.art));
 const primaryIds = new Set<string>();
@@ -41,7 +41,7 @@ for (const entry of entries) if (!seen.has(entry.art)) { primaryIds.add(entry.id
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
- <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Все игровые модели. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${labEraOrder.length} эпох</b><span>${models.size} моделей · ${manifest.sheets.length} атласов</span><span>${entries.length} игровых ID · 16 / 48 кадров</span></div></header>
+ <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Все игровые модели. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${ERA_ORDER.length} игровых эпох</b><span>${models.size} моделей · ${manifest.sheets.length} атласов</span><span>${Object.keys(UNITS).length} игровых ID</span></div></header>
  <form class="controls" onsubmit="return false">
   <label>Эпоха<select id="era"><option value="all">Все эпохи</option>${labEraOrder.map(id => `<option value="${id}">${labEraName(id)}</option>`).join('')}</select></label>
   <label>Каталог<select id="catalog"><option value="models">Уникальные модели</option><option value="ids">Все ID / боссы</option></select></label>
@@ -60,6 +60,8 @@ root.innerHTML = `
   <button type="button" id="pause">Пауза</button><button type="button" id="step">Следующий кадр</button>
   <label class="scrubber">Кадр<input id="frame" type="range" min="0" max="15" value="2"/><output id="frame-value">2 / 15</output></label>
  </form>
+ <aside id="draft-preview" hidden><img src="${import.meta.env.BASE_URL}assets/era-cards/world-wars.png" alt="Иллюстрация карты эпохи Мировые войны: окоп, бункер и лёгкий танк на рассвете"/><div><span class="eyebrow">ИГРОВАЯ ЭПОХА</span><h2>Мировые войны</h2><p>Окопная арена, укрепления обеих сторон и восемь ролевых моделей. Осадная роль — бронемашина, босс — отдельный лёгкий танк.</p><div class="draft-forts"><img src="${import.meta.env.BASE_URL}assets/world-wars-tower-ally.svg" alt="Союзное окопное укрепление"/><img src="${import.meta.env.BASE_URL}assets/world-wars-tower-enemy.svg" alt="Вражеское окопное укрепление"/></div><a href="${import.meta.env.BASE_URL}assets/world-wars-manifest.json" target="_blank" rel="noopener">Манифест набора ↗</a></div></aside>
+ <section id="draft-boss" hidden><span class="eyebrow">УНИКАЛЬНЫЙ БОСС</span><h2>Командующий Броневого узла</h2><p>Вражеский лёгкий танк в масштабе ×1,5 с отдельным атласом. Сверху осадная бронемашина, снизу босс; показаны стойка, движение и выстрел.</p><a href="${import.meta.env.BASE_URL}assets/world-wars-boss-preview.png" target="_blank" rel="noopener"><img src="${import.meta.env.BASE_URL}assets/world-wars-boss-preview.png" alt="Сравнение осадной бронемашины с уникальным боссом лёгким танком в трёх фазах анимации"/></a></section>
  <div class="result-line"><span id="count"></span><span id="status" role="status">Загрузка ассетов…</span></div><main id="units"></main><p id="empty" hidden>По этому запросу юнитов нет.</p>
  <dialog id="inspector"><div class="dialog-heading"><h2 id="detail-title"></h2><button id="close" type="button">Закрыть</button></div><p>Все кадры одного атласа, включая плавное действие командиров поддержки. Портрет и PNG можно открыть отдельно в карточке.</p><div id="frames"></div></dialog>`;
 const select = (id: string) => document.querySelector<HTMLSelectElement>(`#${id}`)!;
@@ -96,7 +98,8 @@ for (const entry of entries) {
  const role = entry.art;
  article.innerHTML = `<div class="unit-heading"><div><span class="eyebrow">${labEraName(entry.era)}</span><h2>${entry.unit.name}</h2>${smallModels[entry.art] ? `<div class="size-warning"><span>Мелкая модель</span><p>${smallModels[entry.art]}</p></div>` : ''}${correctedModels[entry.art] ? `<div class="size-warning size-corrected"><span>Размер исправлен</span><p>${correctedModels[entry.art]}</p></div>` : ''}<p>${entry.unit.role}</p></div><code>${entry.id}</code></div><div class="variants"></div><footer><span>320 × 192 · опора 160,176</span><span>${role}${entry.boss ? ' · босс ×1,5' : ''}</span></footer>`;
  const variants = article.querySelector('.variants')!;
- for (const enemy of [false, true]) {
+ if (entry.era === 'world-wars' && entry.boss) variants.classList.add('single');
+ for (const enemy of entry.era === 'world-wars' && entry.boss ? [true] : [false, true]) {
   const key = `${enemy ? 'enemy-' : ''}${role}`, portrait = asset(key), sheet = portrait.replace('.svg', '-sheet.png');
   const block = document.createElement('section'); block.dataset.team = enemy ? 'enemy' : 'ally';
   block.innerHTML = `<div class="team-label ${enemy ? 'enemy' : ''}">${enemy ? 'ПРОТИВНИК' : 'СОЮЗНИК'}</div><div class="stage"><canvas width="480" height="288" aria-label="${entry.unit.name}, ${enemy ? 'противник' : 'союзник'}"></canvas></div><div class="links"><button type="button">${atlasFrames(entry.era, labRole(entry.id))} кадров ↗</button><a href="${portrait}" target="_blank" rel="noopener">SVG</a><a href="${sheet}" target="_blank" rel="noopener">PNG-атлас</a></div>`;
@@ -108,8 +111,10 @@ for (const entry of entries) {
  units.append(article);
 }
 const arenas = new Map<Era, HTMLImageElement>();
-for (const value of ERA_ORDER) arenas.set(value, imageFor(asset(`arena-${value}`)));
+for (const value of labEraOrder) arenas.set(value, imageFor(asset(`arena-${value}`)));
 function filter() {
+ document.querySelector<HTMLElement>('#draft-preview')!.hidden = era.value !== 'world-wars';
+ document.querySelector<HTMLElement>('#draft-boss')!.hidden = era.value !== 'world-wars';
  let count = 0, hasBanner = false;
  displayRole = '';
  for (const article of units.querySelectorAll<HTMLElement>('article')) {
@@ -162,7 +167,7 @@ function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: E
  for (let frame = 0; frame < atlasFrames(arena, role); frame++) {
   const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = boss ? 480 : 320; canvas.height = boss ? 300 : 220;
   const walkLabel = ['контакт','амортизация','пронос стопы','отталкивание'][(frame-2)%4];
-  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'industrial' ? 'работа инструментом' : arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
+  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'world-wars' ? 'радиосигнал' : arena === 'industrial' ? 'работа инструментом' : arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
   const stage = document.createElement('div'); stage.className = 'stage';
   canvas.style.width = `${canvas.width}px`; canvas.style.height = `${canvas.height}px`; stage.append(canvas);
   figure.append(stage, caption); frames.append(figure); items.push({ canvas, image, enemy, arena, role, frame, period, boss });
@@ -177,7 +182,7 @@ pose.onchange = () => { manual = null; time = 0; };
 function currentFrame(role = displayRole, era = displayEra, period = entries.find(entry=>entry.era === era && entry.artRole === role)?.unit.period ?? 1.2) {
  if (manual !== null) return Math.min(manual,atlasFrames(era, role) - 1);
  const state = pose.value as Pose;
- if (state === 'attack' && role === 'banner' && era !== 'industrial') return era === 'medieval' ? medievalSignalFrame(time) : ['high-medieval','renaissance'].includes(era) ? 16 + Math.floor(time * 16) % 32 : standardFrame(time);
+ if (state === 'attack' && role === 'banner' && atlasFrames(era,role) === 48) return era === 'medieval' ? medievalSignalFrame(time) : ['high-medieval','renaissance'].includes(era) ? 16 + Math.floor(time * 16) % 32 : standardFrame(time);
  if (state === 'attack' && atlasFrames(era,role) === 48) return 16 + (Math.floor(time / period * 32) + (era === 'renaissance' ? 7 : 0)) % 32;
  if (era === 'medieval' && state === 'attack' && role === 'medic') return medievalTreatmentFrame(time);
  if (era === 'medieval' && state === 'move' && ['medic','raider'].includes(role)) return 2 + Math.floor(time * (role === 'medic' ? 8 : 10)) % 8;
@@ -187,9 +192,11 @@ function draw(item: typeof canvasList[number], frame: number, scale: number) {
  const { canvas, image, enemy, arena } = item;
  // Canvas pixels track CSS pixels so the game-size presets really are 52% and 34%.
  const effectiveScale = scale * (item.boss ? 1.5 : 1);
- const width = item.frame === undefined ? Math.max(Math.round(canvas.parentElement!.clientWidth), Math.ceil(320 * effectiveScale)) : canvas.width;
+ const stageWidth = Math.round(canvas.parentElement!.clientWidth);
+ const displayScale = item.frame === undefined ? Math.min(effectiveScale, Math.max(.1,(stageWidth-12)/320)) : effectiveScale;
+ const width = item.frame === undefined ? Math.max(stageWidth, Math.ceil(320 * displayScale)) : canvas.width;
  if (width && canvas.width !== width) canvas.width = width;
- if (item.frame === undefined) { const height = Math.max(compact.checked ? 156 : 236, Math.ceil(192 * effectiveScale + 24)); if (canvas.height !== height) canvas.height = height; if (canvas.style.width !== `${width}px`) canvas.style.width = `${width}px`; if (canvas.style.height !== `${height}px`) canvas.style.height = `${height}px`; }
+ if (item.frame === undefined) { const height = Math.max(compact.checked ? 156 : 236, Math.ceil(192 * displayScale + 24)); if (canvas.height !== height) canvas.height = height; if (canvas.style.width !== `${width}px`) canvas.style.width = `${width}px`; if (canvas.style.height !== `${height}px`) canvas.style.height = `${height}px`; }
  const ctx = canvas.getContext('2d')!, w = canvas.width, h = canvas.height, base = h - 24;
  ctx.clearRect(0, 0, w, h);
  ctx.fillStyle = background.value === 'light' ? '#e8ddc4' : '#20353c'; ctx.fillRect(0, 0, w, h);
@@ -197,7 +204,7 @@ function draw(item: typeof canvasList[number], frame: number, scale: number) {
  const arenaImage = arenas.get(arena);
  if (background.value === 'arena' && arenaImage?.complete && arenaImage.naturalWidth) ctx.drawImage(arenaImage,0,0,w,h);
  ctx.save(); ctx.translate(w / 2, base); const flip = facing.value === 'left' || (facing.value === 'natural' && enemy) ? -1 : 1;
- ctx.scale(effectiveScale * flip, effectiveScale);
+ ctx.scale(displayScale * flip, displayScale);
  if (guides.checked) { ctx.strokeStyle = '#dbbe7277'; ctx.strokeRect(-160,-176,320,192); }
  if (image.complete && image.naturalWidth) ctx.drawImage(image,frame % 4 * 320,Math.floor(frame / 4) * 192,320,192,-160,-176,320,192);
  else { ctx.fillStyle = '#e99978'; ctx.font = '16px sans-serif'; ctx.fillText('Ассет недоступен',-70,-70); }

@@ -34,7 +34,7 @@ export class BattleScene extends Phaser.Scene {
       for (const team of ['ally','enemy']) this.load.svg(`${era}-tower-${team}`, asset(`${era}-tower-${team}`), { width: 240, height: 240 });
     }
     for (const key of new Set(Object.values(unitArt))) {
-      this.load.spritesheet(key, asset(key).replace('.svg', '-sheet.png'), { frameWidth: 320, frameHeight: 192 });
+      if (key !== 'world-wars-boss') this.load.spritesheet(key, asset(key).replace('.svg', '-sheet.png'), { frameWidth: 320, frameHeight: 192 });
       this.load.spritesheet(`enemy-${key}`, asset(`enemy-${key}`).replace('.svg', '-sheet.png'), { frameWidth: 320, frameHeight: 192 });
     }
   }
@@ -155,6 +155,8 @@ export class BattleScene extends Phaser.Scene {
     }
     if (isBoss) figure.bar.lineStyle(2, 0xffd16f, .8).strokeEllipse(x, y - 2, 88 * scale, 18 * scale);
     if (roleOf(unit.kind) === 'banner') figure.bar.lineStyle(1, unit.team === 'ally' ? 0xd1dd96 : 0xf1a18b, .22).strokeEllipse(x, y - 2, this.scale.width < 650 ? 65 : 140, 13);
+    if ((unit.suppressedUntil ?? 0) > this.snapshot.elapsed) figure.bar.lineStyle(2, 0x8cc9d7, .85).strokeEllipse(x, y - 3, 65 * scale, 15 * scale);
+    if ((unit.exposedUntil ?? 0) > this.snapshot.elapsed) figure.bar.lineStyle(2, 0xf6c46d, .9).strokeCircle(x, barY - 4, 6);
   }
   private drawDamage() {
     this.damage.clear();
@@ -206,6 +208,10 @@ export class BattleScene extends Phaser.Scene {
         if (event.type === 'fortress') this.fx.lineStyle(3, 0xf1aa79, alpha).strokeCircle(x, y, 10 + p * 32);
       } else if (event.type === 'boss-warning' || event.type === 'boss-assault') {
         this.fx.lineStyle(3, 0xffc68b, alpha).strokeEllipse(this.point(1000) / scale, y - 25, 25 + p * 100, 35 + p * 70);
+      } else if (event.type === 'suppress') {
+        this.fx.lineStyle(2, 0x8cc9d7, alpha).strokeEllipse(x, y + 25, 26 + p * 32, 10 + p * 15);
+      } else if (event.type === 'expose') {
+        this.fx.lineStyle(2, 0xf6c46d, alpha).strokeCircle(x, y - 28, 8 + p * 18);
       } else if (event.type === 'block') this.fx.lineStyle(3, 0xc4ebed, alpha).strokeRoundedRect(x - 13 - p * 5, y - 18, 26 + p * 10, 36, 8);
       else if (event.type === 'spawn') this.fx.lineStyle(2, event.team === 'ally' ? 0x8ce1c4 : 0xeb9d85, alpha).strokeEllipse(x, this.baseline() / scale, 30 + p * 35, 8 + p * 10);
       else if (event.type === 'death') {

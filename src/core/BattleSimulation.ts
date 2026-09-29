@@ -263,7 +263,8 @@ export class BattleSimulation {
     const distance = Math.abs(targetX - unit.x);
     if (distance > range + (target ? 10 : 30)) {
       const direction = targetX > unit.x ? 1 : -1;
-      const speed = def.speed * (unit.team === 'ally' && unitRole(unit.kind) === 'raider' && this.upgrades.includes('boots') ? 1.2 : 1);
+      const speed = def.speed * (unit.team === 'ally' && unitRole(unit.kind) === 'raider' && this.upgrades.includes('boots') ? 1.2 : 1)
+        * (this.eraId === 'world-wars' && (unit.suppressedUntil ?? 0) > this.elapsed ? .7 : 1);
       const previousX = unit.x;
       unit.x = Math.max(75, Math.min(925, unit.x + direction * Math.min(speed * STEP, distance - range)));
       unit.action = unit.x === previousX ? 'idle' : 'move';
@@ -303,10 +304,26 @@ export class BattleSimulation {
       }
       if (unitRole(unit.kind) === 'spear' && UNITS[target.kind].armor > 0) raw *= (def.antiArmor ?? 1) + (this.upgrades.includes('pikes') ? .35 : 0);
       if (unitRole(unit.kind) === 'archer' && this.upgrades.includes('arrows')) raw *= 1.15;
+      if (this.eraId === 'world-wars' && (target.exposedUntil ?? 0) > this.elapsed) raw *= 1.2;
       raw *= unit.team === 'ally' ? talentMultiplier(this.talents.damage) : this.enemyDamageMultiplier;
       const armor = this.armor(target) * (unitRole(unit.kind) === 'spear' ? .3 : 1);
       const blocked = raw * armor;
       const dealt = this.damageUnit(target, Math.max(1, raw - blocked));
+      if (this.eraId === 'world-wars' && dealt > 0 && target.hp > 0) {
+        if (unit.kind === 'worldWarsJeep') {
+          if ((target.exposedUntil ?? 0) <= this.elapsed) this.event('expose', target.x, unit.team, undefined, unit.id, target.id);
+          target.exposedUntil = this.elapsed + 4;
+        }
+        if (def.range >= 100 && def.damage > 0) {
+          const hits = (this.elapsed - (target.lastSuppressHit ?? -Infinity) <= 3 ? target.suppressionHits ?? 0 : 0) + 1;
+          target.lastSuppressHit = this.elapsed;
+          target.suppressionHits = hits >= 3 ? 0 : hits;
+          if (hits >= 3) {
+            target.suppressedUntil = this.elapsed + 3;
+            this.event('suppress', target.x, unit.team, undefined, unit.id, target.id);
+          }
+        }
+      }
       if (target.kind === 'medievalBerserker' && target.hp > 0 && dealt > 0 && def.range < 100)
         this.counterUntil.set(target.id, this.elapsed + 2);
       if (unit.team === 'ally') { this.damageDealt += dealt; this.blocked += target.team === 'ally' ? blocked : 0; }

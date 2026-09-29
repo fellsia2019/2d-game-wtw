@@ -8,6 +8,7 @@ export const ERA_THEMES = {
   antique: { main: '#63734c', accent: '#e7d8a2' },
   renaissance: { main: '#73546d', accent: '#e0b783' },
   industrial: { main: '#465d5c', accent: '#e6bb83' },
+  'world-wars': { main: '#465d61', accent: '#d6bd95' },
   'high-medieval': { main: '#405e82', accent: '#dbcaa2' },
   medieval: { main: '#3e654f', accent: '#c6d7a0' }
 } as const satisfies Record<EraId, { main: string; accent: string }>;

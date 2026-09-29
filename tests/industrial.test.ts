@@ -29,7 +29,7 @@ it('unlocks after Renaissance and keeps its own wallet and eight approved models
   const save=profile();
   save.writeTalents({gold:830,levels:{damage:2,health:3,supply:1,attackSpeed:2},baseLevel:8},'renaissance');
   expect(nextEra('renaissance')).toBe('industrial');
-  expect(nextEra('industrial')).toBeUndefined();
+  expect(nextEra('industrial')).toBe('world-wars');
   expect(save.loadEraProgress().unlocked.industrial).toBe(true);
   expect(save.loadTalents('industrial').gold).toBe(0);
   expect(save.loadTalents('renaissance').gold).toBe(830);

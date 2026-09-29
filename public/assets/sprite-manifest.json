@@ -83,7 +83,8 @@
     "medieval",
     "high-medieval",
     "renaissance",
-    "industrial"
+    "industrial",
+    "world-wars"
   ],
   "standardFrames": {
     "first": 16,
@@ -180,6 +181,15 @@
     "enemy-stone-u-siege-sheet.png",
     "enemy-stone-u-spear-sheet.png",
     "enemy-stone-u-thrower-sheet.png",
+    "enemy-world-wars-boss-sheet.png",
+    "enemy-world-wars-u-archer-sheet.png",
+    "enemy-world-wars-u-banner-sheet.png",
+    "enemy-world-wars-u-medic-sheet.png",
+    "enemy-world-wars-u-raider-sheet.png",
+    "enemy-world-wars-u-shield-sheet.png",
+    "enemy-world-wars-u-siege-sheet.png",
+    "enemy-world-wars-u-spear-sheet.png",
+    "enemy-world-wars-u-thrower-sheet.png",
     "high-medieval-u-archer-sheet.png",
     "high-medieval-u-banner-sheet.png",
     "high-medieval-u-medic-sheet.png",
@@ -231,7 +241,15 @@
     "stone-u-shield-sheet.png",
     "stone-u-siege-sheet.png",
     "stone-u-spear-sheet.png",
-    "stone-u-thrower-sheet.png"
+    "stone-u-thrower-sheet.png",
+    "world-wars-u-archer-sheet.png",
+    "world-wars-u-banner-sheet.png",
+    "world-wars-u-medic-sheet.png",
+    "world-wars-u-raider-sheet.png",
+    "world-wars-u-shield-sheet.png",
+    "world-wars-u-siege-sheet.png",
+    "world-wars-u-spear-sheet.png",
+    "world-wars-u-thrower-sheet.png"
   ],
   "eraActionCycles": {
     "high-medieval": {
@@ -299,6 +317,17 @@
       "thrower": 16,
       "banner": 16,
       "siege": 16
+    },
+    "world-wars": {
+      "shield": 16,
+      "spear": 16,
+      "archer": 16,
+      "medic": 16,
+      "raider": 16,
+      "thrower": 16,
+      "banner": 16,
+      "siege": 16,
+      "boss": 16
     }
   }
 }

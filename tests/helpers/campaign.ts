@@ -14,10 +14,11 @@ export const CAMPAIGN_PLANS = {
   'high-medieval': [{ tier: 8, order: '02' }, { tier: 16, order: '02' }, { tier: 22, order: '02' }, { tier: 25, order: '02' }],
   medieval: [{ tier: 7, order: '02' }, { tier: 11, order: '02' }, { tier: 16, order: '02' }, { tier: 18, order: '002' }],
   antique: [{ tier: 3, order: '012' }, { tier: 6, order: '02' }, { tier: 9, order: '002' }, { tier: 12, order: '002' }]
-} satisfies Record<EraId, { tier: number; order: string }[]>;
+} satisfies Record<Exclude<EraId, 'world-wars'>, { tier: number; order: string }[]>;
 
 export function completeCampaignBattle(game: GameDirector, battle: number): number {
   const era = game.getState().eraId;
+  if (era === 'world-wars') throw new Error('No fixed automatic recruitment plan is defined for World Wars');
   const { tier, order } = CAMPAIGN_PLANS[era][battle];
   const roster = ERA_STARTER_KINDS[era];
   for (let attempt = 1; attempt <= 40; attempt++) {

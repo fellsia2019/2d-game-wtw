@@ -2,7 +2,7 @@
   "generator": "Built-in image_gen",
   "generatedOn": "2026-09-29",
   "output": {
-    "format": "webp for eras 1-7; PNG for Industrial",
+    "format": "webp for eras 1-7; PNG for Industrial and World Wars",
     "width": 768,
     "height": 512,
     "quality": 84
@@ -39,6 +39,11 @@
     {
       "era": "industrial",
       "prompt": "Use case: historical-scene. Asset type: wide 3:2 landscape background for the Industrial era selection card in a strategy game. A late-19th-century industrial fortress and rail foundry at dusk: brick workshops, iron chimneys with restrained smoke, a fortified wall, rail tracks, a grounded field howitzer in the middle distance, a few infantry silhouettes. Painterly realistic concept art with detailed warm light and cool teal shadows, visually consistent with a richly painted historical strategy-game map card. Wide readable composition, unobstructed lower third for UI text overlay. No bicycles, no modern tanks, no modern skyscrapers, no logos, no writing, no watermark."
+    },
+    {
+      "era": "world-wars",
+      "status": "approved",
+      "prompt": "Use case: historical-scene. Asset type: landscape 3:2 illustrated background concept for the ninth era card in a strategy game, World Wars; no UI. Primary request: a distinctive early-to-mid 20th century frontline landscape. Foreground: an earthen trench crossing the lower part of the scene, sandbags, duckboards and restrained barbed wire. Midground: a low concrete bunker and a small light tank advancing across a scarred road, with a few distant infantry silhouettes. Background: sparse ruined brick buildings and telephone poles fading into mist, no recognisable real-world insignia or flags. Style/medium: richly detailed painterly historical strategy-game concept art, matching the polished depth and texture of existing era-card paintings, with believable period materials and no photorealistic collage. Composition/framing: wide readable landmark in the upper two-thirds; lower third deliberately dark and relatively quiet for later cream title overlay. Strong layered depth, visually readable at a 280 px card thumbnail. Lighting/mood: overcast dawn with a narrow warm break in clouds; subdued tension, no gore. Color palette: slate blue, muddy olive, burnt sienna, cool smoke, warm dawn highlights; distinct from the copper industrial foundry and stone castle cards. Constraints: landscape 3:2, full bleed, no text, no UI, no logo, no watermark, no modern skyscrapers, no futuristic vehicles, no oversized explosions."
     }
   ]
 }
