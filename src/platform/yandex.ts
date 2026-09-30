@@ -1,5 +1,6 @@
 import type { RewardedPlacement, RewardedProvider } from '../core/advertising';
 import type { CloudPlayer } from './cloud';
+import { portalLocale, setLocale } from '../i18n';
 // Local development can run without the SDK; release builds load the host SDK.
 interface Advertising {
   showFullscreenAdv(options: { callbacks: { onOpen?: () => void; onClose?: (wasShown: boolean) => void; onError?: () => void } }): void;
@@ -21,6 +22,7 @@ export class YandexAdapter implements RewardedProvider {
   private gameplay = false;
   private gameplaySent = false;
   private adBusy = false;
+  private language: string | null = null;
   constructor(private onExternalPause: (paused: boolean, source: 'platform' | 'advertisement') => void) {}
 
   async initialize(): Promise<boolean> {
@@ -39,9 +41,8 @@ export class YandexAdapter implements RewardedProvider {
       }
       if (!global) return false;
       this.sdk = await global.init();
-      // This release supports RU only; unsupported portal languages use RU.
-      const language = this.sdk.environment.i18n.lang;
-      document.documentElement.lang = language === 'ru' ? language : 'ru';
+      this.language = this.sdk.environment.i18n.lang;
+      setLocale(portalLocale(this.language));
       this.sdk.on('game_api_pause', () => this.onExternalPause(true, 'platform'));
       this.sdk.on('game_api_resume', () => this.onExternalPause(false, 'platform'));
       this.notifyReady();
@@ -52,6 +53,7 @@ export class YandexAdapter implements RewardedProvider {
   }
 
   markGameReady(): void { this.gameReady = true; this.notifyReady(); }
+  getLanguage(): string | null { return this.language; }
   setGameplay(active: boolean): void { this.gameplay = active; this.syncGameplay(); }
   async getCloudPlayer(): Promise<CloudPlayer | null> {
     try { return await this.sdk?.getPlayer?.() ?? null; } catch { return null; }

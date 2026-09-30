@@ -1,4 +1,5 @@
 import type { StorageLike } from '../core/save';
+import { translateTree } from '../i18n';
 
 export interface CloudPlayer {
   getUniqueID(): string;
@@ -178,6 +179,7 @@ export function chooseCloudProfile(root: HTMLElement, local: CloudSnapshot, remo
   };
   return new Promise(resolve => {
     root.innerHTML = `<div class="scrim"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="save-title"><h2 id="save-title">Выбери сохранение</h2><p>Прогресс в этом браузере отличается от облачного. Будет использован один профиль целиком.</p><div class="modal-actions"><button class="primary" data-save="cloud">Из облака · ${summarize(remote)} золота</button><button class="secondary" data-save="local">Из этого браузера · ${summarize(local)} золота</button></div></section></div>`;
+    translateTree(root);
     for (const button of root.querySelectorAll<HTMLButtonElement>('[data-save]')) button.addEventListener('click', () => resolve(button.dataset.save as 'local' | 'cloud'), { once: true });
   });
 }

@@ -3,12 +3,16 @@ import { SaveService } from './core/save';
 import { YandexAdapter } from './platform/yandex';
 import { mountGame } from './view/mountGame';
 import { bounded, CloudProfileStorage, chooseCloudProfile } from './platform/cloud';
+import { browserLocale, portalLocale, setLocale, translateTree } from './i18n';
 
 const root = document.getElementById('app');
 if (!root) throw new Error('Missing #app');
 
 async function boot(root: HTMLElement): Promise<void> {
+const previewLanguage = import.meta.env.DEV ? new URLSearchParams(location.search).get('lang') : null;
+setLocale(previewLanguage === 'en' ? 'en' : browserLocale());
 root.innerHTML = '<div class="scrim"><section class="modal" role="status">Загрузка игры и сохранения…</section></div>';
+translateTree(root);
 let storage: Storage | null = null;
 try { storage = window.localStorage; } catch { /* private mode */ }
 let app: GameDirector | null = null;
@@ -18,6 +22,7 @@ const platform = new YandexAdapter((paused, source) => {
 });
 let available = false;
 try { available = await bounded(platform.initialize()); } catch { /* SDK unavailable */ }
+if (available) { setLocale(portalLocale(platform.getLanguage() ?? '')); root.innerHTML = '<div class="scrim"><section class="modal" role="status">Загрузка игры и сохранения…</section></div>'; translateTree(root); }
 let player = null;
 if (available) { try { player = await bounded(platform.getCloudPlayer()); } catch { /* local fallback */ } }
 const profile = await CloudProfileStorage.open(storage, player, (local, remote) => {

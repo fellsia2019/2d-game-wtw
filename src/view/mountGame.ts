@@ -7,6 +7,7 @@ import { BattleSound } from './Sound';
 import { GameUI } from '../ui/GameUI';
 import { recruitSlot } from '../ui/shortcuts';
 import { mountOrientationGuard } from '../ui/orientation';
+import { translate } from '../i18n';
 import '../ui/game.css';
 import '../ui/fullscreen.css';
 import '../ui/results.css';
@@ -20,12 +21,12 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
   const overlay = document.createElement('div');
   overlay.className = 'boot-overlay';
   overlay.setAttribute('role', 'status');
-  overlay.textContent = 'Загрузка игры…';
+  overlay.textContent = translate('Загрузка игры…');
   root.append(overlay);
   const sound = new BattleSound({ onStatus: status => ui.setAudioStatus(status) });
   let state: GameState = app.getState();
   const scene = new BattleScene(() => state, event => sound.play(event), loaded => {
-    if (!loaded) { overlay.textContent = 'Не удалось загрузить ресурсы игры. Обновите страницу.'; return; }
+    if (!loaded) { overlay.textContent = translate('Не удалось загрузить ресурсы игры. Обновите страницу.'); return; }
     loading = false;
     gameSurface.inert = false;
     overlay.remove();

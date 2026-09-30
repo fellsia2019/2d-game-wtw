@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { translate } from '../i18n';
 import type { BattleEvent, GameState, UnitState } from '../core/types';
 import { asset, unitArt, roleOf } from '../art/catalog';
 import { UnitMotion } from './UnitMotion';
@@ -47,7 +48,7 @@ export class BattleScene extends Phaser.Scene {
     this.ready = true;
     this.scale.on('resize', this.layout, this);
     this.layout();
-    this.game.canvas.setAttribute('aria-label', 'Поле боя: союзники слева, враги справа. Бой идёт автоматически.');
+    this.game.canvas.setAttribute('aria-label', translate('Поле боя: союзники слева, враги справа. Бой идёт автоматически.'));
     this.game.canvas.setAttribute('role', 'img');
     requestAnimationFrame(() => this.onReady(true));
   }

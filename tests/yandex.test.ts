@@ -16,13 +16,27 @@ function setup() {
   return { adapter: new YandexAdapter(pause), events, features, pause, sdk, html };
 }
 
-it('waits for scene readiness and reports it once, with RU fallback determined on startup', async () => {
+it('waits for scene readiness and selects English from the SDK on startup', async () => {
   const { adapter, features, html } = setup();
   expect(await adapter.initialize()).toBe(true);
-  expect(html.lang).toBe('ru');
+  expect(html.lang).toBe('en');
   expect(features.LoadingAPI.ready).not.toHaveBeenCalled();
   adapter.markGameReady(); adapter.markGameReady();
   expect(features.LoadingAPI.ready).toHaveBeenCalledTimes(1);
+});
+
+it('uses English for an unsupported SDK language outside the Russian fallback group', async () => {
+  const { adapter, sdk, html } = setup();
+  sdk.environment.i18n.lang = 'tr';
+  expect(await adapter.initialize()).toBe(true);
+  expect(html.lang).toBe('en');
+});
+
+it('uses Russian for languages in the portal fallback group', async () => {
+  const { adapter, sdk, html } = setup();
+  sdk.environment.i18n.lang = 'uk';
+  expect(await adapter.initialize()).toBe(true);
+  expect(html.lang).toBe('ru');
 });
 
 it('handles the scene loading before SDK initialization and deduplicates gameplay transitions', async () => {

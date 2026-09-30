@@ -6,6 +6,8 @@ import manifest from '../../public/assets/sprite-manifest.json';
 import modernManifest from '../../public/assets/modern-manifest.json';
 import { medievalSignalFrame, medievalTreatmentFrame } from './medieval-motion';
 import { standardFrame } from '../view/SupportMotion';
+import { browserLocale, setLocale } from '../i18n';
+import { translateLab, translateLabTree } from './sprite-lab-i18n';
 
 type Era = EraId;
 type LabEntry = { id: string; unit: { name: string; role: string; period: number }; era: Era; art: string; artRole: string; boss: boolean };
@@ -40,9 +42,13 @@ const primaryIds = new Set<string>();
 const seen = new Set<string>();
 for (const entry of entries) if (!seen.has(entry.art)) { primaryIds.add(entry.id); seen.add(entry.art); }
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
+const languageParam = new URLSearchParams(location.search).get('lang');
+const forcedLanguage = languageParam === 'en' || languageParam === 'ru' ? languageParam : null;
+setLocale(forcedLanguage === 'en' ? 'en' : forcedLanguage === 'ru' ? 'ru' : browserLocale());
+document.title = translateLab('Лаборатория спрайтов · Знамёна эпох');
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
- <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Игровые модели всех эпох. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${ERA_ORDER.length} игровых эпох</b><span>${models.size} моделей в мастерской · ${manifest.sheets.length} игровых атласов</span><span>${Object.keys(UNITS).length} игровых ID</span></div></header>
+ <header><a href="${import.meta.env.BASE_URL}${forcedLanguage ? `?lang=${forcedLanguage}` : ''}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Игровые модели всех эпох. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${ERA_ORDER.length} игровых эпох</b><span>${models.size} моделей в мастерской · ${manifest.sheets.length} игровых атласов</span><span>${Object.keys(UNITS).length} игровых ID</span></div></header>
  <form class="controls" onsubmit="return false">
   <label>Эпоха<select id="era"><option value="all">Все эпохи</option>${labEraOrder.map(id => `<option value="${id}">${labEraName(id)}</option>`).join('')}</select></label>
   <label>Каталог<select id="catalog"><option value="models">Уникальные модели</option><option value="ids">Все ID / боссы</option></select></label>
@@ -66,6 +72,7 @@ root.innerHTML = `
  <section id="draft-boss" hidden><span class="eyebrow">УНИКАЛЬНЫЙ БОСС</span><h2>Командующий Броневого узла</h2><p>Вражеский лёгкий танк в масштабе ×1,5 с отдельным атласом. Сверху осадная бронемашина, снизу босс; показаны стойка, движение и выстрел.</p><a href="${import.meta.env.BASE_URL}assets/world-wars-boss-preview.png" target="_blank" rel="noopener"><img src="${import.meta.env.BASE_URL}assets/world-wars-boss-preview.png" alt="Сравнение осадной бронемашины с уникальным боссом лёгким танком в трёх фазах анимации"/></a></section>
  <div class="result-line"><span id="count"></span><span id="status" role="status">Загрузка ассетов…</span></div><main id="units"></main><p id="empty" hidden>По этому запросу юнитов нет.</p>
  <dialog id="inspector"><div class="dialog-heading"><h2 id="detail-title"></h2><button id="close" type="button">Закрыть</button></div><p>Все кадры одного атласа, включая плавное действие командиров поддержки. Портрет и PNG можно открыть отдельно в карточке.</p><div id="frames"></div></dialog>`;
+translateLabTree(root);
 const select = (id: string) => document.querySelector<HTMLSelectElement>(`#${id}`)!;
 const catalog = select('catalog'), roleFilter = select('role');
 const era = select('era'), team = select('team'), pose = select('pose'), facing = select('facing'), zoom = select('zoom'), background = select('background'), speed = select('speed');
@@ -87,7 +94,7 @@ function imageFor(url: string) {
  }
  return image;
 }
-function loadStatus() { status.textContent = pending ? `Загрузка: осталось ${pending}` : errors ? `Не загрузились ${errors} ассетов` : 'Все ассеты загружены'; }
+function loadStatus() { status.textContent = translateLab(pending ? `Загрузка: осталось ${pending}` : errors ? `Не загрузились ${errors} ассетов` : 'Все ассеты загружены'); }
 const droneCanvas = document.querySelector<HTMLCanvasElement>('#modern-drone-demo')!;
 const operatorAtlas = imageFor(`${import.meta.env.BASE_URL}assets/modern-u-banner-sheet.png`);
 const targetAtlas = imageFor(`${import.meta.env.BASE_URL}assets/enemy-modern-u-shield-sheet.png`);
@@ -123,7 +130,7 @@ function drawDroneDemo(seconds: number) {
   ctx.fillStyle=blast;ctx.beginPath();ctx.arc(680,85,r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
  }
  const label=phase<.65?'ЗАПУСК':phase<2.12?'ПОЛЁТ К ПРОТИВНИКУ':phase<2.68?'ПОДРЫВ':'ПЕРЕЗАРЯДКА';
- ctx.fillStyle='#e9ecdc';ctx.font='bold 14px Segoe UI, sans-serif';ctx.fillText(label,16,24);
+ ctx.fillStyle='#e9ecdc';ctx.font='bold 14px Segoe UI, sans-serif';ctx.fillText(translateLab(label),16,24);
 }
 const units = document.querySelector<HTMLElement>('#units')!;
 for (const entry of entries) {
@@ -131,9 +138,9 @@ for (const entry of entries) {
  article.dataset.small = String(Boolean(smallModels[entry.art]));
  article.dataset.corrected = String(Boolean(correctedModels[entry.art]));
  article.dataset.era = entry.era; article.dataset.id = entry.id; article.dataset.role = entry.artRole;
- article.dataset.searchId = `${entry.id} ${entry.unit.name} ${entry.unit.role} ${entry.artRole} ${labEraName(entry.era)}`.toLocaleLowerCase('ru');
+ article.dataset.searchId = `${entry.id} ${entry.unit.name} ${entry.unit.role} ${entry.artRole} ${labEraName(entry.era)} ${translateLab(entry.unit.name)} ${translateLab(entry.unit.role)} ${translateLab(labEraName(entry.era))}`.toLocaleLowerCase();
  const aliases = entries.filter(other => other.art === entry.art);
- article.dataset.search = aliases.map(other => `${other.id} ${other.unit.name} ${other.unit.role}`).join(' ').concat(` ${labEraName(entry.era)} ${entry.artRole}`).toLocaleLowerCase('ru');
+ article.dataset.search = aliases.map(other => `${other.id} ${other.unit.name} ${other.unit.role} ${translateLab(other.unit.name)} ${translateLab(other.unit.role)}`).join(' ').concat(` ${labEraName(entry.era)} ${translateLab(labEraName(entry.era))} ${entry.artRole}`).toLocaleLowerCase();
  const role = entry.art;
  article.innerHTML = `<div class="unit-heading"><div><span class="eyebrow">${labEraName(entry.era)}</span><h2>${entry.unit.name}</h2>${smallModels[entry.art] ? `<div class="size-warning"><span>Мелкая модель</span><p>${smallModels[entry.art]}</p></div>` : ''}${correctedModels[entry.art] ? `<div class="size-warning size-corrected"><span>Размер исправлен</span><p>${correctedModels[entry.art]}</p></div>` : ''}<p>${entry.unit.role}</p></div><code>${entry.id}</code></div><div class="variants"></div><footer><span>320 × 192 · опора 160,176</span><span>${role}${entry.boss ? ' · босс ×1,5' : ''}</span></footer>`;
  const variants = article.querySelector('.variants')!;
@@ -147,6 +154,7 @@ for (const entry of entries) {
   block.querySelector('button')!.onclick = () => inspect(entry.unit.name, image, enemy, entry.era, labRole(entry.id), entry.unit.period, entry.boss);
   variants.append(block);
  }
+ translateLabTree(article);
  units.append(article);
 }
 const arenas = new Map<Era, HTMLImageElement>();
@@ -158,16 +166,17 @@ function filter() {
  let count = 0, hasBanner = false;
  displayRole = '';
  for (const article of units.querySelectorAll<HTMLElement>('article')) {
-  article.hidden = (small.checked && article.dataset.small !== 'true') || (corrected.checked && article.dataset.corrected !== 'true') || (era.value !== 'all' && era.value !== article.dataset.era) || (catalog.value === 'models' && !primaryIds.has(article.dataset.id!)) || (roleFilter.value !== 'all' && roleFilter.value !== article.dataset.role) || !(catalog.value === 'models' ? article.dataset.search! : article.dataset.searchId!).includes(search.value.toLocaleLowerCase('ru').trim());
+  article.hidden = (small.checked && article.dataset.small !== 'true') || (corrected.checked && article.dataset.corrected !== 'true') || (era.value !== 'all' && era.value !== article.dataset.era) || (catalog.value === 'models' && !primaryIds.has(article.dataset.id!)) || (roleFilter.value !== 'all' && roleFilter.value !== article.dataset.role) || !(catalog.value === 'models' ? article.dataset.search! : article.dataset.searchId!).includes(search.value.toLocaleLowerCase().trim());
   if (!article.hidden) { if (atlasFrames(article.dataset.era as Era, labRole(article.querySelector('code')!.textContent!)) === 48) hasBanner = true; if (count === 0) { displayRole = labRole(article.querySelector('code')!.textContent!); displayEra = article.dataset.era as Era; } count++; }
   article.querySelector<HTMLElement>('.variants')!.style.gridTemplateColumns = team.value === 'both' ? '' : '1fr';
   for (const section of article.querySelectorAll<HTMLElement>('section')) section.hidden = team.value !== 'both' && team.value !== section.dataset.team;
  }
  slider.max = hasBanner ? '47' : '15';
  if (manual !== null) manual = Math.min(manual, Number(slider.max));
- document.querySelector('#count')!.textContent = `Показано ${count} из ${catalog.value === 'models' ? models.size : entries.length} ${catalog.value === 'models' ? 'моделей' : 'ID каталога'}`;
+ document.querySelector('#count')!.textContent = translateLab(`Показано ${count} из ${catalog.value === 'models' ? models.size : entries.length} ${catalog.value === 'models' ? 'моделей' : 'ID каталога'}`);
  document.querySelector<HTMLElement>('#empty')!.hidden = count > 0;
  const query = new URLSearchParams();
+ if (forcedLanguage) query.set('lang', forcedLanguage);
  if (small.checked) query.set('size','small');
  if (corrected.checked) query.set('size','corrected');
  if (era.value !== 'all') query.set('era',era.value);
@@ -201,13 +210,14 @@ if (small.checked || corrected.checked) { compact.checked = true; units.classLis
 const dialog = document.querySelector<HTMLDialogElement>('#inspector')!;
 document.querySelector<HTMLButtonElement>('#close')!.onclick = () => dialog.close();
 function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: Era, role: string, period: number, boss: boolean) {
- document.querySelector('#detail-title')!.textContent = `${name} · ${enemy ? 'противник' : 'союзник'}`;
+ document.querySelector('#detail-title')!.textContent = translateLab(`${name} · ${enemy ? 'противник' : 'союзник'}`);
  const frames = document.querySelector('#frames')!; frames.replaceChildren();
  const items: typeof canvasList = [];
  for (let frame = 0; frame < atlasFrames(arena, role); frame++) {
   const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = boss ? 480 : 320; canvas.height = boss ? 300 : 220;
   const walkLabel = ['контакт','амортизация','пронос стопы','отталкивание'][(frame-2)%4];
   const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'modern' ? ['подготовка запуска','взлёт','удаление от оператора','полёт к цели','удар у цели','новый дрон'][frame-10] : arena === 'world-wars' ? 'радиосигнал' : arena === 'industrial' ? 'работа инструментом' : arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
+  caption.textContent = translateLab(caption.textContent ?? '');
   const stage = document.createElement('div'); stage.className = 'stage';
   canvas.style.width = `${canvas.width}px`; canvas.style.height = `${canvas.height}px`; stage.append(canvas);
   figure.append(stage, caption); frames.append(figure); items.push({ canvas, image, enemy, arena, role, frame, period, boss });
@@ -215,9 +225,9 @@ function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: E
  dialog.showModal();
  for (const item of items) draw(item, item.frame!, 1);
 }
-pause.onclick = () => { paused = !paused; manual = null; pause.textContent = paused ? 'Продолжить' : 'Пауза'; };
-document.querySelector<HTMLButtonElement>('#step')!.onclick = () => { manual = ((manual ?? currentFrame()) + 1) % (Number(slider.max) + 1); paused = true; pause.textContent = 'Продолжить'; };
-slider.oninput = () => { manual = Number(slider.value); paused = true; pause.textContent = 'Продолжить'; };
+pause.onclick = () => { paused = !paused; manual = null; pause.textContent = translateLab(paused ? 'Продолжить' : 'Пауза'); };
+document.querySelector<HTMLButtonElement>('#step')!.onclick = () => { manual = ((manual ?? currentFrame()) + 1) % (Number(slider.max) + 1); paused = true; pause.textContent = translateLab('Продолжить'); };
+slider.oninput = () => { manual = Number(slider.value); paused = true; pause.textContent = translateLab('Продолжить'); };
 pose.onchange = () => { manual = null; time = 0; };
 function currentFrame(role = displayRole, era = displayEra, period = entries.find(entry=>entry.era === era && entry.artRole === role)?.unit.period ?? 1.2) {
  if (manual !== null) return Math.min(manual,atlasFrames(era, role) - 1);
@@ -247,7 +257,7 @@ function draw(item: typeof canvasList[number], frame: number, scale: number) {
  ctx.scale(displayScale * flip, displayScale);
  if (guides.checked) { ctx.strokeStyle = '#dbbe7277'; ctx.strokeRect(-160,-176,320,192); }
  if (image.complete && image.naturalWidth) ctx.drawImage(image,frame % 4 * 320,Math.floor(frame / 4) * 192,320,192,-160,-176,320,192);
- else { ctx.fillStyle = '#e99978'; ctx.font = '16px sans-serif'; ctx.fillText('Ассет недоступен',-70,-70); }
+ else { ctx.fillStyle = '#e99978'; ctx.font = '16px sans-serif'; ctx.fillText(translateLab('Ассет недоступен'),-70,-70); }
  ctx.restore();
  if (guides.checked) { ctx.strokeStyle = background.value === 'light' ? '#735d3d' : '#e4cb8a'; ctx.beginPath(); ctx.moveTo(0,base); ctx.lineTo(w,base); ctx.moveTo(w/2-5,base); ctx.lineTo(w/2+5,base); ctx.moveTo(w/2,base-5); ctx.lineTo(w/2,base+5); ctx.stroke(); }
 }
