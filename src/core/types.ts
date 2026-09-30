@@ -79,6 +79,7 @@ export interface BattleReport {
 }
 
 export interface GameState {
+  advertising: { busy: boolean; speedUnlocked: boolean; speed: 1 | 2; goldClaimed: boolean; pendingGold: boolean; message: string; canRestoreResult: boolean };
   phase: GamePhase;
   seed: number;
   eraId: EraId;
@@ -129,10 +130,13 @@ export interface GameState {
   musicMuted: boolean;
   canContinue: boolean;
   records: Records;
-  platform: { sdk: 'available' | 'unavailable' | 'loading'; online: boolean };
+  platform: { sdk: 'available' | 'unavailable' | 'loading'; online: boolean; cloud: import('../platform/cloud').CloudStatus };
 }
 
 export interface GameApp {
+  requestRewardedAd(placement: import('./advertising').RewardedPlacement): Promise<boolean>;
+  setRewardedSpeed(speed: 1 | 2): boolean;
+  restoreBattleResult(): boolean;
   getState(): GameState;
   subscribe(listener: (state: GameState) => void): () => void;
   selectEra(id: EraId): boolean;
@@ -146,7 +150,7 @@ export interface GameApp {
   setLoadout(kinds: HireKind[]): boolean;
   beginRun(): boolean;
   chooseContract(id: string): boolean;
-  retryBattle(): boolean;
+  retryBattle(prepare?: boolean): boolean;
   hire(kind: HireKind): boolean;
   upgradeIncome(): boolean;
   chooseReward(id: UpgradeId): boolean;

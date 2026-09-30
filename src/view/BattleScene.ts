@@ -26,7 +26,7 @@ export class BattleScene extends Phaser.Scene {
   private insets: BattleInsets = { top: 190, bottom: 210, left: 12, right: 12 };
   setInsets(insets: BattleInsets) { this.insets = insets; this.layout(); }
   constructor(private read: () => GameState, private onEffect: (event: BattleEvent) => void,
-    private onReady: () => void = () => {}) { super('battle'); }
+    private onReady: (loaded: boolean) => void = () => {}) { super('battle'); }
   preload() {
     this.load.on('loaderror', () => { this.loadFailed = true; });
     for (const era of ERA_ORDER) {
@@ -39,6 +39,7 @@ export class BattleScene extends Phaser.Scene {
     }
   }
   create() {
+    if (this.loadFailed) { this.onReady(false); return; }
     this.background = this.add.image(0, 0, 'arena-stone').setOrigin(0);
     this.towers = [this.add.image(0, 0, 'stone-tower-ally').setOrigin(.5, 1), this.add.image(0, 0, 'stone-tower-enemy').setOrigin(.5, 1)];
     this.damage = this.add.graphics().setDepth(2);
@@ -48,7 +49,7 @@ export class BattleScene extends Phaser.Scene {
     this.layout();
     this.game.canvas.setAttribute('aria-label', 'Поле боя: союзники слева, враги справа. Бой идёт автоматически.');
     this.game.canvas.setAttribute('role', 'img');
-    if (!this.loadFailed) requestAnimationFrame(() => this.onReady());
+    requestAnimationFrame(() => this.onReady(true));
   }
   private metrics() { return battlefieldLayout(this.scale.width, this.scale.height, this.insets); }
   private point(x: number) { const { left, right } = this.metrics(); return left + x / 1000 * (right - left); }
@@ -83,7 +84,7 @@ export class BattleScene extends Phaser.Scene {
       this.figures.clear();
     }
     this.lastSimulationTime = state.elapsed;
-    const dt = state.paused ? 0 : Math.min(delta, 50) / 1000;
+    const dt = state.paused ? 0 : Math.min(delta, 100) / 1000 * state.battleSpeed;
     const alive = new Set(state.units.map(u => u.id));
     for (const [id, figure] of this.figures) if (!alive.has(id)) { this.recycle(figure); this.figures.delete(id); }
     for (const unit of state.units) this.ensureFigure(unit).motion.sample(unit, state.elapsed);

@@ -8,14 +8,14 @@ const g=(t,s)=>`<g transform="${t}">${s}</g>`;
 const limb=(d,c,w=8)=>l(d,ink,w+3)+l(d,c,w);
 const pal=enemy=>({cloth:enemy?'#a34548':'#396b98',light:enemy?'#efb394':'#9dcbea',dark:enemy?'#61313e':'#273c60',skin:'#dfb08d',shade:'#ad775d',metal:'#c7d4db',steel:'#70818f',linen:'#f0dfb5',wood:'#856043',woodLight:'#c09967',leather:'#604333',gold:'#deb76b',hair:'#574438'});
 export const highMedievalRoles=['shield','spear','archer','medic','raider','thrower','banner','siege'];
-export const highMedievalNames=['Рыцарь щита','Алебардист','Арбалетчик','Монах лекарь','Конный рейдер','Огнемётчик смолы','Герольд','Требушет'];
+export const highMedievalNames=['Рыцарь щита','Алебардист','Арбалетчик','Замковый лекарь','Конный рейдер','Огнемётчик смолы','Герольд','Требушет'];
 export const highMedievalFrameCounts=Object.fromEntries(highMedievalRoles.map(role=>[role,['archer','banner','siege'].includes(role)?48:16]));
 function head(role,c,hatOnly=false) {
  const anatomy=p('M86 67v15h18V66',c.shade)+p('M79 44q7-13 24-8 12 3 13 17l8 9-9 4-2 10-23-1-10-14z',c.skin)+e(82,57,4,6,c.skin)+l('M103 48l9 1',ink,2)+e(109,54,1.8,2,ink,'none')+l('M110 68h5','#82503a',1.6);
  let hat='';
  if(['shield','raider'].includes(role))hat=p('M74 43Q74 24 95 20q21 2 25 20l-15-3-20 6-7 13z',c.metal)+p('M75 44l9-4-2 30-9 4z',c.steel)+l('M80 35q17-8 33 0',c.linen,3)+l('M95 23v12',c.gold,2)+p('M78 46l6-3-2 15-6 5z',c.metal);
  else if(['spear','archer','thrower','siege'].includes(role))hat=p('M76 40q0-17 20-19 19 2 21 17z',c.steel)+p('M67 39q25-9 58 0l-4 7q-22-7-50 2z',c.metal)+l('M81 31l29-1',c.linen,2);
- else if(role==='medic')hat=p('M75 48q-7-20 12-25 21-5 31 15l-17-4-16 10-5 18-7-4z',c.dark)+p('M86 28q9-5 17 1l-1 8-16 3z',c.hair);
+ else if(role==='medic')hat=p('M78 42q3-17 19-19 17 2 21 17l-12 2-13-6-12 10z',c.steel)+p('M83 39q12-9 26-1l-6 7-14-2z',c.hair);
  else hat=p('M75 45q-4-18 15-23 18-2 27 16l-14-2-18 7-6 13-6-3z',c.dark)+l('M76 36l36-5',c.gold,4)+p('M88 25q-3-15 7-17l5 12-7 10z',c.linen);
  return hatOnly?hat:anatomy+hat;
 }
@@ -31,7 +31,7 @@ function legs(c,f,armored=false) {
  }
  return s;
 }
-const emblem=c=>p('M-8-10h6v7h6v-7h6v20h-6V3h-6v7h-6z',c.gold,'none');
+const emblem=c=>p('M0-12L10 0 0 12-10 0z',c.gold,'none')+p('M0-6L5 0 0 6-5 0z',c.cloth,'none');
 function torso(role,c) {
  let s=['shield','medic','banner'].includes(role)?p('M73 79L51 96l-5 57 22-9 18 13 29-16 8-51-18-13z',c.dark):'';
  s+=p('M75 81q19-10 36 0l8 43-24 14-26-13z',role==='medic'?c.dark:c.cloth);
@@ -44,7 +44,7 @@ function torso(role,c) {
  if(role==='archer')s+=p('M76 82l14-5 22 7 5 36-39 6z',c.leather)+l('M80 89l27 25M80 101l26 1',c.woodLight,2)+p('M58 92h17v42H58z',c.leather)+l('M63 92V69M69 92V67',c.woodLight,3);
  if(role==='thrower')s+=p('M53 84h20v42H53z',c.wood)+p('M52 87h22v8H52zM52 115h22v7H52z',c.steel)+l('M66 81l37 43',c.leather,5)+p('M79 82l27 2 10 30-18 11-21-10z',c.leather)+l('M87 88l13 26',c.gold,2);
  s+=p(role==='medic'?'M73 113h41l9 51-29 6-24-5z':'M73 124h43l5 23-25-5-24 6z',role==='medic'?c.dark:c.cloth)+l('M72 123h44',c.leather,5)+e(96,123,4,4,c.gold);
- if(role==='medic')s+=p('M80 82l11 10 13-12 8 13-16 10-17-10z',c.linen)+l('M96 105v40',c.gold,2)+p('M103 128h24v25h-24z',c.leather)+l('M108 139h13M114 133v12',c.linen,3);
+ if(role==='medic')s+=p('M80 82l11 10 13-12 8 13-16 10-17-10z',c.linen)+l('M86 105l21 39',c.gold,2)+p('M103 128h24v25h-24z',c.leather)+l('M108 135h13M108 141h13',c.linen,3);
  if(role==='banner')s+=p('M75 84l16-7 19 8 7 32-41 1z',c.linen)+g('translate(96 101)',emblem(c))+p('M75 123h42v25l-21-6-21 6z',c.linen)+l('M81 141h30',c.gold,3);
  return s;
 }

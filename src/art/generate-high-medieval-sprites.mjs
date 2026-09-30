@@ -24,7 +24,7 @@ console.log('Approved game era: 8 models, 16 atlases, review sheets and backdrop
 
 for(const enemy of [false,true]) {
  const paint=enemy?'#ac4c45':'#4b73a2';
- const tower=`<g stroke="#35404b" stroke-width="3" stroke-linejoin="round"><path d="M24 176V60h144v116Z" fill="#98a2a7"/><path d="M18 176V42h40v134ZM134 176V42h40v134Z" fill="#b9bebc"/><path d="M15 43V24h12v9h10v-9h12v9h12v10ZM131 43V24h12v9h10v-9h12v9h12v10Z" fill="#d5d4c8"/><path d="M72 176v-59q24-36 48 0v59Z" fill="#4b423d"/><path d="M82 64h28v34l-14 13-14-13Z" fill="${paint}"/><path d="M96 71v27M86 83h20" fill="none" stroke="#ead6a0"/><path d="M32 69h10v29H32ZM150 69h10v29h-10Z" fill="#43515a"/><path d="M26 126h27M140 126h27M60 111h15M118 111h15" stroke="#77838b"/></g>`;
+ const tower=`<g stroke="#35404b" stroke-width="3" stroke-linejoin="round"><path d="M24 176V60h144v116Z" fill="#98a2a7"/><path d="M18 176V42h40v134ZM134 176V42h40v134Z" fill="#b9bebc"/><path d="M15 43V24h12v9h10v-9h12v9h12v10ZM131 43V24h12v9h10v-9h12v9h12v10Z" fill="#d5d4c8"/><path d="M72 176v-59q24-36 48 0v59Z" fill="#4b423d"/><path d="M82 64h28v34l-14 13-14-13Z" fill="${paint}"/><path d="M96 71l10 12-10 15-10-15z" fill="none" stroke="#ead6a0"/><path d="M32 69h10v29H32ZM150 69h10v29h-10Z" fill="#43515a"/><path d="M26 126h27M140 126h27M60 111h15M118 111h15" stroke="#77838b"/></g>`;
  writeFileSync(`public/assets/high-medieval-tower-${enemy?'enemy':'ally'}.svg`,svg(192,192,tower));
 }
 mkdirSync('public/assets/era-cards',{recursive:true});

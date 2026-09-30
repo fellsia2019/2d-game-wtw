@@ -1,6 +1,7 @@
 import { enemyBalanceDefaults, validEnemyBalance, type EnemyBalance, type EnemyBalanceOverrides } from './enemyBalance';
 import { DOCTRINES, ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, ERA_ORDER, ERA_INCOME, victoryGold, nextEra, UNITS, UPGRADES } from '../data/content';
 import { BattleSimulation } from './BattleSimulation';
+import { newAdAttempt, type AdAttempt, type RewardedPlacement, type RewardedProvider } from './advertising';
 import { offerRewards } from './rewards';
 import { SaveService, type Checkpoint } from './save';
 import { talentCost, globalTalentCost, combinedTalents, baseHealth, baseHealthCost, type TalentId, type TalentProgress, type GlobalTalentProgress } from './talents';
@@ -36,14 +37,23 @@ export class GameDirector implements GameApp {
   private records: Records;
   private paused = false;
   private battleSpeed = 1;
+  private adAttempt: AdAttempt = newAdAttempt();
+  private adBusy = false;
+  private adMessage = '';
+  private adProvider: RewardedProvider | null = null;
+  private goldClaimed = false;
+  private pendingGold = false;
+  private lastResult: Checkpoint | null;
   private enemyBalanceOverrides: EnemyBalanceOverrides;
   private pauseSources = new Set<string>();
   private muted = true;
   private musicMuted = true;
-  private platform: GameState['platform'] = { sdk: 'loading', online: true };
+  private platform: GameState['platform'] = { sdk: 'loading', online: true, cloud: 'local' };
 
   constructor(private save: SaveService) {
-    this.enemyBalanceOverrides = save.loadEnemyBalance();
+    save.recoverPendingGold();
+    this.lastResult = save.loadResult();
+    this.enemyBalanceOverrides = import.meta.env.MODE === "yandex" ? {} : save.loadEnemyBalance();
     const checkpoint = save.load();
     this.checkpointAvailable = !!checkpoint;
     this.checkpointEra = checkpoint ? checkpoint.eraId ?? 'stone' : null;
@@ -72,6 +82,9 @@ export class GameDirector implements GameApp {
       canHire: this.phase === 'battle' && !this.paused && !this.externallyPaused && !!sim
         && sim.resource >= sim.hireCost(kind) }));
     return {
+      advertising: { busy: this.adBusy, speedUnlocked: this.adAttempt.speedUnlocked, speed: this.adAttempt.speed,
+        goldClaimed: this.goldClaimed, pendingGold: this.pendingGold, message: this.adMessage,
+        canRestoreResult: this.lastResult?.eraId === this.eraId },
       phase: this.phase, seed: this.seed, eraId: this.eraId, unlockedEras: { ...this.unlockedEras }, eraProgress: { ...this.eraProgress }, eraChallenges: { ...this.eraChallenges }, gold: this.talentProgress.gold, battleGold: sim?.goldEarned ?? this.report?.goldEarned ?? 0, talents: { ...this.talentProgress.levels }, battleIndex: this.battleIndex, arenaId: battle.arenaId,
       baseLevel: this.talentProgress.baseLevel ?? 0,
       globalTalentPoints: this.globalTalentProgress.points, globalTalents: { ...this.globalTalentProgress.levels },
@@ -92,7 +105,7 @@ export class GameDirector implements GameApp {
       contracts: this.contracts.map(c => ({ ...c, roster: [...c.roster] })), selectedContract: this.selectedContract?.id ?? null, contractRisk: this.contractRisk,
       rewards: this.rewards.map(id => ({ id, name: UPGRADES[id].name, description: UPGRADES[id].description })),
       chosenUpgrades: [...this.upgrades], report: this.report ? { ...this.report } : null,
-      battleSpeed: this.battleSpeed, debugEnemyBalance: this.enemyBalances().map(row => ({ ...row })), paused: this.paused || this.externallyPaused, muted: this.muted, musicMuted: this.musicMuted, canContinue: this.checkpointAvailable && this.checkpointEra === this.eraId,
+      battleSpeed: this.battleSpeed * this.adAttempt.speed, debugEnemyBalance: this.enemyBalances().map(row => ({ ...row })), paused: this.paused || this.externallyPaused, muted: this.muted, musicMuted: this.musicMuted, canContinue: this.checkpointAvailable && this.checkpointEra === this.eraId,
       records: { ...this.records }, platform: { ...this.platform }
     };
   }
@@ -104,6 +117,7 @@ export class GameDirector implements GameApp {
   }
 
   selectEra(id: EraId): boolean {
+    if (this.adBusy) return false;
     if (!['menu', 'victory', 'defeat'].includes(this.phase) || !ERA_ORDER.includes(id) || !this.unlockedEras[id]) return false;
     this.eraId = id;
     this.save.writeSelectedEra(id);
@@ -119,6 +133,7 @@ export class GameDirector implements GameApp {
   }
 
   returnToMenu(): boolean {
+    if (this.adBusy) return false;
     if (this.phase === 'menu') return false;
     if (this.phase === 'victory') {
       const selected = this.save.loadSelectedEra();
@@ -139,6 +154,7 @@ export class GameDirector implements GameApp {
   }
 
   buyTalent(id: TalentId): boolean {
+    if (this.adBusy) return false;
     if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase) || !Object.hasOwn(this.talentProgress.levels, id)) return false;
     const level = this.talentProgress.levels[id];
     const cost = talentCost(level);
@@ -151,6 +167,8 @@ export class GameDirector implements GameApp {
   }
 
   startNewRun(seed = (Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0, eraId: EraId = this.eraId): void {
+    if (this.adBusy) return;
+    this.resetAdAttempt();
     if (!this.unlockedEras[eraId]) return;
     this.eraId = eraId;
     this.save.writeSelectedEra(eraId);
@@ -177,8 +195,27 @@ export class GameDirector implements GameApp {
   }
 
   continueRun(): void {
+    if (this.adBusy) return;
     const checkpoint = this.save.load();
     if (!checkpoint) { this.checkpointAvailable = false; this.emit(); return; }
+    this.restoreCheckpoint(checkpoint);
+    if (checkpoint.phase === 'battle' && this.lastResult?.adAttempt?.id === checkpoint.adAttempt?.id) {
+      this.resetAdAttempt(); this.persist(); this.emit();
+    }
+  }
+
+  restoreBattleResult(): boolean {
+    const result = this.save.loadResult();
+    if (this.adBusy || !result || result.eraId !== this.eraId) return false;
+    this.restoreCheckpoint(result);
+    return true;
+  }
+
+  private restoreCheckpoint(checkpoint: Checkpoint): void {
+    this.adAttempt = checkpoint.adAttempt ? { ...checkpoint.adAttempt } : newAdAttempt();
+    this.goldClaimed = this.save.hasRewardClaim(`${this.adAttempt.id}:battle-gold-double`);
+    this.pendingGold = this.save.hasPendingGold(`${this.adAttempt.id}:battle-gold-double`);
+    this.adMessage = '';
     this.eraId = checkpoint.eraId ?? 'stone';
     this.save.writeSelectedEra(this.eraId);
     this.talentProgress = this.eraTalents(this.eraId);
@@ -209,6 +246,7 @@ export class GameDirector implements GameApp {
   }
 
   selectDoctrine(id: DoctrineId): boolean {
+    if (this.adBusy) return false;
     if (this.phase !== 'preparation' || !DOCTRINES.some(d => d.id === id)) return false;
     this.doctrine = id;
     this.persist(); this.emit();
@@ -216,6 +254,7 @@ export class GameDirector implements GameApp {
   }
 
   setLoadout(kinds: HireKind[]): boolean {
+    if (this.adBusy) return false;
     if (this.phase !== 'preparation' && this.phase !== 'contract') return false;
     const unlocked = this.unlockedUnits();
     if (kinds.length !== 4 || new Set(kinds).size !== 4 || !kinds.every(k => unlocked.includes(k))) return false;
@@ -225,6 +264,7 @@ export class GameDirector implements GameApp {
   }
 
   beginRun(): boolean {
+    if (this.adBusy) return false;
     if (this.phase !== 'preparation' || !this.doctrine || this.roster.length !== 4) return false;
     this.phase = 'contract';
     this.contracts = this.makeContracts();
@@ -233,6 +273,7 @@ export class GameDirector implements GameApp {
   }
 
   chooseContract(id: string): boolean {
+    if (this.adBusy) return false;
     if (this.phase !== 'contract') return false;
     const chosen = this.contracts.find(c => c.id === id);
     if (!chosen || (this.contractRisk && chosen.risk !== this.contractRisk)) return false;
@@ -244,10 +285,19 @@ export class GameDirector implements GameApp {
     return true;
   }
 
-  retryBattle(): boolean {
+  retryBattle(prepare = false): boolean {
+    if (this.adBusy) return false;
     if (this.phase !== 'defeat' || !this.selectedContract) return false;
+    this.resetAdAttempt();
     this.report = null;
     this.simulation = null;
+    if (prepare) {
+      this.phase = 'contract';
+      this.contracts = this.makeContracts();
+      this.selectedContract = null;
+      this.persist(); this.emit();
+      return true;
+    }
     this.beginBattle(true);
     return true;
   }
@@ -267,7 +317,9 @@ export class GameDirector implements GameApp {
   }
 
   chooseReward(id: UpgradeId): boolean {
+    if (this.adBusy) return false;
     if (this.phase !== 'reward' || !this.rewards.includes(id)) return false;
+    this.resetAdAttempt();
     this.upgrades.push(id);
     this.rewards = [];
     this.report = null;
@@ -285,6 +337,8 @@ export class GameDirector implements GameApp {
   }
 
   setEnemyBalance(battleIndex: number, balance: EnemyBalance): boolean {
+    if (import.meta.env.MODE === "yandex") return false;
+    if (this.adBusy) return false;
     if (!Number.isInteger(battleIndex) || battleIndex < 0 || battleIndex >= ERA_BATTLES[this.eraId].length || !validEnemyBalance(balance)) return false;
     const rows = this.enemyBalances().map(row => ({ ...row }));
     rows[battleIndex] = { ...balance };
@@ -295,14 +349,18 @@ export class GameDirector implements GameApp {
   }
 
   resetEnemyBalance(): void {
+    if (this.adBusy || import.meta.env.MODE === "yandex") return;
     delete this.enemyBalanceOverrides[this.eraId];
     this.save.writeEnemyBalance(this.enemyBalanceOverrides);
     this.emit();
   }
 
   startDebugBattle(battleIndex: number): boolean {
+    if (import.meta.env.MODE === "yandex") return false;
+    if (this.adBusy) return false;
     if (!Number.isInteger(battleIndex) || battleIndex < 0 || battleIndex >= ERA_BATTLES[this.eraId].length) return false;
     this.battleIndex = battleIndex;
+    this.resetAdAttempt();
     this.doctrine ??= 'steel';
     this.report = null;
     this.rewards = [];
@@ -317,6 +375,8 @@ export class GameDirector implements GameApp {
   }
 
   addDebugGold(amount: number): boolean {
+    if (import.meta.env.MODE === "yandex") return false;
+    if (this.adBusy) return false;
     const activeBattle = this.phase === 'battle' && this.simulation && !this.simulation.report ? this.simulation : null;
     if (![50, 100, 200, 500, 2000].includes(amount)
       || !Number.isSafeInteger(this.talentProgress.gold + amount)
@@ -332,6 +392,8 @@ export class GameDirector implements GameApp {
   }
 
   setBattleSpeed(speed: number): boolean {
+    if (import.meta.env.MODE === "yandex") return false;
+    if (this.adBusy) return false;
     if (!Number.isInteger(speed) || speed < 1 || speed > 5) return false;
     this.battleSpeed = speed;
     this.emit();
@@ -369,6 +431,75 @@ export class GameDirector implements GameApp {
   fixedStep(): number { return FIXED_STEP; }
   private get externallyPaused(): boolean { return this.pauseSources.size > 0; }
 
+  setRewardedProvider(provider: RewardedProvider): void { this.adProvider = provider; }
+
+  private resetAdAttempt(): void {
+    this.adAttempt = newAdAttempt();
+    this.adMessage = '';
+    this.goldClaimed = false;
+    this.pendingGold = false;
+    this.lastResult = null;
+    this.save.clearResult();
+  }
+
+  setRewardedSpeed(speed: 1 | 2): boolean {
+    if (this.adBusy || this.phase !== 'battle' || ![1, 2].includes(speed)
+      || (speed === 2 && !this.adAttempt.speedUnlocked)) return false;
+    this.adAttempt.speed = speed;
+    this.persist(); this.emit();
+    return true;
+  }
+
+  async requestRewardedAd(placement: RewardedPlacement): Promise<boolean> {
+    if (this.adBusy) return false;
+    const gold = this.report?.goldEarned ?? 0;
+    const claim = `${this.adAttempt.id}:${placement}`;
+    if (placement === 'battle-speed-double') {
+      if (this.phase !== 'contract' || this.adAttempt.speedUnlocked) return false;
+    } else if (placement === 'battle-gold-double') {
+      if (!['reward', 'victory', 'defeat'].includes(this.phase) || gold <= 0 || this.save.hasRewardClaim(claim)) return false;
+    } else return false;
+    if (placement === 'battle-gold-double' && this.save.hasPendingGold(claim)) {
+      const progress = this.save.claimBattleGold(claim, this.eraId, this.talentProgress, gold);
+      if (progress) {
+        this.talentProgress = progress; this.talentWallets.set(this.eraId, progress);
+        this.goldClaimed = true; this.pendingGold = false;
+        this.adMessage = `Бонус получен: +${gold} золота.`;
+      }
+      this.emit(); return !!progress;
+    }
+    if (!this.adProvider || this.platform.sdk !== 'available' || !this.platform.online) return false;
+    const attempt = this.adAttempt.id, era = this.eraId, phase = this.phase;
+    this.adBusy = true; this.adMessage = ''; this.emit();
+    let granted = false, confirmed = false;
+    try {
+      await this.adProvider.showRewardedAd(placement, () => {
+        if (confirmed || !this.adBusy || this.adAttempt.id !== attempt || this.eraId !== era || this.phase !== phase) return;
+        confirmed = true;
+        if (placement === 'battle-speed-double') {
+          this.adAttempt.speedUnlocked = true; this.adAttempt.speed = 2;
+          this.persist(); granted = true;
+        } else {
+          const progress = this.save.claimBattleGold(claim, era, this.talentProgress, gold);
+          if (progress) {
+            this.talentProgress = progress; this.talentWallets.set(era, progress);
+            this.goldClaimed = true;
+            granted = true;
+          } else this.pendingGold = this.save.hasPendingGold(claim);
+        }
+        this.adMessage = granted ? (placement === 'battle-speed-double' ? 'Темп ×2 доступен для этого боя.' : `Бонус получен: +${gold} золота.`)
+          : 'Не удалось сохранить бонус. Проверь доступность сохранения.';
+        this.emit();
+      });
+    } catch { /* Closing or SDK failures never award a bonus. */ }
+    finally {
+      this.adBusy = false;
+      if (!confirmed) this.adMessage = 'Просмотр не засчитан. Можно продолжить без рекламы.';
+      this.emit();
+    }
+    return granted;
+  }
+
   private eraTalents(id: EraId): TalentProgress {
     let progress = this.talentWallets.get(id);
     if (!progress) { progress = this.save.loadTalents(id); this.talentWallets.set(id, progress); }
@@ -376,6 +507,7 @@ export class GameDirector implements GameApp {
   }
 
   buyGlobalTalent(id: TalentId): boolean {
+    if (this.adBusy) return false;
     if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase)
       || !Object.hasOwn(this.globalTalentProgress.levels, id)) return false;
     const cost = globalTalentCost();
@@ -388,6 +520,7 @@ export class GameDirector implements GameApp {
   }
 
   buyBaseHealth(): boolean {
+    if (this.adBusy) return false;
     if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase)) return false;
     const level = this.talentProgress.baseLevel ?? 0, cost = baseHealthCost(level);
     if (!Number.isSafeInteger(baseHealth(level + 1)) || this.talentProgress.gold < cost) return false;
@@ -429,6 +562,7 @@ export class GameDirector implements GameApp {
     this.report = { ...report };
     if (!report.won) {
       this.phase = 'defeat';
+      this.storeResult();
       return;
     }
     this.runTime += report.duration;
@@ -446,6 +580,7 @@ export class GameDirector implements GameApp {
       this.records.bestTime = this.records.bestTime === null ? this.runTime : Math.min(this.records.bestTime, this.runTime);
       this.save.writeRecords(this.records);
       this.phase = 'victory';
+      this.storeResult();
       this.save.clear();
       this.checkpointAvailable = false;
       return;
@@ -453,21 +588,32 @@ export class GameDirector implements GameApp {
     this.save.writeRecords(this.records);
     this.phase = 'reward';
     this.rewards = offerRewards(this.seed, this.battleIndex, this.roster, this.upgrades);
+    this.storeResult();
     this.persist();
   }
 
   private persist(): void {
     if (this.phase !== 'preparation' && this.phase !== 'contract' && this.phase !== 'reward' && this.phase !== 'battle') return;
-    const checkpoint: Checkpoint = {
+    this.save.write(this.checkpoint());
+    this.checkpointAvailable = true;
+    this.checkpointEra = this.eraId;
+  }
+
+  private checkpoint(): Checkpoint {
+    if (this.phase === 'menu') throw new Error('Menu has no checkpoint');
+    return {
+      adAttempt: { ...this.adAttempt },
       version: 3, eraId: this.eraId, seed: this.seed, battleIndex: this.battleIndex, phase: this.phase,
       doctrine: this.doctrine, roster: [...this.roster], upgrades: [...this.upgrades],
       rewards: [...this.rewards], contracts: this.contracts.map(c => ({ ...c, roster: [...c.roster] })),
       contractRisk: this.contractRisk, selectedContract: this.selectedContract ? { ...this.selectedContract, roster: [...this.selectedContract.roster] } : null,
       report: this.report ? { ...this.report } : null, runTime: this.runTime
     };
-    this.save.write(checkpoint);
-    this.checkpointAvailable = true;
-    this.checkpointEra = this.eraId;
+  }
+
+  private storeResult(): void {
+    this.lastResult = this.checkpoint();
+    this.save.writeResult(this.lastResult);
   }
 
   private emit(): void {

@@ -12,9 +12,23 @@ import '../ui/results.css';
 
 export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void = () => {}): () => void {
   const ui = new GameUI(root, app);
+  const gameSurface = root.querySelector<HTMLElement>('main.game-shell')!;
+  gameSurface.inert = true;
+  let loading = true;
+  const overlay = document.createElement('div');
+  overlay.className = 'boot-overlay';
+  overlay.setAttribute('role', 'status');
+  overlay.textContent = 'Загрузка игры…';
+  root.append(overlay);
   const sound = new BattleSound({ onStatus: status => ui.setAudioStatus(status) });
   let state: GameState = app.getState();
-  const scene = new BattleScene(() => state, event => sound.play(event), onReady);
+  const scene = new BattleScene(() => state, event => sound.play(event), loaded => {
+    if (!loaded) { overlay.textContent = 'Не удалось загрузить ресурсы игры. Обновите страницу.'; return; }
+    loading = false;
+    gameSurface.inert = false;
+    overlay.remove();
+    onReady();
+  });
   scene.setInsets(ui.battleInsets());
   const game = new Phaser.Game({ type: Phaser.AUTO, parent: ui.arena, backgroundColor: '#263e48', transparent: false, scene, scale: { mode: Phaser.Scale.RESIZE, width: ui.arena.clientWidth, height: ui.arena.clientHeight }, render: { antialias: true, roundPixels: false }, audio: { noAudio: true }, banner: false });
   const unsubscribe = app.subscribe(next => { state = next; ui.update(next); sound.sync(next); });
@@ -27,6 +41,8 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
     app.returnToMenu();
   };
   const click = (event: MouseEvent) => {
+    if (loading) return;
+    if (state.advertising.busy) return;
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
     if (!button || button.disabled) return;
     if (!['mute', 'music'].includes(button.dataset.action ?? '')) void sound.unlock();
@@ -62,7 +78,11 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
       case 'roster': ui.toggleRoster(button.dataset.kind as HireKind); break;
       case 'begin': if (app.setLoadout(ui.getDraftRoster())) app.beginRun(); break;
       case 'contract': app.chooseContract(button.dataset.contract!); break;
-      case 'retry': app.retryBattle(); break;
+      case 'retry': app.retryBattle(true); break;
+      case 'restore-result': app.restoreBattleResult(); break;
+      case 'ad-gold': void app.requestRewardedAd('battle-gold-double'); break;
+      case 'ad-speed': void app.requestRewardedAd('battle-speed-double'); break;
+      case 'rewarded-speed': app.setRewardedSpeed(state.advertising.speed === 2 ? 1 : 2); break;
       case 'book': ui.openPanel('book'); break;
       case 'records': ui.openPanel('records'); break;
       case 'talents': ui.openPanel('talents'); break;
@@ -86,6 +106,8 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
     }
   };
   const key = (event: KeyboardEvent) => {
+    if (loading) return;
+    if (state.advertising.busy) return;
     if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.isComposing
       || (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])'))) return;
     if (event.key === 'Escape') {

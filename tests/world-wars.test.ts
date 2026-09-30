@@ -8,6 +8,7 @@ import { SaveService, type StorageLike } from '../src/core/save';
 import { ERA_HIRE_KINDS, UNITS, nextEra, unitRole } from '../src/data/content';
 import { unitArt } from '../src/art/catalog';
 import type { Team, UnitKind, UnitState } from '../src/core/types';
+import { completeCampaignBattle } from './helpers/campaign';
 
 class MemoryStorage implements StorageLike {
   values = new Map<string,string>();
@@ -24,6 +25,32 @@ function profile(wins=4) {
 function figure(id:number,kind:UnitKind,team:Team,x:number):UnitState {
   return {id,kind,team,x,cooldown:0,hp:5000,maxHp:5000,action:'idle',facing:team==='ally'?1:-1};
 }
+
+it.each([23,47])('completes all World Wars stages without ads or debug gold and restores progress (seed %i)', seed => {
+  const save = profile(); let game = new GameDirector(save);
+  expect(game.selectEra('world-wars')).toBe(true);
+  game.startNewRun(seed); game.selectDoctrine('steel');
+  while (game.getState().globalTalentPoints > 0) expect(game.buyGlobalTalent('supply')).toBe(true);
+  game.beginRun();
+  const attempts: number[] = [];
+  for (let battle = 0; battle < 4; battle++) {
+    attempts.push(completeCampaignBattle(game, battle));
+    expect(game.getState().eraProgress['world-wars']).toBe(battle + 1);
+    expect(game.getState().unlockedUnits).toHaveLength(5 + battle);
+    if (battle < 3) {
+      game = new GameDirector(save); game.continueRun();
+      expect(game.getState().eraId).toBe('world-wars');
+      expect(game.chooseReward(game.getState().rewards[0].id)).toBe(true);
+    }
+  }
+  expect(attempts).toHaveLength(4);
+  expect(game.getState().phase).toBe('victory');
+  const restored = new GameDirector(save);
+  expect(restored.selectEra('world-wars')).toBe(true);
+  expect(restored.getState().eraProgress['world-wars']).toBe(4);
+  restored.startNewRun(seed + 1);
+  expect(restored.getState().unlockedUnits).toEqual(ERA_HIRE_KINDS['world-wars']);
+}, 30000);
 
 it('unlocks after Industrial, preserves its own wallet, and registers eight roles plus the unique tank',()=>{
   const save=profile();
@@ -90,6 +117,15 @@ it('uses the tank in the boss phase and applies reconnaissance and suppression t
     };
     expect(movement(true)).toBeCloseTo(movement(false)*.7);
   }
+});
+
+it('recruits the full third-stage ranged roster, including grenadier and armored car',()=>{
+  const battle=new BattleSimulation(2,[],23,'steel',undefined,undefined,'world-wars',undefined,10000);
+  battle.enemyResource=1000;
+  for(let step=0;step<90;step++)battle.step();
+  const recruits=battle.units.filter(unit=>unit.team==='enemy').map(unit=>unit.kind);
+  expect(recruits).toContain('worldWarsGrenadier');
+  expect(recruits).toContain('worldWarsArmoredCar');
 });
 
 it('shows the requested balance in a new game and after restoring its checkpoint',()=>{

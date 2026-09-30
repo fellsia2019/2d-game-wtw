@@ -1,8 +1,12 @@
+import type { RewardedPlacement, RewardedProvider } from '../core/advertising';
+import type { CloudPlayer } from './cloud';
 // Local development can run without the SDK; release builds load the host SDK.
 interface Advertising {
   showFullscreenAdv(options: { callbacks: { onOpen?: () => void; onClose?: (wasShown: boolean) => void; onError?: () => void } }): void;
+  showRewardedVideo(options: { callbacks: { onOpen: () => void; onRewarded: () => void; onClose: () => void; onError: () => void } }): void;
 }
 interface YandexSdk {
+  getPlayer?(): Promise<CloudPlayer>;
   adv: Advertising;
   environment: { i18n: { lang: string } };
   features: { LoadingAPI?: { ready(): void }; GameplayAPI?: { start(): void; stop(): void } };
@@ -10,12 +14,13 @@ interface YandexSdk {
 }
 interface YandexGlobal { init(): Promise<YandexSdk>; }
 
-export class YandexAdapter {
+export class YandexAdapter implements RewardedProvider {
   private sdk: YandexSdk | null = null;
   private gameReady = false;
   private readySent = false;
   private gameplay = false;
   private gameplaySent = false;
+  private adBusy = false;
   constructor(private onExternalPause: (paused: boolean, source: 'platform' | 'advertisement') => void) {}
 
   async initialize(): Promise<boolean> {
@@ -48,6 +53,9 @@ export class YandexAdapter {
 
   markGameReady(): void { this.gameReady = true; this.notifyReady(); }
   setGameplay(active: boolean): void { this.gameplay = active; this.syncGameplay(); }
+  async getCloudPlayer(): Promise<CloudPlayer | null> {
+    try { return await this.sdk?.getPlayer?.() ?? null; } catch { return null; }
+  }
 
   private notifyReady(): void {
     if (!this.sdk || !this.gameReady || this.readySent) return;
@@ -63,25 +71,54 @@ export class YandexAdapter {
   }
 
   async showIntermissionAd(phase: 'reward' | 'victory' | 'defeat'): Promise<boolean> {
-    if (!this.sdk || !['reward', 'victory', 'defeat'].includes(phase)) return false;
+    if (!this.sdk || this.adBusy || !['reward', 'victory', 'defeat'].includes(phase)) return false;
+    this.adBusy = true;
     this.onExternalPause(true, 'advertisement');
     return await new Promise(resolve => {
       let finished = false;
-      const watchdog = window.setTimeout(() => finish(false), 120_000);
       const finish = (shown: boolean) => {
         if (finished) return;
         finished = true;
-        window.clearTimeout(watchdog);
+        this.adBusy = false;
         this.onExternalPause(false, 'advertisement');
         resolve(shown);
       };
       try {
         this.sdk!.adv.showFullscreenAdv({ callbacks: {
-          onOpen: () => this.onExternalPause(true, 'advertisement'),
+          onOpen: () => { if (!finished) this.onExternalPause(true, 'advertisement'); },
           onClose: wasShown => finish(wasShown),
           onError: () => finish(false)
         } });
       } catch { finish(false); }
+    });
+  }
+
+  async showRewardedAd(placement: RewardedPlacement, onRewarded: () => void): Promise<boolean> {
+    if (!this.sdk?.adv.showRewardedVideo || this.adBusy
+      || !['battle-gold-double', 'battle-speed-double'].includes(placement)) return false;
+    this.adBusy = true;
+    this.onExternalPause(true, 'advertisement');
+    return new Promise(resolve => {
+      let finished = false, rewarded = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        this.adBusy = false;
+        this.onExternalPause(false, 'advertisement');
+        resolve(rewarded);
+      };
+      try {
+        this.sdk!.adv.showRewardedVideo({ callbacks: {
+          onOpen: () => { if (!finished) this.onExternalPause(true, 'advertisement'); },
+          onRewarded: () => {
+            if (finished || rewarded) return;
+            rewarded = true;
+            onRewarded();
+          },
+          onClose: finish,
+          onError: finish
+        } });
+      } catch { finish(); }
     });
   }
 }

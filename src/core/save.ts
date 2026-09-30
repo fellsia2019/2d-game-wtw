@@ -2,13 +2,15 @@ import { validEnemyBalance, type EnemyBalance, type EnemyBalanceOverrides } from
 import { ERA_HIRE_KINDS, ERA_ORDER, UPGRADES, UNITS } from '../data/content';
 import type { BattleReport, ContractOption, DoctrineId, EraChallenges, EraId, EraProgress, EraUnlocks, HireKind, Records, UpgradeId } from './types';
 import { emptyTalentProgress, emptyGlobalTalents, LEGACY_POINT_GOLD, TALENTS, type TalentProgress, type GlobalTalentProgress } from './talents';
+import type { AdAttempt } from './advertising';
 
 export interface Checkpoint {
+  adAttempt?: AdAttempt;
   version: 3;
   eraId: EraId;
   seed: number;
   battleIndex: number;
-  phase: 'preparation' | 'contract' | 'reward' | 'battle';
+  phase: 'preparation' | 'contract' | 'reward' | 'battle' | 'victory' | 'defeat';
   doctrine: DoctrineId | null;
   roster: HireKind[];
   upgrades: UpgradeId[];
@@ -35,7 +37,66 @@ const RECORDS = 'arena-naemnikov-records-v1';
 const EMPTY: Records = { runs: 0, wins: 0, bestBattle: 0, bestTime: null, marks: 0 };
 
 export class SaveService {
+  private memoryClaims = new Set<string>();
+  private pendingGold: { id: string; era: EraId; amount: number } | null = null;
   constructor(private storage: StorageLike | null) {}
+
+  loadResult(): Checkpoint | null {
+    try {
+      const data: unknown = JSON.parse(this.storage?.getItem('arena-naemnikov-result-v1') ?? 'null');
+      return valid(data) && ['reward', 'victory', 'defeat'].includes(data.phase) ? data : null;
+    } catch { return null; }
+  }
+  writeResult(result: Checkpoint): void {
+    try { this.storage?.setItem('arena-naemnikov-result-v1', JSON.stringify(result)); } catch { /* remains playable */ }
+  }
+  clearResult(): void {
+    try { this.storage?.removeItem('arena-naemnikov-result-v1'); } catch { /* remains playable */ }
+  }
+  private rewardClaims(): string[] {
+    if (!this.storage) return [...this.memoryClaims];
+    const data = JSON.parse(this.storage.getItem(TALENT_PROGRESS) ?? 'null');
+    return Array.isArray(data?.rewardClaims) ? data.rewardClaims.filter((id: unknown) => typeof id === 'string') : [];
+  }
+  hasRewardClaim(id: string): boolean {
+    try { return this.rewardClaims().includes(id); } catch { return false; }
+  }
+  private loadPendingGold(): typeof this.pendingGold {
+    try {
+      const value = this.pendingGold ?? JSON.parse(this.storage?.getItem('arena-naemnikov-pending-ad-gold-v1') ?? 'null');
+      return value && typeof value.id === 'string' && ERA_ORDER.includes(value.era)
+        && Number.isSafeInteger(value.amount) && value.amount > 0 ? value : null;
+    } catch { return this.pendingGold; }
+  }
+  hasPendingGold(id: string): boolean { return this.loadPendingGold()?.id === id; }
+  recoverPendingGold(): void {
+    const pending = this.loadPendingGold();
+    if (!pending) return;
+    if (this.hasRewardClaim(pending.id)) this.clearPendingGold();
+    else this.claimBattleGold(pending.id, pending.era, this.loadTalents(pending.era), pending.amount);
+  }
+  private clearPendingGold(): void {
+    this.pendingGold = null;
+    try { this.storage?.removeItem('arena-naemnikov-pending-ad-gold-v1'); } catch { /* receipt makes recovery idempotent */ }
+  }
+  claimBattleGold(id: string, era: EraId, progress: TalentProgress, amount: number): TalentProgress | null {
+    try {
+      const claims = this.rewardClaims();
+      if (claims.includes(id) || !Number.isSafeInteger(amount) || amount <= 0
+        || !Number.isSafeInteger(progress.gold + amount)) return null;
+      const updated = { ...progress, gold: progress.gold + amount };
+      const wallets = this.loadTalentWallets();
+      wallets[era] = updated;
+      this.pendingGold = { id, era, amount };
+      // Preserve the SDK confirmation for recovery if the wallet commit fails.
+      try { this.storage?.setItem('arena-naemnikov-pending-ad-gold-v1', JSON.stringify(this.pendingGold)); } catch { /* retain in memory */ }
+      // The wallet delta and its receipt commit in a single localStorage write.
+      if (this.storage) this.storage.setItem(TALENT_PROGRESS, JSON.stringify({ version: 2, eras: wallets, rewardClaims: [...claims.slice(-127), id] }));
+      else this.memoryClaims.add(id);
+      this.clearPendingGold();
+      return updated;
+    } catch { return null; }
+  }
 
   loadAudio(): { muted: boolean; musicMuted: boolean } {
     try {
@@ -208,7 +269,7 @@ export class SaveService {
     if (!validTalents(progress)) return;
     const wallets = this.loadTalentWallets();
     wallets[eraId] = { gold: progress.gold, levels: { ...progress.levels }, ...(progress.baseLevel !== undefined ? { baseLevel: progress.baseLevel } : {}) };
-    try { this.storage?.setItem(TALENT_PROGRESS, JSON.stringify({ version: 2, eras: wallets })); } catch { /* game remains playable */ }
+    try { this.storage?.setItem(TALENT_PROGRESS, JSON.stringify({ version: 2, eras: wallets, rewardClaims: this.rewardClaims() })); } catch { /* game remains playable */ }
   }
 
   loadRecords(): Records {
@@ -246,7 +307,10 @@ function valid(value: unknown): value is Checkpoint {
   const ids = Object.keys(UPGRADES) as UpgradeId[];
   return v.version === 3 && v.eraId !== undefined && ERA_ORDER.includes(v.eraId) && Number.isInteger(v.seed) && Number.isInteger(v.battleIndex)
     && v.battleIndex! >= 0 && v.battleIndex! < 4
-    && ['preparation', 'contract', 'reward', 'battle'].includes(v.phase ?? '')
+    && ['preparation', 'contract', 'reward', 'battle', 'victory', 'defeat'].includes(v.phase ?? '')
+    && (v.adAttempt === undefined || (typeof v.adAttempt.id === 'string' && v.adAttempt.id.length > 0
+      && typeof v.adAttempt.speedUnlocked === 'boolean' && [1, 2].includes(v.adAttempt.speed)
+      && (v.adAttempt.speed !== 2 || v.adAttempt.speedUnlocked)))
     && (v.doctrine === null || ['steel', 'arrow', 'bargain'].includes(v.doctrine ?? ''))
     && Array.isArray(v.roster) && v.roster.length === 4 && new Set(v.roster).size === 4 && v.roster.every(id => ERA_HIRE_KINDS[v.eraId!].includes(id))
     && Array.isArray(v.upgrades) && v.upgrades.every(id => ids.includes(id))

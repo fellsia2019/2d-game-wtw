@@ -25,7 +25,7 @@ function head(c, role, bob = 0) {
  let helmet = path('M70 45q1-28 27-30 25 1 28 28l-12 2q-17-10-30 1z', c.helmet)
   + path('M69 44q29-8 59-1l-5 7q-25-6-51 2z', c.helmetLight)
   + line('M76 48l-1 10 7 8', c.leather, 2);
- if (role === 'medic') helmet += circle(96, 29, 10, c.white, 'none') + path('M93 22h6v5h5v5h-5v5h-6v-5h-5v-5h5z', c.red, 'none');
+ if (role === 'medic') helmet += circle(96, 29, 10, c.white, 'none') + path('M96 21l7 8-7 8-7-8z', c.brass, 'none');
  if (role === 'archer') helmet += line('M81 29h34', c.canvas, 3) + path('M81 36l20-11 12 1', 'none', c.leather, 2);
  if (role === 'spear') helmet += path('M78 20l29-5 11 7-30 5z', c.canvas);
  if (role === 'banner') helmet += line('M79 33h36', c.brass, 2);
@@ -54,7 +54,7 @@ function body(c, role, bob) {
   + path('M78 135q18 8 38 0l5 12q-23 11-49-1z', c.shade)
   + path('M62 105h15v30H62z', c.canvas) + line('M65 112h9M65 123h9', c.leather, 2);
  if (role === 'shield') art += path('M82 87l27 1 8 31-17 10-20-11z', c.darkSteel) + path('M85 90h20l4 21-12 8-13-9z', c.steel);
- if (role === 'medic') art += path('M86 111h9v7h7v9h-7v7h-9v-7h-7v-9h7z', c.red, 'none') + path('M113 102l15 5-5 35-15-3z', c.white) + path('M114 117h5v5h5v5h-5v5h-5v-5h-5v-5h5z', c.red, 'none');
+ if (role === 'medic') art += path('M90 111l12 12-12 12-12-12z', c.brass, 'none') + path('M113 102l15 5-5 35-15-3z', c.white) + line('M110 119l13 10M111 126l11 9', c.brass, 2);
  if (role === 'archer') art += line('M78 82l36 38', c.leather, 6) + path('M74 121h17v19H74z', c.canvas);
  if (role === 'spear') art += path('M76 88l40 37', 'none', c.leather, 7) + [82,91,100].map(x => path(`M${x} ${x-2}h8v12h-8z`, c.canvas)).join('');
  if (role === 'thrower') art += path('M110 104h23v31h-23z', c.canvas) + line('M114 112h15M114 122h15', c.leather, 2);
@@ -111,7 +111,7 @@ function infantry(role, c, frame) {
   const reach = attacking ? [0,3,11,15,7,0][k] : 0;
   art += arms(c,bob,[66,115],[138+reach,105])
    + path(`M${133+reach} 99h15v14h-15z`, c.white)
-   + line(`M${139+reach} 102v9M${136+reach} 106h7`, c.red, 2);
+   + line(`M${136+reach} 104h9M${136+reach} 109h9`, c.brass, 2);
   if (attacking && k >= 2 && k <= 4) art += circle(147+reach,106,8+(k-2)*4,'none',c.white,2);
  } else if (role === 'thrower') {
   const lift = attacking ? [0,-4,-15,-19,-11,0][k] : 0;

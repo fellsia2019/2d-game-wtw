@@ -68,7 +68,7 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   highKnight: { name: 'Рыцарь щита', role: 'Защитник · меч и щит', cost: 42, hp: 122, damage: 8, range: 29, speed: 31, period: 1.2, armor: .5 },
   highHalberd: { name: 'Алебардист', role: 'Против брони · двуручная алебарда', cost: 55, hp: 65, damage: 18, range: 68, speed: 34, period: 1.3, armor: .27, antiArmor: 2.6 },
   highCrossbow: { name: 'Арбалетчик', role: 'Дальний бой · выстрел и перезарядка', cost: 62, hp: 44, damage: 48, range: 215, speed: 35, period: 4, armor: .16 },
-  highMonk: { name: 'Монах лекарь', role: 'Лечение · помощь раненым', cost: 78, hp: 51, damage: 2, heal: 20, range: 130, speed: 30, period: 2.2, armor: .12 },
+  highMonk: { name: 'Замковый лекарь', role: 'Лечение · помощь раненым', cost: 78, hp: 51, damage: 2, heal: 20, range: 130, speed: 30, period: 2.2, armor: .12 },
   highRider: { name: 'Конный рейдер', role: 'Прорыв · конница против дальнего ряда', cost: 65, hp: 82, damage: 22, range: 38, speed: 98, period: 1.1, armor: .18 },
   highPitch: { name: 'Огнемётчик смолы', role: 'Площадь · горящая смола по группе', cost: 84, hp: 50, damage: 21, range: 155, speed: 34, period: 1.7, armor: .16 },
   highHerald: { name: 'Герольд', role: 'Поддержка · знамя ускоряет союзников', cost: 92, hp: 63, damage: 0, range: 35, speed: 32, period: 1.2, armor: .24 },
@@ -127,7 +127,7 @@ export const victoryGold = (era: EraId): number => 25 * ERA_KILL_GOLD[era];
 export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan', renaissance: 'renaissanceGeneral', industrial: 'industrialBaron', 'world-wars': 'worldWarsCommander' };
 export const isBoss = (kind: UnitKind): boolean => Object.values(ERA_BOSSES).includes(kind);
 export const nextEra = (era: EraId): EraId | undefined => ERA_ORDER[ERA_ORDER.indexOf(era) + 1];
-export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох', industrial: 'Индустриальная эпоха', 'world-wars': 'Мировые войны' };
+export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох', industrial: 'Индустриальная эпоха', 'world-wars': 'Эпоха бронемашин' };
 export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   stone: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'],
   bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam'],
@@ -197,7 +197,7 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
     { name: 'Конная засада', threat: 'Конница прорывается к арбалетчикам; щиты держат фронт', ai: 'rush', enemyIncome: 30, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.2, roster: ['highKnight', 'highCrossbow', 'highRider'], arenaId: 'ash' },
     { name: 'Алебардный рубеж', threat: 'Алебарды и щиты под знаменем; арбалеты бьют из дальнего ряда', ai: 'wall', enemyIncome: 37, enemyStartingSupplies: 40, enemyHealthMultiplier: 1.55, enemyDamageMultiplier: 1.53, enemyRecruitRoster: ['highKnight', 'highHalberd', 'highCrossbow', 'highHerald'], roster: ['highKnight', 'highHalberd', 'highCrossbow', 'highHerald'], arenaId: 'iron' },
     { name: 'Осада каменного замка', threat: 'Щиты прикрывают арбалеты, смолу и требушет; у ворот выходят алебардисты', ai: 'ranged', enemyIncome: 43, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.65, enemyDamageMultiplier: 1.65, enemyRecruitRoster: ['highKnight', 'highCrossbow', 'highKnight', 'highPitch', 'highTrebuchet'], enemyDefenseRoster: ['highKnight', 'highCrossbow', 'highKnight', 'highHalberd'], roster: ['highKnight', 'highCrossbow', 'highKnight', 'highPitch', 'highTrebuchet'], arenaId: 'arrows' },
-    { name: 'Цитадель кастеляна', threat: 'При 50% крепости кастелян выходит с рыцарями, конницей и монахом', ai: 'boss', enemyIncome: 50, enemyStartingSupplies: 55, enemyHealthMultiplier: 1.7, enemyDamageMultiplier: 1.7, enemyRecruitRoster: ['highKnight', 'highHalberd', 'highCrossbow', 'highPitch'], roster: ['highCastellan', 'highKnight', 'highHalberd', 'highCrossbow', 'highRider', 'highMonk'], arenaId: 'citadel' }
+    { name: 'Цитадель кастеляна', threat: 'При 50% крепости кастелян выходит с рыцарями, конницей и лекарем', ai: 'boss', enemyIncome: 50, enemyStartingSupplies: 55, enemyHealthMultiplier: 1.7, enemyDamageMultiplier: 1.7, enemyRecruitRoster: ['highKnight', 'highHalberd', 'highCrossbow', 'highPitch'], roster: ['highCastellan', 'highKnight', 'highHalberd', 'highCrossbow', 'highRider', 'highMonk'], arenaId: 'citadel' }
   ],
   antique: [
     { name: 'Пограничный лагерь', threat: 'Всадники метают дротики под прикрытием легионеров', ai: 'rush', enemyIncome: 18, enemyStartingSupplies: 10, enemyHealthMultiplier: 1.1, enemyDamageMultiplier: 1.05, roster: ['antiqueLegionary', 'antiquePeltast', 'antiqueRider'], arenaId: 'ash' },

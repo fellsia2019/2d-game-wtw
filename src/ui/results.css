@@ -88,3 +88,10 @@
  .reward-result .result-button{min-height:44px;padding:8px}
 }
 @media(max-width:480px) and (max-height:600px){.result-modal .result-next-era,.result-modal .result-finished{display:none}}
+.advertising-offer { display: grid; gap: 8px; margin: 12px 0; min-width: 0; }
+.advertising-offer button { white-space: normal; width: 100%; }
+.advertising-offer p, .advertising-offer small { margin: 0; font-size: 16px; line-height: 1.35; }
+@media(max-height:420px) and (min-width:481px) {
+ .reward-result .advertising-offer { grid-column:1/-1; grid-row:3; margin:4px 0; }
+ .reward-result .result-bottom { grid-row:4; }
+}

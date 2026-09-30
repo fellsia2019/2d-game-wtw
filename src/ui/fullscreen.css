@@ -380,3 +380,10 @@ small{font-size:16px}
  .game-shell .unit-card .card-copy{padding-right:28px}
 }
 .modal.menu-modal{touch-action:pan-x pan-y}
+/* Attempt speed control on narrow screens. */
+.game-shell [data-action="rewarded-speed"] { min-width: 44px; padding: 6px; }
+/* Keep desktop playfield at or below 2:1 while it touches the viewport vertically. */
+@media (min-aspect-ratio: 2/1) and (hover: hover) and (pointer: fine) {
+ .game-shell{width:min(100vw,200vh);width:min(100dvw,200dvh);left:50%;right:auto;transform:translateX(-50%)}
+}
+.boot-overlay{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:#101d23;color:#efe9d5;text-align:center;font-size:18px}

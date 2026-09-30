@@ -51,3 +51,46 @@ it('remains playable locally without an SDK', async () => {
   adapter.markGameReady(); adapter.setGameplay(true);
   expect(await adapter.showIntermissionAd('victory')).toBe(false);
 });
+
+it('rewards once only on onRewarded and keeps the ad pause until close', async () => {
+  const { adapter, sdk, pause } = setup();
+  let callbacks!: { onOpen(): void; onRewarded(): void; onClose(): void; onError(): void };
+  Object.assign(sdk.adv, { showRewardedVideo: vi.fn((options) => { callbacks = options.callbacks; }) });
+  await adapter.initialize();
+  const reward = vi.fn();
+  const result = adapter.showRewardedAd('battle-gold-double', reward);
+  expect(await adapter.showRewardedAd('battle-speed-double', reward)).toBe(false);
+  expect(await adapter.showIntermissionAd('victory')).toBe(false);
+  callbacks.onOpen(); callbacks.onRewarded(); callbacks.onRewarded();
+  expect(reward).toHaveBeenCalledTimes(1);
+  expect(pause).not.toHaveBeenCalledWith(false, 'advertisement');
+  callbacks.onClose();
+  expect(await result).toBe(true);
+  callbacks.onOpen(); callbacks.onRewarded(); callbacks.onError();
+  expect(reward).toHaveBeenCalledTimes(1);
+  expect(pause.mock.calls.filter(call => call[0] === false)).toHaveLength(1);
+});
+
+it.each(['close', 'error', 'throw'] as const)('does not reward on %s without confirmation', async mode => {
+  const { adapter, sdk } = setup();
+  Object.assign(sdk.adv, { showRewardedVideo: vi.fn(({ callbacks }) => {
+    if (mode === 'throw') throw new Error('unavailable');
+    if (mode === 'close') callbacks.onClose(); else callbacks.onError();
+    callbacks.onRewarded();
+  }) });
+  await adapter.initialize();
+  const reward = vi.fn();
+  expect(await adapter.showRewardedAd('battle-gold-double', reward)).toBe(false);
+  expect(reward).not.toHaveBeenCalled();
+});
+
+it('does not cancel a confirmed reward when an error follows', async () => {
+  const { adapter, sdk } = setup();
+  Object.assign(sdk.adv, { showRewardedVideo: vi.fn(({ callbacks }) => {
+    callbacks.onRewarded(); callbacks.onError(); callbacks.onClose();
+  }) });
+  await adapter.initialize();
+  const reward = vi.fn();
+  expect(await adapter.showRewardedAd('battle-speed-double', reward)).toBe(true);
+  expect(reward).toHaveBeenCalledTimes(1);
+});

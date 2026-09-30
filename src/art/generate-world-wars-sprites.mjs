@@ -22,7 +22,7 @@ const bossFrames = Array.from({length:16},(_,frame)=>`<svg x="${frame%4*320}" y=
 writeFileSync(`${assets}/enemy-world-wars-boss-sheet.png`,new Resvg(svg(1280,768,bossFrames)).render().asPng());
 sheets.push('enemy-world-wars-boss-sheet.png');
 const models = worldWarsRoles.map((role,index)=>({role,name:worldWarsNames[index],description:worldWarsDescriptions[index],period:1.2,frames:16}));
-const manifest = {era:'world-wars',name:'Мировые войны',status:'approved',gameIntegrated:true,modelCount:8,totalUniqueModels:9,palettes:['ally','enemy'],frameWidth:320,frameHeight:192,origin:[160,176],models,sheets,scenery:['arena-world-wars.svg','world-wars-tower-ally.svg','world-wars-tower-enemy.svg','era-cards/world-wars.png'],bossPreview:{name:'Командующий Броневого узла',uniqueModel:true,side:'enemy',scale:1.5,frames:16,portrait:'enemy-world-wars-boss.svg',sheet:'enemy-world-wars-boss-sheet.png',image:'world-wars-boss-preview.png'}};
+const manifest = {era:'world-wars',name:'Эпоха бронемашин',status:'approved',gameIntegrated:true,modelCount:8,totalUniqueModels:9,palettes:['ally','enemy'],frameWidth:320,frameHeight:192,origin:[160,176],models,sheets,scenery:['arena-world-wars.svg','world-wars-tower-ally.svg','world-wars-tower-enemy.svg','era-cards/world-wars.png'],bossPreview:{name:'Командующий Броневого узла',uniqueModel:true,side:'enemy',scale:1.5,frames:16,portrait:'enemy-world-wars-boss.svg',sheet:'enemy-world-wars-boss-sheet.png',image:'world-wars-boss-preview.png'}};
 writeFileSync(`${assets}/world-wars-manifest.json`,JSON.stringify(manifest,null,2)+'\n');
 rmSync(`${assets}/world-wars-draft-manifest.json`,{force:true});
 const gameManifest = JSON.parse(readFileSync(`${assets}/sprite-manifest.json`,'utf8'));
