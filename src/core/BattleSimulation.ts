@@ -26,7 +26,7 @@ export class BattleSimulation {
   enemyResource = 0;
   incomeUpgrades = 0;
   allyFortressHp: number;
-  readonly allyFortressMaxHp: number;
+  allyFortressMaxHp: number;
   enemyFortressHp = 100;
   enemyGlyphRemaining = 0;
   private enemyGlyphUsed = false;
@@ -75,6 +75,21 @@ export class BattleSimulation {
   }
 
   get income(): number { return (ERA_INCOME[this.eraId] + this.incomeUpgrades + (this.upgrades.includes('wagon') ? 1 : 0)) * talentMultiplier(this.talents.supply); }
+
+  updateTalents(levels: TalentLevels, baseHp: number): void {
+    const cooldownRatio = talentMultiplier(this.talents.attackSpeed) / talentMultiplier(levels.attackSpeed);
+    Object.assign(this.talents, levels);
+    for (const unit of this.units) {
+      if (unit.team !== 'ally' || unit.hp <= 0) continue;
+      const healthFraction = unit.hp / unit.maxHp;
+      unit.maxHp = this.unitMaxHp(unit.kind, 'ally');
+      unit.hp = unit.maxHp * healthFraction;
+      unit.cooldown *= cooldownRatio;
+    }
+    const fortressFraction = this.allyFortressHp / this.allyFortressMaxHp;
+    this.allyFortressMaxHp = this.doctrine === 'bargain' ? Math.max(1, Math.floor(baseHp * .85)) : baseHp;
+    this.allyFortressHp = this.allyFortressMaxHp * fortressFraction;
+  }
   get incomeUpgradeCost(): number { return 40 + this.incomeUpgrades * 10 - (this.incomeUpgrades === 0 && this.upgrades.includes('workshop') ? 12 : 0); }
   get enemyIncome(): number { return this.contract.enemyIncome + (this.elapsed >= 300 ? 2 : 0); }
   private get enemyDamageMultiplier(): number { return 1 + this.enemyBalance.damageBonus / 100; }
@@ -196,10 +211,14 @@ export class BattleSimulation {
     }
   }
 
-  private spawn(kind: UnitKind, team: Team): void {
+  private unitMaxHp(kind: UnitKind, team: Team): number {
     const def = UNITS[kind];
     const bonusHp = team === 'ally' && this.upgrades.includes('banner') && (unitRole(kind) === 'shield' || unitRole(kind) === 'spear') ? 1.15 : 1;
-    const hp = Math.round(def.hp * bonusHp * (team === 'ally' ? talentMultiplier(this.talents.health) : (1 + this.enemyBalance.hpBonus / 100)));
+    return Math.round(def.hp * bonusHp * (team === 'ally' ? talentMultiplier(this.talents.health) : (1 + this.enemyBalance.hpBonus / 100)));
+  }
+
+  private spawn(kind: UnitKind, team: Team): void {
+    const hp = this.unitMaxHp(kind, team);
     const unit: UnitState = { id: this.nextUnitId++, kind, team, x: team === 'ally' ? 105 : 895,
       hp, maxHp: hp, cooldown: .35, action: 'idle', facing: team === 'ally' ? 1 : -1 };
     if (team === 'ally' && unitRole(kind) === 'archer') {

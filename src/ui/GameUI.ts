@@ -184,11 +184,11 @@ export class GameUI {
     let cards = (Object.keys(TALENTS) as TalentId[]).map(id => {
       const talent = TALENTS[id], level = levels[id];
       const cost = global ? globalTalentCost() : talentCost(level);
-      return `<article class="talent-card talent-${id}"><span class="talent-icon">${uiIcon(id)}</span><h3>${talent.name}</h3><span class="talent-level" aria-label="Уровень ${level}">Ур. ${level}</span><div class="talent-stat" aria-label="Текущий бонус +${level * 5}%, следующий +${(level + 1) * 5}%"><strong>+${level * 5}%</strong><span class="talent-arrow" aria-hidden="true">→</span><span class="talent-next">+${(level + 1) * 5}%</span></div><button class="talent-buy" data-action="${global ? 'buy-global-talent' : 'buy-talent'}" data-talent="${id}" ${currency < cost ? 'disabled' : ''} aria-label="Купить ${talent.name}, уровень ${level + 1}, цена ${cost} ${global ? 'очков' : 'золота'}">${uiIcon(global ? 'point' : 'gold')} ${cost}</button></article>`;
+      return `<button type="button" class="talent-card talent-${id}" data-action="${global ? 'buy-global-talent' : 'buy-talent'}" data-talent="${id}" ${currency < cost ? 'disabled' : ''} aria-label="Купить ${talent.name}, уровень ${level + 1}, цена ${cost} ${global ? 'очков' : 'золота'}"><span class="talent-icon">${uiIcon(id)}</span><span class="talent-name">${talent.name}</span><span class="talent-level" aria-label="Уровень ${level}">Ур. ${level}</span><span class="talent-stat" aria-label="Текущий бонус +${level * 5}%, следующий +${(level + 1) * 5}%"><strong>+${level * 5}%</strong><span class="talent-arrow" aria-hidden="true">→</span><span class="talent-next">+${(level + 1) * 5}%</span></span><span class="talent-buy" aria-hidden="true">${uiIcon(global ? 'point' : 'gold')} ${cost}</span></button>`;
     }).join('');
     if (!global) {
       const hp = baseHealth(state.baseLevel), cost = baseHealthCost(state.baseLevel);
-      cards += `<article class="talent-card talent-health"><span class="talent-icon">${uiIcon('health')}</span><h3>Здоровье базы</h3><span class="talent-level" aria-label="Уровень ${state.baseLevel}">Ур. ${state.baseLevel}</span><div class="talent-stat" aria-label="Текущее здоровье ${hp} HP, следующее ${hp + 10} HP"><strong>${hp} HP</strong><span class="talent-arrow" aria-hidden="true">→</span><span class="talent-next">${hp + 10} HP</span></div><button class="talent-buy" data-action="buy-base-health" ${state.gold < cost ? 'disabled' : ''} aria-label="Купить здоровье базы, уровень ${state.baseLevel + 1}, цена ${cost} золота">${uiIcon('gold')} ${cost}</button></article>`;
+      cards += `<button type="button" class="talent-card talent-health" data-action="buy-base-health" ${state.gold < cost ? 'disabled' : ''} aria-label="Купить здоровье базы, уровень ${state.baseLevel + 1}, цена ${cost} золота"><span class="talent-icon">${uiIcon('health')}</span><span class="talent-name">Здоровье базы</span><span class="talent-level" aria-label="Уровень ${state.baseLevel}">Ур. ${state.baseLevel}</span><span class="talent-stat" aria-label="Текущее здоровье ${hp} HP, следующее ${hp + 10} HP"><strong>${hp} HP</strong><span class="talent-arrow" aria-hidden="true">→</span><span class="talent-next">${hp + 10} HP</span></span><span class="talent-buy" aria-hidden="true">${uiIcon('gold')} ${cost}</span></button>`;
     }
     return `<div class="eyebrow">ДЕРЕВО ТАЛАНТОВ</div><h2 id="dialog-title">${global ? 'Глобальные таланты' : `Таланты · ${eraName(state.eraId)}`}</h2><div class="talent-tabs" role="group" aria-label="Выбор дерева талантов"><button type="button" data-action="talents" class="talent-tab ${!global ? 'is-selected' : ''}" aria-pressed="${!global}">${uiIcon('gold')}<span><b>Таланты эпохи</b><small>За золото · текущая эпоха</small></span></button><button type="button" data-action="global-talents" class="talent-tab ${global ? 'is-selected' : ''}" aria-pressed="${global}">${uiIcon('point')}<span><b>Глобальные таланты</b><small>За очки · все эпохи</small></span></button></div><p class="talent-points">${global ? 'Очки перехода' : 'Золото эпохи'}: ${uiIcon(global ? 'point' : 'gold')} <b>${currency}</b></p><div class="talent-grid">${cards}</div>`;
   }
@@ -309,16 +309,23 @@ export class GameUI {
     }
     else if (state.phase === 'contract') content = this.contractHTML(state);
     else if (state.phase === 'menu') content = this.menuHTML(state);
-    else if (state.paused && state.phase === 'battle') content = `<div class="result-seal">Ⅱ</div><div class="eyebrow">ПРИКАЗ: ПРИВАЛ</div><h2 id="dialog-title">Бой на паузе</h2><p class="modal-intro">Фронт, припасы и время остановлены.<br/>Твой отряд ждёт возвращения.</p><div class="modal-actions"><button class="primary" data-action="pause">Вернуться в бой →</button><button class="secondary" data-action="main-menu">В главное меню</button><button class="secondary" data-action="start">Начать эпоху заново</button></div><p class="save-note">Поход и заработанное золото сохранятся.<br/>При продолжении текущий бой начнётся заново.</p>`;
+    else if (state.paused && state.phase === 'battle') content = `<div class="result-seal">Ⅱ</div><div class="eyebrow">ПРИКАЗ: ПРИВАЛ</div><h2 id="dialog-title">Бой на паузе</h2><p class="modal-intro">Фронт, припасы и время остановлены.<br/>Твой отряд ждёт возвращения.</p><div class="modal-actions"><button class="primary" data-action="pause">Вернуться в бой →</button><button class="secondary" data-action="talents">Улучшить отряд · ${uiIcon('gold')} ${state.gold}</button><button class="secondary" data-action="main-menu">В главное меню</button><button class="secondary" data-action="start">Начать эпоху заново</button></div><p class="save-note">Поход и заработанное золото сохранятся.<br/>При продолжении текущий бой начнётся заново.</p>`;
     else if (['reward', 'victory', 'defeat'].includes(state.phase)) content = this.battleResultHTML(state);
 
     const isResult = ['reward', 'victory', 'defeat'].includes(state.phase) && this.panel === null;
     const isBattleReady = state.phase === 'contract' && state.contractRisk !== null && this.panel === null;
     const isMainMenu = state.phase === 'menu' && this.panel === null;
     const isPreparation = state.phase === 'preparation' && this.panel === null;
+    const isTalentPanel = this.panel === 'talents' || this.panel === 'globalTalents';
+    const talentContinue = isTalentPanel && state.phase === 'defeat'
+      ? '<button class="primary" data-action="retry" data-result-primary="true">Повторить бой →</button>'
+      : isTalentPanel && state.phase === 'battle' && state.paused
+        ? '<button class="primary" data-action="resume-battle" data-result-primary="true">Вернуться в бой →</button>'
+        : '';
     const wideModal = isMainMenu || ['reward', 'preparation', 'contract', 'victory', 'defeat'].includes(state.phase)
       || this.panel === 'book' || this.panel === 'talents' || this.panel === 'globalTalents';
     const modalClasses = [wideModal ? 'reward-modal' : '', isMainMenu ? 'menu-modal' : 'has-back',
+      isTalentPanel ? 'talents-modal' : '',
       isPreparation ? `preparation-modal ${this.preparationStep}-screen` : '',
       state.phase === 'defeat' && !this.panel ? 'defeat-modal' : '',
       isResult ? `result-modal ${state.phase}-result` : '',
@@ -332,7 +339,12 @@ export class GameUI {
     const topbar = isMainMenu || isResult ? '' : `<div class="modal-topbar ${isPreparation ? 'prep-topbar' : ''}">${backButton}</div>`;
     const footer = isPreparation || isResult || isBattleReady ? '' : `<div class="modal-platform">${talentLink}${platformLabel}</div>`;
     if (!oldEraMap) this.destroy();
-    this.overlay.innerHTML = content ? `<div class="scrim ${isPreparation && this.preparationStep === 'roster' ? 'roster-scrim' : ''}">${audioControls()}<section class="modal ${modalClasses}" role="dialog" aria-modal="true" aria-labelledby="dialog-title">${topbar}${content}${footer}</section></div>` : '';
+    this.overlay.innerHTML = content ? `<div class="scrim ${isTalentPanel ? 'talents-scrim' : ''} ${isPreparation && this.preparationStep === 'roster' ? 'roster-scrim' : ''} ${talentContinue ? 'talent-continue-scrim' : ''}">${audioControls()}<section class="modal ${modalClasses}" role="dialog" aria-modal="true" aria-labelledby="dialog-title">${topbar}${content}${footer}</section>${talentContinue ? `<div class="talent-continue-footer">${talentContinue}</div>` : ''}</div>` : '';
+    if (content) {
+      const audio = this.overlay.querySelector('.scrim>.audio-controls');
+      const audioHost = this.overlay.querySelector('.modal-topbar, .menu-hero-copy, .result-header');
+      if (audio && audioHost) audioHost.append(audio);
+    }
     if (oldEraMap) {
       // Keep the live slider, including its exact translate and active index.
       // Update only card state while the banner and other menu content change.

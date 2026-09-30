@@ -1,0 +1,46 @@
+/* One spacing rhythm for mobile panels; short screens scroll rather than squeeze. */
+@media (max-width:1000px), (max-height:600px){
+ .scrim{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right))}
+ .scrim .modal{--panel-gap:16px;display:flex;flex-direction:column;gap:var(--panel-gap);padding:16px}
+ .scrim .modal.result-modal.reward-result{display:flex;gap:var(--panel-gap);padding:16px}
+ .scrim .modal> *{flex-shrink:0;margin-top:0;margin-bottom:0}
+ .scrim .modal .modal-back{margin:0}
+ .scrim .modal :is(.modal-topbar,.modal-actions,.ready-actions,.ready-progress,.ready-enemies,.menu-hero-actions,.menu-section-title,.menu-features,.talent-tabs,.talent-grid,.book-grid,.doctrines,.fighter-grid,.picked-bar,.picked-units,.report-stats,.result-header,.result-summary,.result-rewards,.result-actions,.result-bottom,.result-next-portraits){gap:var(--panel-gap)}
+ .scrim .modal :is(.modal-actions,.ready-actions,.menu-hero-actions,.talent-tabs,.talent-grid,.book-grid,.doctrines,.fighter-grid,.report-stats,.result-summary,.result-rewards,.result-actions,.result-bottom){margin-top:0;margin-bottom:0}
+ .scrim .modal .ready-actions{width:100%;margin-left:auto;margin-right:auto}
+ .scrim .modal .menu-hero-copy{display:flex;flex-direction:column;gap:var(--panel-gap);padding:16px}
+ .scrim .modal .menu-hero-copy> *{margin-top:0;margin-bottom:0}
+ .scrim .modal .menu-section-title{align-items:flex-start}
+ .scrim .modal :is(.menu-feature,.book-unit,.book-upgrades,.talent-card,.talent-tab,.doctrine,.fighter-choice,.reward-card,.result-stat,.result-next-era,.ready-contract){padding:16px}
+ .scrim .modal :is(.result-choice-title,.result-hint,.result-next-era,.result-finished,.save-note,.modal-platform){margin-top:0;margin-bottom:0}
+ .scrim .modal .result-bottom{width:100%}
+ .scrim .modal .result-header h2{margin:0}
+ .scrim .modal .result-actions button{flex-shrink:0}
+ .scrim>.pick-footer,.scrim>.talent-continue-footer{bottom:max(16px,env(safe-area-inset-bottom));width:min(960px,calc(100% - 32px));padding:16px;gap:16px}
+ .roster-scrim{padding-bottom:calc(144px + env(safe-area-inset-bottom))}
+ .talent-continue-scrim{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+}
+
+/* Talent controls share the header, leaving the viewport for the scrollable tree. */
+.scrim{padding-top:max(16px,env(safe-area-inset-top))}
+.modal-topbar>.audio-controls,.result-header>.audio-controls{position:static;flex-shrink:0;margin-left:auto}
+.menu-hero-copy>.audio-controls{position:absolute;top:16px;right:16px}
+.menu-hero-copy h2{padding-right:120px}
+.scrim.talents-scrim{display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));padding-top:max(16px,env(safe-area-inset-top))}
+.scrim.talents-scrim .talents-modal{flex:1 1 auto;min-height:0;max-height:100%;width:min(1000px,100%)}
+.scrim.talents-scrim .modal-topbar{position:static;background:none;border-radius:0;flex-wrap:wrap}
+.scrim.talents-scrim .modal-topbar>.audio-controls{position:static;margin-left:auto}
+.scrim.talents-scrim>.talent-continue-footer{position:static;transform:none;flex:none;width:100%;margin:0;padding:0;border:0;background:none;box-shadow:none;gap:0}
+.modal .talent-card{width:100%;cursor:pointer}
+.modal .talent-card .talent-name{grid-column:2;grid-row:1;margin:0;color:#f2eddc;font:700 18px/1.25 var(--game-font)}
+.modal .talent-card:enabled{border-color:var(--available)}
+.modal .talent-card:disabled{opacity:1;cursor:default;border-color:#a46866;background:var(--unavailable-bg)}
+.modal .talent-card:enabled .talent-buy{background:linear-gradient(#94dbac,#6fbd90);color:#173529;border-color:#b7eec7;box-shadow:0 3px 0 #3e7956}
+.modal .talent-card:disabled .talent-buy{background:#45353b;border-color:#b47573;color:#edc2bd;box-shadow:none}
+.modal .talent-card:enabled:hover{border-color:#b0f1ca}
+.modal .talent-card:focus-visible{outline:3px solid #f5d89a;outline-offset:3px}
+@media (orientation:landscape) and (max-height:600px){
+ .game-shell{--hud-top:76px;--edge:16px}
+ .game-shell .masthead,.game-shell .battle-heading{top:calc(var(--safe-top) + 16px)}
+ .game-shell .tools,.game-shell .tools .audio-controls{gap:16px}
+}
