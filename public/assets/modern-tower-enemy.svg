@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <g stroke-linejoin="round" stroke-linecap="round">
+   <path d="M20 153V105l18-16h116l18 16v48z" fill="#707a76" stroke="#2b3940" stroke-width="4"/>
+   <path d="M29 104l12-9h110l12 9-8 12H37z" fill="#a3a89a" stroke="#2b3940" stroke-width="3"/>
+   <path d="M39 91V68l14-11h86l14 11v23z" fill="#515f60" stroke="#2b3940" stroke-width="4"/>
+   <path d="M49 59l8-8h78l8 8" fill="none" stroke="#a3a89a" stroke-width="4"/>
+   <path d="M44 71h104v19H44z" fill="#51424e" stroke="#2b3940" stroke-width="3"/>
+   <path d="M58 73v15m26-15v15m26-15v15m25-15v15" stroke="#c6a4aa" stroke-width="2"/>
+   <path d="M47 72h96" stroke="#c6a4aa" stroke-width="2"/>
+   <path d="M35 110h122v12H35z" fill="#865c68" stroke="#2b3940" stroke-width="3"/>
+   <path d="M57 110v12m78-12v12" stroke="#a3a89a" stroke-width="3"/>
+   <path d="M20 149h152v27H20z" fill="#515f60" stroke="#2b3940" stroke-width="4"/>
+   <path d="M27 152l13-26h112l13 26z" fill="#707a76" stroke="#2b3940" stroke-width="4"/>
+   <path d="M45 128l-9 22m32-22-4 22m60-22 4 22m21-22 9 22" stroke="#2b3940" stroke-width="3"/>
+   <path d="M78 177v-42q18-11 36 0v42z" fill="#2b3940"/>
+   <path d="M84 140q12-6 24 0v34H84z" fill="#51424e" stroke="#c6a4aa" stroke-width="2"/>
+   <circle cx="104" cy="158" r="2" fill="#c6a4aa"/>
+   <path d="M17 154h57v13H17zm101 0h57v13h-57z" fill="#a3a89a" stroke="#2b3940" stroke-width="3"/>
+   <path d="M23 154q8-7 16 0 8-7 16 0 8-7 16 0m50 0q8-7 16 0 8-7 16 0 8-7 16 0" fill="none" stroke="#2b3940" stroke-width="2"/>
+   <path d="M27 167v8m21-8v8m112-8v8m-21-8v8" stroke="#2b3940" stroke-width="2"/>
+   <path d="M30 176h132" stroke="#865c68" stroke-width="3"/>
+   <path d="M51 56V29m-6 6h12m-12 8h12" stroke="#2b3940" stroke-width="3"/>
+   <path d="M128 51V35m-18 0q18-14 36 0" fill="none" stroke="#2b3940" stroke-width="3"/>
+   <path d="M112 37q16-6 32 0" fill="none" stroke="#c6a4aa" stroke-width="2"/>
+   <circle cx="128" cy="35" r="3" fill="#865c68" stroke="#2b3940" stroke-width="2"/>
+  </g></svg>

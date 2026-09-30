@@ -93,11 +93,11 @@ export class BattleScene extends Phaser.Scene {
       const source = state.units.find(u => u.id === event.sourceId);
       this.effects.push({ event, age: 0, sourceX: source?.x });
       const figure = event.sourceId == null ? undefined : this.figures.get(event.sourceId);
-      if (figure && event.sourceId != null && ['attack', 'heal', 'fortress'].includes(event.type) && !struck.has(event.sourceId)) {
+      if (figure && event.sourceId != null && ['attack', 'heal', 'fortress', 'drone-launch'].includes(event.type) && !struck.has(event.sourceId)) {
         figure.motion.triggerStrike(); struck.add(event.sourceId);
       }
       const target = event.targetId == null ? undefined : this.figures.get(event.targetId);
-      if (target && (event.type === 'attack' || event.type === 'block')) target.hurt = .15;
+      if (target && (event.type === 'attack' || event.type === 'block' || event.type === 'drone-explode')) target.hurt = .15;
       this.onEffect(event);
     }
     for (const unit of state.units) this.drawUnit(unit, dt, state.paused);
@@ -130,7 +130,9 @@ export class BattleScene extends Phaser.Scene {
     const figure = this.figures.get(unit.id)!;
     const pose = figure.motion.advance(dt, paused);
     const isBoss = bossKind(unit.kind);
-    const x = this.point(pose.x), scale = this.size() * (isBoss ? 1.5 : 1);
+    const room = this.baseline() - this.insets.top;
+    const eraScale = this.snapshot.eraId === 'modern' ? Math.min(this.size() * 1.15, (room - 9) / 176) : this.size();
+    const x = this.point(pose.x), scale = eraScale * (isBoss ? 1.5 : 1);
     const y = this.baseline() + (unit.id % 4) * (this.scale.width < 650 ? 4 : 6);
     figure.hurt = Math.max(0, figure.hurt - dt);
     figure.image.setPosition(x, y).setScale(scale).setDepth(y).setAngle(0).setFrame(pose.frame).setFlipX(pose.facing < 0);
@@ -154,7 +156,7 @@ export class BattleScene extends Phaser.Scene {
       }
     }
     if (isBoss) figure.bar.lineStyle(2, 0xffd16f, .8).strokeEllipse(x, y - 2, 88 * scale, 18 * scale);
-    if (roleOf(unit.kind) === 'banner') figure.bar.lineStyle(1, unit.team === 'ally' ? 0xd1dd96 : 0xf1a18b, .22).strokeEllipse(x, y - 2, this.scale.width < 650 ? 65 : 140, 13);
+    if (roleOf(unit.kind) === 'banner' && unit.kind !== 'modernDroneOperator') figure.bar.lineStyle(1, unit.team === 'ally' ? 0xd1dd96 : 0xf1a18b, .22).strokeEllipse(x, y - 2, this.scale.width < 650 ? 65 : 140, 13);
     if ((unit.suppressedUntil ?? 0) > this.snapshot.elapsed) figure.bar.lineStyle(2, 0x8cc9d7, .85).strokeEllipse(x, y - 3, 65 * scale, 15 * scale);
     if ((unit.exposedUntil ?? 0) > this.snapshot.elapsed) figure.bar.lineStyle(2, 0xf6c46d, .9).strokeCircle(x, barY - 4, 6);
   }
@@ -206,6 +208,10 @@ export class BattleScene extends Phaser.Scene {
         this.fx.lineStyle(2, 0xffdc9c, alpha);
         for (let n = 0; n < 5; n++) { const a = n * 1.256; this.fx.lineBetween(x + Math.cos(a) * (4 + p * 10), y + Math.sin(a) * (4 + p * 10), x + Math.cos(a) * (9 + p * 23), y + Math.sin(a) * (9 + p * 23)); }
         if (event.type === 'fortress') this.fx.lineStyle(3, 0xf1aa79, alpha).strokeCircle(x, y, 10 + p * 32);
+      } else if (event.type === 'drone-explode') {
+        this.fx.fillStyle(0xffbb73, alpha * .35).fillCircle(x, y - 18, 9 + p * 40);
+        this.fx.lineStyle(3, 0xffe4a5, alpha).strokeCircle(x, y - 18, 8 + p * 32);
+        for (let n = 0; n < 7; n++) { const a = n * Math.PI * 2 / 7; this.fx.lineBetween(x + Math.cos(a) * (8 + p * 18), y - 18 + Math.sin(a) * (8 + p * 18), x + Math.cos(a) * (17 + p * 45), y - 18 + Math.sin(a) * (17 + p * 45)); }
       } else if (event.type === 'boss-warning' || event.type === 'boss-assault') {
         this.fx.lineStyle(3, 0xffc68b, alpha).strokeEllipse(this.point(1000) / scale, y - 25, 25 + p * 100, 35 + p * 70);
       } else if (event.type === 'suppress') {
@@ -218,6 +224,15 @@ export class BattleScene extends Phaser.Scene {
         this.fx.fillStyle(event.team === 'ally' ? 0x8dbcae : 0xb88d7d, alpha * .5);
         for (let n = 0; n < 5; n++) this.fx.fillCircle(x + Math.sin(n * 12) * p * 20, y + 10 + p * 20 + n * 2, 2 + p * 2);
       }
+    }
+    for (const drone of this.snapshot.droneStrikes) {
+      const x = this.point(Phaser.Math.Linear(drone.startX, drone.targetX, drone.progress)) / scale;
+      const y = this.baseline() / scale - 72 - Math.sin(drone.progress * Math.PI) * 32;
+      this.fx.lineStyle(2, 0xa9c6ca, 1).lineBetween(x - 15, y - 7, x + 15, y + 7).lineBetween(x - 15, y + 7, x + 15, y - 7);
+      this.fx.fillStyle(drone.team === 'ally' ? 0x345d68 : 0x70424b, 1).fillEllipse(x, y, 24, 10);
+      this.fx.fillStyle(0xe9a78f, 1).fillCircle(x + Math.sign(drone.targetX - drone.startX) * 9, y, 3);
+      this.fx.fillStyle(0x1d3038, 1);
+      for (const dx of [-17,17]) for (const dy of [-8,8]) this.fx.fillEllipse(x + dx, y + dy, 12, 4);
     }
   }
 }

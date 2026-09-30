@@ -65,6 +65,15 @@ export const UNITS: Record<UnitKind, UnitDefinition> = {
   worldWarsRadio: { name: 'Радист', role: 'Поддержка · радиосигнал ускоряет огонь союзников', cost: 140, hp: 95, damage: 0, range: 35, speed: 32, period: 1.2, armor: .32 },
   worldWarsArmoredCar: { name: 'Бронемашина', role: 'Осада · колёсная артиллерия против укреплений', cost: 210, hp: 135, damage: 100, range: 330, speed: 23, period: 5, armor: .4 },
   worldWarsCommander: { name: 'Командующий Броневого узла', role: 'Босс · уникальный лёгкий танк с охраной', cost: 245, hp: 2200, damage: 52, range: 250, speed: 23, period: 2.2, armor: .55, archetype: 'siege' },
+  modernShield: { name: 'Щитовик спецгруппы', role: 'Защитник · тяжёлый штурмовой щит', cost: 76, hp: 215, damage: 16, range: 34, speed: 32, period: 1.15, armor: .58 },
+  modernAntiTank: { name: 'Противотанкист', role: 'Против брони · плечевой пусковой комплекс', cost: 96, hp: 118, damage: 36, range: 160, speed: 34, period: 1.6, armor: .34, antiArmor: 2.8 },
+  modernMarksman: { name: 'Марксман', role: 'Дальний бой · точная винтовка', cost: 108, hp: 73, damage: 93, range: 300, speed: 35, period: 4, armor: .18 },
+  modernMedic: { name: 'Боевой медик', role: 'Лечение · мобильная медицинская помощь', cost: 132, hp: 85, damage: 2, heal: 36, range: 150, speed: 32, period: 2.1, armor: .18 },
+  modernRecon: { name: 'Оператор разведки', role: 'Прорыв · быстрый удар по дальнему ряду', cost: 122, hp: 137, damage: 38, range: 145, speed: 102, period: 1.4, armor: .3 },
+  modernGrenadier: { name: 'Реактивный гранатомётчик', role: 'Площадь · залп по группе противников', cost: 142, hp: 88, damage: 43, range: 205, speed: 33, period: 2, armor: .22 },
+  modernDroneOperator: { name: 'Оператор ударного дрона', role: 'Поддержка · дрон летит к цели и взрывается', cost: 154, hp: 99, damage: 65, range: 260, speed: 32, period: 3.4, armor: .27 },
+  modernArtillery: { name: 'Артиллерийский расчёт', role: 'Осада · гаубица против укреплений', cost: 235, hp: 150, damage: 110, range: 350, speed: 20, period: 4.8, armor: .42 },
+  modernCommander: { name: 'Командир Автономной базы', role: 'Босс · тяжёлый щитовик с охраной', cost: 270, hp: 2300, damage: 34, range: 42, speed: 28, period: 1.3, armor: .58, archetype: 'shield' },
   highKnight: { name: 'Рыцарь щита', role: 'Защитник · меч и щит', cost: 42, hp: 122, damage: 8, range: 29, speed: 31, period: 1.2, armor: .5 },
   highHalberd: { name: 'Алебардист', role: 'Против брони · двуручная алебарда', cost: 55, hp: 65, damage: 18, range: 68, speed: 34, period: 1.3, armor: .27, antiArmor: 2.6 },
   highCrossbow: { name: 'Арбалетчик', role: 'Дальний бой · выстрел и перезарядка', cost: 62, hp: 44, damage: 48, range: 215, speed: 35, period: 4, armor: .16 },
@@ -116,18 +125,18 @@ export const UPGRADES: Record<UpgradeId, { name: string; description: string; ca
   boots: { name: 'Лёгкие сапоги', description: 'Быстрые бойцы двигаются на 20% быстрее', category: 'offense', requires: 'raider' },
   siegecraft: { name: 'Осадный расчёт', description: 'Осадные бойцы наносят крепости на 20% больше урона', category: 'offense', requires: 'siege' },
   lastReserve: { name: 'Последний резерв', description: 'Один бесплатный защитник при крепости ниже 35%', category: 'defense', requires: 'shield' },
-  standard: { name: 'Строевой шаг', description: 'Командиры сильнее ускоряют союзников рядом', category: 'offense', requires: 'banner' }
+  standard: { name: 'Командная система', description: 'Усиливает поддержку: ускоряет союзников, в Современности повышает урон дрона', category: 'offense', requires: 'banner' }
 };
 
 export interface BattleDefinition { name: string; threat: string; ai: 'rush' | 'wall' | 'ranged' | 'boss'; enemyIncome: number; enemyStartingSupplies?: number; enemyHealthMultiplier?: number; enemyDamageMultiplier?: number; enemyRecruitRoster?: UnitKind[]; enemyDefenseRoster?: UnitKind[]; roster: UnitKind[]; arenaId: 'ash' | 'iron' | 'arrows' | 'citadel'; }
-export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance', 'industrial', 'world-wars'];
-export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12, medieval: 14, 'high-medieval': 16, renaissance: 18, industrial: 20, 'world-wars': 22 };
-export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4, medieval: 5, 'high-medieval': 6, renaissance: 7, industrial: 8, 'world-wars': 9 };
+export const ERA_ORDER: EraId[] = ['stone', 'bronze', 'iron', 'antique', 'medieval', 'high-medieval', 'renaissance', 'industrial', 'world-wars', 'modern'];
+export const ERA_INCOME: Record<EraId, number> = { stone: 6, bronze: 8, iron: 10, antique: 12, medieval: 14, 'high-medieval': 16, renaissance: 18, industrial: 20, 'world-wars': 22, modern: 24 };
+export const ERA_KILL_GOLD: Record<EraId, number> = { stone: 1, bronze: 2, iron: 3, antique: 4, medieval: 5, 'high-medieval': 6, renaissance: 7, industrial: 8, 'world-wars': 9, modern: 10 };
 export const victoryGold = (era: EraId): number => 25 * ERA_KILL_GOLD[era];
-export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan', renaissance: 'renaissanceGeneral', industrial: 'industrialBaron', 'world-wars': 'worldWarsCommander' };
+export const ERA_BOSSES: Record<EraId, UnitKind> = { stone: 'stoneChief', bronze: 'bronzeKing', iron: 'ironCommandant', antique: 'antiqueLegate', medieval: 'medievalJarl', 'high-medieval': 'highCastellan', renaissance: 'renaissanceGeneral', industrial: 'industrialBaron', 'world-wars': 'worldWarsCommander', modern: 'modernCommander' };
 export const isBoss = (kind: UnitKind): boolean => Object.values(ERA_BOSSES).includes(kind);
 export const nextEra = (era: EraId): EraId | undefined => ERA_ORDER[ERA_ORDER.indexOf(era) + 1];
-export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох', industrial: 'Индустриальная эпоха', 'world-wars': 'Мировые войны' };
+export const ERA_NAMES: Record<EraId, string> = { stone: 'Каменный век', bronze: 'Бронзовый век', iron: 'Железный век', antique: 'Античность', medieval: 'Раннее Средневековье', 'high-medieval': 'Высокое Средневековье', renaissance: 'Ренессанс и порох', industrial: 'Индустриальная эпоха', 'world-wars': 'Мировые войны', modern: 'Современность' };
 export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   stone: ['stoneShield', 'stoneSpear', 'stoneSlinger', 'stoneShaman', 'stoneScout', 'stoneThrower', 'stoneTotem', 'stoneRam'],
   bronze: ['bronzeGuard', 'bronzeSpear', 'bronzeArcher', 'bronzeHealer', 'bronzeChariot', 'bronzePitch', 'bronzeHerald', 'bronzeRam'],
@@ -135,12 +144,13 @@ export const ERA_HIRE_KINDS: Record<EraId, HireKind[]> = {
   renaissance: ['renaissanceCuirassier', 'renaissancePikeman', 'renaissanceMusket', 'renaissanceSurgeon', 'renaissanceDragoon', 'renaissanceGrenadier', 'renaissanceCaptain', 'renaissanceCannon'],
   industrial: ['industrialShield', 'industrialBayonet', 'industrialRifle', 'industrialMedic', 'industrialCarbine', 'industrialDemolition', 'industrialMechanic', 'industrialHowitzer'],
   'world-wars': ['worldWarsShield', 'worldWarsAssault', 'worldWarsSniper', 'worldWarsMedic', 'worldWarsJeep', 'worldWarsGrenadier', 'worldWarsRadio', 'worldWarsArmoredCar'],
+  modern: ['modernShield', 'modernAntiTank', 'modernMarksman', 'modernMedic', 'modernRecon', 'modernGrenadier', 'modernDroneOperator', 'modernArtillery'],
   'high-medieval': ['highKnight', 'highHalberd', 'highCrossbow', 'highMonk', 'highRider', 'highPitch', 'highHerald', 'highTrebuchet'],
   medieval: ['medievalGuard', 'medievalPikeman', 'medievalLongbow', 'medievalHealer', 'medievalBerserker', 'medievalThrower', 'medievalHorn', 'medievalRam'],
   antique: ['antiqueLegionary', 'antiqueHoplite', 'antiquePeltast', 'antiqueSurgeon', 'antiqueRider', 'antiqueScorpion', 'antiqueCenturion', 'antiqueBallista']
 };
 export const ERA_STARTER_KINDS: Record<EraId, HireKind[]> = {
-  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4), medieval: ERA_HIRE_KINDS.medieval.slice(0, 4), 'high-medieval': ERA_HIRE_KINDS['high-medieval'].slice(0, 4), renaissance: ERA_HIRE_KINDS.renaissance.slice(0, 4), industrial: ERA_HIRE_KINDS.industrial.slice(0, 4), 'world-wars': ERA_HIRE_KINDS['world-wars'].slice(0, 4)
+  stone: ERA_HIRE_KINDS.stone.slice(0, 4), bronze: ERA_HIRE_KINDS.bronze.slice(0, 4), iron: ERA_HIRE_KINDS.iron.slice(0, 4), antique: ERA_HIRE_KINDS.antique.slice(0, 4), medieval: ERA_HIRE_KINDS.medieval.slice(0, 4), 'high-medieval': ERA_HIRE_KINDS['high-medieval'].slice(0, 4), renaissance: ERA_HIRE_KINDS.renaissance.slice(0, 4), industrial: ERA_HIRE_KINDS.industrial.slice(0, 4), 'world-wars': ERA_HIRE_KINDS['world-wars'].slice(0, 4), modern: ERA_HIRE_KINDS.modern.slice(0, 4)
 };
 const ROLES: UnitRole[] = ['shield', 'spear', 'archer', 'medic', 'raider', 'thrower', 'banner', 'siege'];
 export function unitRole(kind: UnitKind): UnitRole {
@@ -192,6 +202,12 @@ export const ERA_BATTLES: Record<EraId, BattleDefinition[]> = {
     { name: 'Окопный рубеж', threat: 'Штурмовики и снайперы держат линию под радиосигналом; плотный огонь замедляет бойцов', ai: 'wall', enemyIncome: 65, enemyStartingSupplies: 45, enemyHealthMultiplier: 1.5, enemyDamageMultiplier: 1.5, roster: ['worldWarsShield', 'worldWarsAssault', 'worldWarsSniper', 'worldWarsRadio'], arenaId: 'iron' },
     { name: 'Прорыв Броневого узла', threat: 'Гранатомётчики и бронемашина бьют из-за окопов; у форта выходят штурмовики', ai: 'ranged', enemyIncome: 65, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.65, enemyDamageMultiplier: 1.65, enemyRecruitRoster: ['worldWarsShield', 'worldWarsSniper', 'worldWarsShield', 'worldWarsGrenadier', 'worldWarsArmoredCar'], enemyDefenseRoster: ['worldWarsShield', 'worldWarsSniper', 'worldWarsShield', 'worldWarsAssault'], roster: ['worldWarsShield', 'worldWarsSniper', 'worldWarsShield', 'worldWarsGrenadier', 'worldWarsArmoredCar'], arenaId: 'arrows' },
     { name: 'Броневой узел', threat: 'На половине прочности форта командующий выходит на лёгком танке с охраной и медиком', ai: 'boss', enemyIncome: 70, enemyStartingSupplies: 60, enemyHealthMultiplier: 1.96, enemyDamageMultiplier: 1.96, enemyRecruitRoster: ['worldWarsShield', 'worldWarsAssault', 'worldWarsSniper', 'worldWarsGrenadier'], roster: ['worldWarsCommander', 'worldWarsShield', 'worldWarsAssault', 'worldWarsSniper', 'worldWarsJeep', 'worldWarsMedic'], arenaId: 'citadel' }
+  ],
+  modern: [
+    { name: 'Разведка у периметра', threat: 'Операторы разведки обходят щиты под огнём марксманов', ai: 'rush', enemyIncome: 60, enemyStartingSupplies: 35, enemyHealthMultiplier: 1.25, enemyDamageMultiplier: 1.25, roster: ['modernShield', 'modernMarksman', 'modernRecon'], arenaId: 'ash' },
+    { name: 'Линия дистанционного огня', threat: 'Противотанкисты прикрывают марксманов; ударные дроны взрываются у цели', ai: 'wall', enemyIncome: 70, enemyStartingSupplies: 45, enemyHealthMultiplier: 1.47, enemyDamageMultiplier: 1.46, roster: ['modernShield', 'modernAntiTank', 'modernMarksman', 'modernDroneOperator'], arenaId: 'iron' },
+    { name: 'Штурм укреплённого сектора', threat: 'Гранатомётчики и артиллерия бьют из-за щитов; у форта выходят противотанкисты', ai: 'ranged', enemyIncome: 80, enemyStartingSupplies: 45, enemyHealthMultiplier: 1.8, enemyDamageMultiplier: 1.8, enemyRecruitRoster: ['modernShield', 'modernMarksman', 'modernShield', 'modernGrenadier', 'modernArtillery'], enemyDefenseRoster: ['modernShield', 'modernMarksman', 'modernShield', 'modernAntiTank'], roster: ['modernShield', 'modernMarksman', 'modernShield', 'modernGrenadier', 'modernArtillery'], arenaId: 'arrows' },
+    { name: 'Автономная база', threat: 'На половине прочности форта выходит командир щитовиков с охраной, медиком и оператором дрона', ai: 'boss', enemyIncome: 90, enemyStartingSupplies: 50, enemyHealthMultiplier: 1.95, enemyDamageMultiplier: 1.95, enemyRecruitRoster: ['modernShield', 'modernAntiTank', 'modernMarksman', 'modernGrenadier'], roster: ['modernCommander', 'modernShield', 'modernAntiTank', 'modernMarksman', 'modernDroneOperator', 'modernMedic'], arenaId: 'citadel' }
   ],
   'high-medieval': [
     { name: 'Конная засада', threat: 'Конница прорывается к арбалетчикам; щиты держат фронт', ai: 'rush', enemyIncome: 30, enemyStartingSupplies: 20, enemyHealthMultiplier: 1.2, enemyDamageMultiplier: 1.2, roster: ['highKnight', 'highCrossbow', 'highRider'], arenaId: 'ash' },

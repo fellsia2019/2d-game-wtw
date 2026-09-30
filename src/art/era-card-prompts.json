@@ -44,6 +44,11 @@
       "era": "world-wars",
       "status": "approved",
       "prompt": "Use case: historical-scene. Asset type: landscape 3:2 illustrated background concept for the ninth era card in a strategy game, World Wars; no UI. Primary request: a distinctive early-to-mid 20th century frontline landscape. Foreground: an earthen trench crossing the lower part of the scene, sandbags, duckboards and restrained barbed wire. Midground: a low concrete bunker and a small light tank advancing across a scarred road, with a few distant infantry silhouettes. Background: sparse ruined brick buildings and telephone poles fading into mist, no recognisable real-world insignia or flags. Style/medium: richly detailed painterly historical strategy-game concept art, matching the polished depth and texture of existing era-card paintings, with believable period materials and no photorealistic collage. Composition/framing: wide readable landmark in the upper two-thirds; lower third deliberately dark and relatively quiet for later cream title overlay. Strong layered depth, visually readable at a 280 px card thumbnail. Lighting/mood: overcast dawn with a narrow warm break in clouds; subdued tension, no gore. Color palette: slate blue, muddy olive, burnt sienna, cool smoke, warm dawn highlights; distinct from the copper industrial foundry and stone castle cards. Constraints: landscape 3:2, full bleed, no text, no UI, no logo, no watermark, no modern skyscrapers, no futuristic vehicles, no oversized explosions."
+    },
+    {
+      "era": "modern",
+      "status": "approved",
+      "prompt": "A 3:2 landscape painterly game era card of a modern fortified city approach at dawn. Concrete command post, wet road, angular anti-vehicle barriers, contemporary skyline, tiny reconnaissance quadcopter, short teal and muted burgundy banners, warm light under a stormy blue sky. High quality detailed strategy game concept art. No people, no text, no logo, no national flags, no UI."
     }
   ]
 }

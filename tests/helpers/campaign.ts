@@ -11,6 +11,7 @@ export const CAMPAIGN_PLANS = {
   iron: [{ tier: 2, order: '0102' }, { tier: 4, order: '0112' }, { tier: 8, order: '012' }, { tier: 11, order: '002' }],
   renaissance: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '02' }],
   industrial: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '02' }],
+  modern: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '002' }],
   'high-medieval': [{ tier: 8, order: '02' }, { tier: 16, order: '02' }, { tier: 22, order: '02' }, { tier: 25, order: '02' }],
   medieval: [{ tier: 7, order: '02' }, { tier: 11, order: '02' }, { tier: 16, order: '02' }, { tier: 18, order: '002' }],
   antique: [{ tier: 3, order: '012' }, { tier: 6, order: '02' }, { tier: 9, order: '002' }, { tier: 12, order: '002' }]
@@ -18,7 +19,7 @@ export const CAMPAIGN_PLANS = {
 
 export function completeCampaignBattle(game: GameDirector, battle: number): number {
   const era = game.getState().eraId;
-  if (era === 'world-wars') throw new Error('No fixed automatic recruitment plan is defined for World Wars');
+  if (era === 'world-wars') throw new Error(`No fixed automatic recruitment plan is defined for ${era}`);
   const { tier, order } = CAMPAIGN_PLANS[era][battle];
   const roster = ERA_STARTER_KINDS[era];
   for (let attempt = 1; attempt <= 40; attempt++) {

@@ -25,7 +25,7 @@ export class UnitMotion {
   private pose: UnitPose;
   constructor(unit: UnitState, time: number) {
     this.kind = unit.kind;
-    this.standard = unitRole(unit.kind) === 'banner';
+    this.standard = unitRole(unit.kind) === 'banner' && unit.kind !== 'modernDroneOperator';
     this.previousX = this.targetX = unit.x; this.tickTime = time;
     this.previousTime = time; this.visualTime = time - 1 / 30;
     this.action = unit.action; this.facing = this.strikeFacing = unit.facing;
@@ -83,7 +83,7 @@ export class UnitMotion {
     this.previousX = this.targetX = unit.x; this.tickTime = this.previousTime = time; this.visualTime = time - 1 / 30;
     this.walkAge = 0; this.strikeAge = -1; this.action = unit.action;
     this.kind = unit.kind;
-    this.supportAge = 0; this.standard = unitRole(unit.kind) === 'banner';
+    this.supportAge = 0; this.standard = unitRole(unit.kind) === 'banner' && unit.kind !== 'modernDroneOperator';
     this.facing = this.strikeFacing = unit.facing;
     this.pose = { x: unit.x, frame: 0, facing: unit.facing };
   }

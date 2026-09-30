@@ -1,7 +1,7 @@
 import type { EnemyBalance } from './enemyBalance';
 import type { TalentId, TalentLevels } from './talents';
 export type Team = 'ally' | 'enemy';
-export type EraId = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval' | 'renaissance' | 'industrial' | 'world-wars';
+export type EraId = 'stone' | 'bronze' | 'iron' | 'antique' | 'medieval' | 'high-medieval' | 'renaissance' | 'industrial' | 'world-wars' | 'modern';
 export type UnitRole = 'shield' | 'spear' | 'archer' | 'medic' | 'raider' | 'thrower' | 'banner' | 'siege';
 export type StoneHireKind = 'stoneShield' | 'stoneSpear' | 'stoneSlinger' | 'stoneShaman' | 'stoneScout' | 'stoneThrower' | 'stoneTotem' | 'stoneRam';
 export type BronzeHireKind = 'bronzeGuard' | 'bronzeSpear' | 'bronzeArcher' | 'bronzeHealer' | 'bronzeChariot' | 'bronzePitch' | 'bronzeHerald' | 'bronzeRam';
@@ -12,8 +12,9 @@ export type HighMedievalHireKind = 'highKnight' | 'highHalberd' | 'highCrossbow'
 export type RenaissanceHireKind = 'renaissanceCuirassier' | 'renaissancePikeman' | 'renaissanceMusket' | 'renaissanceSurgeon' | 'renaissanceDragoon' | 'renaissanceGrenadier' | 'renaissanceCaptain' | 'renaissanceCannon';
 export type IndustrialHireKind = 'industrialShield' | 'industrialBayonet' | 'industrialRifle' | 'industrialMedic' | 'industrialCarbine' | 'industrialDemolition' | 'industrialMechanic' | 'industrialHowitzer';
 export type WorldWarsHireKind = 'worldWarsShield' | 'worldWarsAssault' | 'worldWarsSniper' | 'worldWarsMedic' | 'worldWarsJeep' | 'worldWarsGrenadier' | 'worldWarsRadio' | 'worldWarsArmoredCar';
-export type HireKind = StoneHireKind | BronzeHireKind | IronHireKind | AntiqueHireKind | MedievalHireKind | HighMedievalHireKind | RenaissanceHireKind | IndustrialHireKind | WorldWarsHireKind;
-export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing' | 'ironGate' | 'ironCommandant' | 'antiqueLegate' | 'medievalJarl' | 'highCastellan' | 'renaissanceGeneral' | 'industrialBaron' | 'worldWarsCommander';
+export type ModernHireKind = 'modernShield' | 'modernAntiTank' | 'modernMarksman' | 'modernMedic' | 'modernRecon' | 'modernGrenadier' | 'modernDroneOperator' | 'modernArtillery';
+export type HireKind = StoneHireKind | BronzeHireKind | IronHireKind | AntiqueHireKind | MedievalHireKind | HighMedievalHireKind | RenaissanceHireKind | IndustrialHireKind | WorldWarsHireKind | ModernHireKind;
+export type UnitKind = HireKind | 'stoneHunter' | 'stoneBone' | 'stoneEnemySlinger' | 'stoneWolf' | 'stoneChief' | 'bronzeEnemySpear' | 'bronzeRaider' | 'bronzeEnemyArcher' | 'bronzeGate' | 'bronzeKing' | 'ironGate' | 'ironCommandant' | 'antiqueLegate' | 'medievalJarl' | 'highCastellan' | 'renaissanceGeneral' | 'industrialBaron' | 'worldWarsCommander' | 'modernCommander';
 export type UpgradeId = 'supply' | 'wagon' | 'banner' | 'arrows' | 'bandages' | 'contract' | 'pikes' | 'workshop' | 'boots' | 'siegecraft' | 'lastReserve' | 'standard';
 export type DoctrineId = 'steel' | 'arrow' | 'bargain';
 export type GamePhase = 'menu' | 'preparation' | 'contract' | 'battle' | 'reward' | 'victory' | 'defeat';
@@ -38,12 +39,22 @@ export interface UnitState {
 
 export interface BattleEvent {
   id: number;
-  type: 'spawn' | 'attack' | 'heal' | 'block' | 'death' | 'fortress' | 'income' | 'result' | 'boss-warning' | 'boss-assault' | 'suppress' | 'expose';
+  type: 'spawn' | 'attack' | 'heal' | 'block' | 'death' | 'fortress' | 'income' | 'result' | 'boss-warning' | 'boss-assault' | 'suppress' | 'expose' | 'drone-launch' | 'drone-explode';
   x: number;
   team: Team;
   amount?: number;
   sourceId?: number;
   targetId?: number;
+}
+
+export interface DroneStrike {
+  id: number;
+  sourceId: number;
+  targetId?: number;
+  team: Team;
+  startX: number;
+  targetX: number;
+  progress: number; // 0..1, damage is applied at 1
 }
 
 export interface RewardOption { id: UpgradeId; name: string; description: string; }
@@ -110,6 +121,7 @@ export interface GameState {
   allyFortressMaxHp: number;
   allyCount: number;
   units: UnitState[];
+  droneStrikes: DroneStrike[];
   events: BattleEvent[]; // recent events, keyed by id for one-shot visuals
   cards: { kind: HireKind; name: string; role: string; cost: number; canHire: boolean }[];
   roster: HireKind[];

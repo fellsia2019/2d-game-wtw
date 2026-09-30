@@ -3,13 +3,14 @@ import { unitArt, eraName, asset, roleOf } from './catalog';
 import './sprite-lab.css';
 import type { EraId } from '../core/types';
 import manifest from '../../public/assets/sprite-manifest.json';
+import modernManifest from '../../public/assets/modern-manifest.json';
 import { medievalSignalFrame, medievalTreatmentFrame } from './medieval-motion';
 import { standardFrame } from '../view/SupportMotion';
 
 type Era = EraId;
 type LabEntry = { id: string; unit: { name: string; role: string; period: number }; era: Era; art: string; artRole: string; boss: boolean };
-const labEraOrder: Era[] = ERA_ORDER;
-const labEraName = eraName;
+const labEraOrder: Era[] = [...ERA_ORDER];
+const labEraName = (id: Era) => eraName(id);
 // Findings from docs/SPRITE_SIZE_REVIEW.md; keyed by art so aliases share the tag.
 const smallModels: Record<string, string> = {
  'bronze-u-raider': 'Мелкий конь колесницы; возница ×0,8.',
@@ -29,10 +30,10 @@ const correctedModels: Record<string, string> = {
 };
 const atlasFrames = (era: Era, role: string) => {
  const counts = (manifest.eraFrameCounts ?? {}) as Partial<Record<Era, Record<string, number>>>;
- return counts[era]?.[role] ?? (era === 'industrial' ? 16 : role === 'banner' ? 48 : 16);
+ return era === 'modern' ? 16 : counts[era as EraId]?.[role] ?? (era === 'industrial' ? 16 : role === 'banner' ? 48 : 16);
 };
 type Pose = 'idle' | 'ready' | 'move' | 'attack';
-const entries: LabEntry[] = Object.entries(UNITS).map(([id, unit]) => ({ id, unit, era: (id === 'worldWarsCommander' ? 'world-wars' : unitArt[id].split('-u-')[0]) as Era, art: unitArt[id], artRole: id === 'worldWarsCommander' ? 'boss' : roleOf(id), boss: isBoss(id as keyof typeof UNITS) }))
+const entries: LabEntry[] = [...Object.entries(UNITS).map(([id, unit]) => ({ id, unit, era: (id === 'worldWarsCommander' ? 'world-wars' : unitArt[id].split('-u-')[0]) as Era, art: unitArt[id], artRole: id === 'worldWarsCommander' ? 'boss' : roleOf(id), boss: isBoss(id as keyof typeof UNITS) }))]
  .sort((a,b) => labEraOrder.indexOf(a.era)-labEraOrder.indexOf(b.era));
 const models = new Set(entries.map(entry => entry.art));
 const primaryIds = new Set<string>();
@@ -41,7 +42,7 @@ for (const entry of entries) if (!seen.has(entry.art)) { primaryIds.add(entry.id
 const labRole = (id: string) => entries.find(entry => entry.id === id)?.artRole ?? roleOf(id);
 const root = document.querySelector<HTMLDivElement>('#lab')!;
 root.innerHTML = `
- <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Все игровые модели. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${ERA_ORDER.length} игровых эпох</b><span>${models.size} моделей · ${manifest.sheets.length} атласов</span><span>${Object.keys(UNITS).length} игровых ID</span></div></header>
+ <header><a href="${import.meta.env.BASE_URL}">← В игру</a><span class="eyebrow">ВСЕ ЭПОХИ / ЕДИНАЯ ЛАБОРАТОРИЯ</span><h1>Лаборатория спрайтов</h1><p>Игровые модели всех эпох. Обе стороны и полные циклы движения и действия показаны в одинаковом масштабе и на одной линии опоры. Боссы увеличены ×1,5 как в игре.</p><div class="summary"><b>${ERA_ORDER.length} игровых эпох</b><span>${models.size} моделей в мастерской · ${manifest.sheets.length} игровых атласов</span><span>${Object.keys(UNITS).length} игровых ID</span></div></header>
  <form class="controls" onsubmit="return false">
   <label>Эпоха<select id="era"><option value="all">Все эпохи</option>${labEraOrder.map(id => `<option value="${id}">${labEraName(id)}</option>`).join('')}</select></label>
   <label>Каталог<select id="catalog"><option value="models">Уникальные модели</option><option value="ids">Все ID / боссы</option></select></label>
@@ -61,6 +62,7 @@ root.innerHTML = `
   <label class="scrubber">Кадр<input id="frame" type="range" min="0" max="15" value="2"/><output id="frame-value">2 / 15</output></label>
  </form>
  <aside id="draft-preview" hidden><img src="${import.meta.env.BASE_URL}assets/era-cards/world-wars.png" alt="Иллюстрация карты эпохи Мировые войны: окоп, бункер и лёгкий танк на рассвете"/><div><span class="eyebrow">ИГРОВАЯ ЭПОХА</span><h2>Мировые войны</h2><p>Окопная арена, укрепления обеих сторон и восемь ролевых моделей. Осадная роль — бронемашина, босс — отдельный лёгкий танк.</p><div class="draft-forts"><img src="${import.meta.env.BASE_URL}assets/world-wars-tower-ally.svg" alt="Союзное окопное укрепление"/><img src="${import.meta.env.BASE_URL}assets/world-wars-tower-enemy.svg" alt="Вражеское окопное укрепление"/></div><a href="${import.meta.env.BASE_URL}assets/world-wars-manifest.json" target="_blank" rel="noopener">Манифест набора ↗</a></div></aside>
+ <aside id="modern-preview" hidden><img src="${import.meta.env.BASE_URL}assets/era-cards/modern.png" alt="Современность: укреплённый рубеж, артиллерия, дрон и город"/><div><span class="eyebrow">ИГРОВАЯ ЭПОХА</span><h2>Современность</h2><p>Восемь ролевых моделей с союзной и вражеской палитрами. Оператор запускает ударный дрон: тот летит к противнику и взрывается. Командир финала использует увеличенную модель щитовика.</p><div class="draft-forts"><a href="${import.meta.env.BASE_URL}assets/modern-tower-ally.svg" target="_blank" rel="noopener"><img src="${import.meta.env.BASE_URL}assets/modern-tower-ally.svg" alt="Союзный современный командный форт"/></a><a href="${import.meta.env.BASE_URL}assets/modern-tower-enemy.svg" target="_blank" rel="noopener"><img src="${import.meta.env.BASE_URL}assets/modern-tower-enemy.svg" alt="Вражеский современный командный форт"/></a></div><a href="${import.meta.env.BASE_URL}assets/modern-manifest.json" target="_blank" rel="noopener">Манифест эпохи ↗</a><div class="drone-demo"><h3>Ударный дрон · цикл действия</h3><canvas id="modern-drone-demo" width="840" height="210" aria-label="Оператор запускает дрон, тот летит к противнику и взрывается"></canvas><p>Запуск → полёт к противнику → подрыв → новый дрон на ранце. Эта механика работает и в бою.</p></div></div></aside>
  <section id="draft-boss" hidden><span class="eyebrow">УНИКАЛЬНЫЙ БОСС</span><h2>Командующий Броневого узла</h2><p>Вражеский лёгкий танк в масштабе ×1,5 с отдельным атласом. Сверху осадная бронемашина, снизу босс; показаны стойка, движение и выстрел.</p><a href="${import.meta.env.BASE_URL}assets/world-wars-boss-preview.png" target="_blank" rel="noopener"><img src="${import.meta.env.BASE_URL}assets/world-wars-boss-preview.png" alt="Сравнение осадной бронемашины с уникальным боссом лёгким танком в трёх фазах анимации"/></a></section>
  <div class="result-line"><span id="count"></span><span id="status" role="status">Загрузка ассетов…</span></div><main id="units"></main><p id="empty" hidden>По этому запросу юнитов нет.</p>
  <dialog id="inspector"><div class="dialog-heading"><h2 id="detail-title"></h2><button id="close" type="button">Закрыть</button></div><p>Все кадры одного атласа, включая плавное действие командиров поддержки. Портрет и PNG можно открыть отдельно в карточке.</p><div id="frames"></div></dialog>`;
@@ -86,6 +88,43 @@ function imageFor(url: string) {
  return image;
 }
 function loadStatus() { status.textContent = pending ? `Загрузка: осталось ${pending}` : errors ? `Не загрузились ${errors} ассетов` : 'Все ассеты загружены'; }
+const droneCanvas = document.querySelector<HTMLCanvasElement>('#modern-drone-demo')!;
+const operatorAtlas = imageFor(`${import.meta.env.BASE_URL}assets/modern-u-banner-sheet.png`);
+const targetAtlas = imageFor(`${import.meta.env.BASE_URL}assets/enemy-modern-u-shield-sheet.png`);
+function drawDroneDemo(seconds: number) {
+ if (era.value !== 'modern') return;
+ const ctx = droneCanvas.getContext('2d')!, w=droneCanvas.width, h=droneCanvas.height, phase=seconds%3.8;
+ const bg=ctx.createLinearGradient(0,0,0,h); bg.addColorStop(0,'#456270'); bg.addColorStop(1,'#253d43');
+ ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+ ctx.fillStyle='#344847'; ctx.fillRect(0,183,w,27);
+ ctx.strokeStyle='#a6b5a7'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(0,183); ctx.lineTo(w,183); ctx.stroke();
+ const sprite=(atlas:HTMLImageElement,frame:number,x:number,flip=false)=>{
+  if(!atlas.complete||!atlas.naturalWidth)return;
+  ctx.save();ctx.translate(x,183);ctx.scale(flip?-.9:.9,.9);
+  ctx.drawImage(atlas,frame%4*320,Math.floor(frame/4)*192,320,192,-160,-176,320,192);ctx.restore();
+ };
+ sprite(operatorAtlas,phase<.42?10:phase<.75?11:phase<2.7?14:15,128);
+ sprite(targetAtlas,phase>2.05&&phase<2.48?13:0,704,true);
+ if(phase>=.65&&phase<2.12){
+  const t=(phase-.65)/1.47,x=238+455*t,y=80-34*Math.sin(Math.PI*t);
+  ctx.strokeStyle='#a5dfe2';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-34,y+12);ctx.lineTo(x-18,y+5);ctx.stroke();
+  ctx.fillStyle='#243741';ctx.strokeStyle='#b4c9c6';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(x,y,17,7,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#dd7e69';ctx.beginPath();ctx.arc(x+13,y,3,0,Math.PI*2);ctx.fill();
+  for(const dx of [-27,27])for(const dy of [-10,10]){
+   ctx.beginPath();ctx.moveTo(x+Math.sign(dx)*13,y+Math.sign(dy)*3);ctx.lineTo(x+dx,y+dy);ctx.stroke();
+   ctx.fillStyle='#182d34';ctx.beginPath();ctx.ellipse(x+dx,y+dy,9,2.5,0,0,Math.PI*2);ctx.fill();
+  }
+ }
+ if(phase>=2.12&&phase<2.68){
+  const t=(phase-2.12)/.56,r=16+49*t;
+  ctx.globalAlpha=1-t;
+  const blast=ctx.createRadialGradient(680,85,5,680,85,r);blast.addColorStop(0,'#fff2c5');blast.addColorStop(.38,'#ffc16c');blast.addColorStop(1,'#e66b4b00');
+  ctx.fillStyle=blast;ctx.beginPath();ctx.arc(680,85,r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+ }
+ const label=phase<.65?'ЗАПУСК':phase<2.12?'ПОЛЁТ К ПРОТИВНИКУ':phase<2.68?'ПОДРЫВ':'ПЕРЕЗАРЯДКА';
+ ctx.fillStyle='#e9ecdc';ctx.font='bold 14px Segoe UI, sans-serif';ctx.fillText(label,16,24);
+}
 const units = document.querySelector<HTMLElement>('#units')!;
 for (const entry of entries) {
  const article = document.createElement('article');
@@ -111,9 +150,10 @@ for (const entry of entries) {
  units.append(article);
 }
 const arenas = new Map<Era, HTMLImageElement>();
-for (const value of labEraOrder) arenas.set(value, imageFor(asset(`arena-${value}`)));
+for (const value of ERA_ORDER) arenas.set(value, imageFor(asset(`arena-${value}`)));
 function filter() {
  document.querySelector<HTMLElement>('#draft-preview')!.hidden = era.value !== 'world-wars';
+ document.querySelector<HTMLElement>('#modern-preview')!.hidden = era.value !== 'modern';
  document.querySelector<HTMLElement>('#draft-boss')!.hidden = era.value !== 'world-wars';
  let count = 0, hasBanner = false;
  displayRole = '';
@@ -167,7 +207,7 @@ function inspect(name: string, image: HTMLImageElement, enemy: boolean, arena: E
  for (let frame = 0; frame < atlasFrames(arena, role); frame++) {
   const figure = document.createElement('figure'), canvas = document.createElement('canvas'); canvas.width = boss ? 480 : 320; canvas.height = boss ? 300 : 220;
   const walkLabel = ['контакт','амортизация','пронос стопы','отталкивание'][(frame-2)%4];
-  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'world-wars' ? 'радиосигнал' : arena === 'industrial' ? 'работа инструментом' : arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
+  const caption = document.createElement('figcaption'); caption.textContent = `${frame} · ${frame === 0 ? 'стойка' : frame === 1 ? 'готовность' : frame < 10 ? `шаг · ${walkLabel}` : role === 'medic' ? 'лечение' : role === 'banner' ? arena === 'modern' ? ['подготовка запуска','взлёт','удаление от оператора','полёт к цели','удар у цели','новый дрон'][frame-10] : arena === 'world-wars' ? 'радиосигнал' : arena === 'industrial' ? 'работа инструментом' : arena === 'medieval' ? 'сигнал рогом' : arena === 'antique' ? 'командный жест' : 'подъём и опускание знамени' : role === 'archer' && arena === 'stone' ? ['прицеливание','натяжение','выстрел','сопровождение','перезарядка','готовность'][frame-10] : frame >= 16 ? 'полный цикл действия / перезарядки' : 'атака'}`;
   const stage = document.createElement('div'); stage.className = 'stage';
   canvas.style.width = `${canvas.width}px`; canvas.style.height = `${canvas.height}px`; stage.append(canvas);
   figure.append(stage, caption); frames.append(figure); items.push({ canvas, image, enemy, arena, role, frame, period, boss });
@@ -191,7 +231,7 @@ function currentFrame(role = displayRole, era = displayEra, period = entries.fin
 function draw(item: typeof canvasList[number], frame: number, scale: number) {
  const { canvas, image, enemy, arena } = item;
  // Canvas pixels track CSS pixels so the game-size presets really are 52% and 34%.
- const effectiveScale = scale * (item.boss ? 1.5 : 1);
+ const effectiveScale = scale * (item.boss ? 1.5 : 1) * (item.arena === 'modern' && scale < 1 ? modernManifest.gameScaleMultiplier : 1);
  const stageWidth = Math.round(canvas.parentElement!.clientWidth);
  const displayScale = item.frame === undefined ? Math.min(effectiveScale, Math.max(.1,(stageWidth-12)/320)) : effectiveScale;
  const width = item.frame === undefined ? Math.max(stageWidth, Math.ceil(320 * displayScale)) : canvas.width;
@@ -220,6 +260,7 @@ function loop(now: number) {
  if (!paused && !document.hidden) time += dt * Number(speed.value);
  const frame = manual ?? currentFrame(); slider.value = String(frame); document.querySelector('#frame-value')!.textContent = `${frame} / ${slider.max}`;
  for (const item of canvasList) if (item.inView && !item.canvas.closest('article')!.hidden && !item.canvas.closest('section')!.hidden) draw(item, currentFrame(item.role, item.arena, item.period), Number(zoom.value));
+ drawDroneDemo(time);
  requestAnimationFrame(loop);
 }
 loadStatus(); requestAnimationFrame(loop);

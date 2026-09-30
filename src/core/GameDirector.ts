@@ -86,7 +86,7 @@ export class GameDirector implements GameApp {
       enemyFortressHp: sim?.enemyFortressHp ?? this.report?.enemyFortressHp ?? 100,
       allyFortressMaxHp: sim?.allyFortressMaxHp ?? baseHealth(this.talentProgress.baseLevel ?? 0),
       fortressMaxHp: 100, allyCount: sim?.allyCount ?? 0,
-      units: sim?.units.map(u => ({ ...u })) ?? [], events: sim?.events.map(e => ({ ...e })) ?? [], cards,
+      units: sim?.units.map(u => ({ ...u })) ?? [], droneStrikes: sim?.droneStrikes.map(strike => ({ ...strike })) ?? [], events: sim?.events.map(e => ({ ...e })) ?? [], cards,
       roster: [...this.roster], unlockedUnits: this.unlockedUnits(),
       doctrines: DOCTRINES.map(d => ({ ...d })), selectedDoctrine: this.doctrine,
       contracts: this.contracts.map(c => ({ ...c, roster: [...c.roster] })), selectedContract: this.selectedContract?.id ?? null, contractRisk: this.contractRisk,
