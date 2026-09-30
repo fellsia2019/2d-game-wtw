@@ -1,6 +1,6 @@
 import { enemyBalanceDefaults, type EnemyBalance } from './enemyBalance';
 import { ERA_BATTLES, ERA_HIRE_KINDS, ERA_STARTER_KINDS, ERA_INCOME, ERA_KILL_GOLD, UNITS, unitRole, isBoss } from '../data/content';
-import type { BattleEvent, BattleReport, BossPhase, ContractOption, DoctrineId, EraId, HireKind, Team, UnitKind, UnitState, UpgradeId } from './types';
+import type { BattleEvent, BattleReport, BossPhase, ContractOption, DoctrineId, DroneStrike, EraId, HireKind, Team, UnitKind, UnitState, UpgradeId } from './types';
 import { Random } from './random';
 import { emptyTalentProgress, talentMultiplier, type TalentLevels } from './talents';
 
@@ -19,13 +19,14 @@ export class BattleSimulation {
   readonly random: Random;
   readonly talents: TalentLevels;
   readonly units: UnitState[] = [];
+  readonly droneStrikes: DroneStrike[] = [];
   readonly events: BattleEvent[] = [];
   elapsed = 0;
   resource = 0;
   enemyResource = 0;
   incomeUpgrades = 0;
   allyFortressHp: number;
-  readonly allyFortressMaxHp: number;
+  allyFortressMaxHp: number;
   enemyFortressHp = 100;
   enemyGlyphRemaining = 0;
   private enemyGlyphUsed = false;
@@ -40,6 +41,7 @@ export class BattleSimulation {
   report: BattleReport | null = null;
   private nextUnitId = 1;
   private nextEventId = 1;
+  private nextDroneId = 1;
   private aiCooldown = 2.5;
   private aiSequence = 0;
   private archersHired = 0;
@@ -73,6 +75,21 @@ export class BattleSimulation {
   }
 
   get income(): number { return (ERA_INCOME[this.eraId] + this.incomeUpgrades + (this.upgrades.includes('wagon') ? 1 : 0)) * talentMultiplier(this.talents.supply); }
+
+  updateTalents(levels: TalentLevels, baseHp: number): void {
+    const cooldownRatio = talentMultiplier(this.talents.attackSpeed) / talentMultiplier(levels.attackSpeed);
+    Object.assign(this.talents, levels);
+    for (const unit of this.units) {
+      if (unit.team !== 'ally' || unit.hp <= 0) continue;
+      const healthFraction = unit.hp / unit.maxHp;
+      unit.maxHp = this.unitMaxHp(unit.kind, 'ally');
+      unit.hp = unit.maxHp * healthFraction;
+      unit.cooldown *= cooldownRatio;
+    }
+    const fortressFraction = this.allyFortressHp / this.allyFortressMaxHp;
+    this.allyFortressMaxHp = this.doctrine === 'bargain' ? Math.max(1, Math.floor(baseHp * .85)) : baseHp;
+    this.allyFortressHp = this.allyFortressMaxHp * fortressFraction;
+  }
   get incomeUpgradeCost(): number { return 40 + this.incomeUpgrades * 10 - (this.incomeUpgrades === 0 && this.upgrades.includes('workshop') ? 12 : 0); }
   get enemyIncome(): number { return this.contract.enemyIncome + (this.elapsed >= 300 ? 2 : 0); }
   private get enemyDamageMultiplier(): number { return 1 + this.enemyBalance.damageBonus / 100; }
@@ -114,6 +131,7 @@ export class BattleSimulation {
     if (boss) this.bossDamagePool = Math.min(boss.maxHp * .25, this.bossDamagePool + boss.maxHp * STEP / 6);
     const previousSeconds = Math.floor(this.elapsed + 1e-8);
     this.elapsed += STEP;
+    this.advanceDrones();
     this.goldEarned += Math.floor(this.elapsed + 1e-8) - previousSeconds;
     const overtime = this.elapsed >= 300 ? 2 : 0;
     this.resource += (this.income + overtime) * STEP;
@@ -163,7 +181,7 @@ export class BattleSimulation {
           const defenders = battle.enemyDefenseRoster;
           kind = defenders[this.aiSequence % defenders.length];
         }
-        else if (plan === 'ranged') kind = ['iron','antique','medieval','high-medieval','renaissance','industrial','world-wars'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
+        else if (plan === 'ranged') kind = ['iron','antique','medieval','high-medieval','renaissance','industrial','world-wars','modern'].includes(this.eraId) ? enemies[allyNearFort ? 0 : this.aiSequence % enemies.length] : enemies[(allyNearFort || this.aiSequence % 3 === 0) ? 0 : Math.min(1, enemies.length - 1)];
         else kind = enemies[this.aiSequence % enemies.length];
         if (allyArchers >= 3 && plan === 'rush' && this.aiSequence % 3 === 0) kind = enemies.find(id => unitRole(id) === 'raider') ?? kind;
         if (isBoss(kind)) kind = enemies.find(id => id !== kind) ?? kind;
@@ -193,10 +211,14 @@ export class BattleSimulation {
     }
   }
 
-  private spawn(kind: UnitKind, team: Team): void {
+  private unitMaxHp(kind: UnitKind, team: Team): number {
     const def = UNITS[kind];
     const bonusHp = team === 'ally' && this.upgrades.includes('banner') && (unitRole(kind) === 'shield' || unitRole(kind) === 'spear') ? 1.15 : 1;
-    const hp = Math.round(def.hp * bonusHp * (team === 'ally' ? talentMultiplier(this.talents.health) : (1 + this.enemyBalance.hpBonus / 100)));
+    return Math.round(def.hp * bonusHp * (team === 'ally' ? talentMultiplier(this.talents.health) : (1 + this.enemyBalance.hpBonus / 100)));
+  }
+
+  private spawn(kind: UnitKind, team: Team): void {
+    const hp = this.unitMaxHp(kind, team);
     const unit: UnitState = { id: this.nextUnitId++, kind, team, x: team === 'ally' ? 105 : 895,
       hp, maxHp: hp, cooldown: .35, action: 'idle', facing: team === 'ally' ? 1 : -1 };
     if (team === 'ally' && unitRole(kind) === 'archer') {
@@ -231,6 +253,47 @@ export class BattleSimulation {
       && ['bronzeGuard', 'bronzeSpear', 'bronzeGate', 'bronzeEnemySpear'].includes(other.kind)
       && Math.abs(other.x - unit.x) <= 72);
     return Math.min(.75, base + (formed ? .12 : 0));
+  }
+
+  private advanceDrones(): void {
+    for (let index = this.droneStrikes.length - 1; index >= 0; index--) {
+      const strike = this.droneStrikes[index];
+      const tracked = this.units.find(unit => unit.id === strike.targetId && unit.hp > 0);
+      if (tracked) strike.targetX = tracked.x;
+      strike.progress = Math.min(1, strike.progress + STEP / .85);
+      if (strike.progress < 1) continue;
+      this.droneStrikes.splice(index, 1);
+      const enemies = this.units.filter(unit => unit.team !== strike.team && unit.hp > 0 && Math.abs(unit.x - strike.targetX) <= 48)
+        .sort((a,b) => Math.abs(a.x-strike.targetX)-Math.abs(b.x-strike.targetX) || a.id-b.id).slice(0,4);
+      const base = UNITS.modernDroneOperator.damage * (strike.team === 'ally' && this.upgrades.includes('standard') ? 1.2 : 1)
+        * (strike.team === 'ally' ? talentMultiplier(this.talents.damage) : this.enemyDamageMultiplier);
+      this.event('drone-explode', strike.targetX, strike.team, undefined, strike.sourceId, enemies[0]?.id);
+      if (enemies.length) {
+        enemies.forEach((target, hitIndex) => {
+          const raw = base * (hitIndex === 0 ? 1 : .5);
+          const blocked = raw * this.armor(target);
+          const dealt = this.damageUnit(target, Math.max(1, raw - blocked));
+          if (strike.team === 'ally') this.damageDealt += dealt;
+          else { this.damageTaken += dealt; this.blocked += blocked; }
+          this.event('attack', target.x, strike.team, dealt, undefined, target.id);
+          if (blocked) this.event('block', target.x, target.team, blocked, undefined, target.id);
+          if (target.hp <= 0) this.event('death', target.x, target.team, undefined, strike.sourceId, target.id);
+        });
+      } else if (strike.targetId === undefined) {
+        const damage = base * .22;
+        if (strike.team === 'ally') {
+          const bossBattle = ERA_BATTLES[this.eraId][this.battleIndex].ai === 'boss';
+          const protectedFortress = (bossBattle && this.bossPhase === 'assault') || this.enemyGlyphRemaining > 0;
+          const nextHp = protectedFortress ? this.enemyFortressHp
+            : Math.max(!this.enemyGlyphUsed || (bossBattle && this.bossPhase === 'none') ? Math.min(50, this.enemyFortressHp) : 0, this.enemyFortressHp - damage);
+          this.damageDealt += this.enemyFortressHp - nextHp;
+          this.enemyFortressHp = nextHp;
+          this.activateEnemyGlyph();
+          if (bossBattle) this.bossTick();
+        } else { this.allyFortressHp = Math.max(0, this.allyFortressHp - damage); this.damageTaken += damage; }
+        this.event('fortress', strike.targetX, strike.team, damage, undefined);
+      }
+    }
   }
 
   private act(unit: UnitState): void {
@@ -272,7 +335,7 @@ export class BattleSimulation {
       return;
     }
     // Standards only supply the nearby attack-speed aura. They never strike units or bases.
-    if (unitRole(unit.kind) === 'banner') {
+    if (unitRole(unit.kind) === 'banner' && unit.kind !== 'modernDroneOperator') {
       unit.action = 'idle';
       if (targetX !== unit.x) unit.facing = targetX > unit.x ? 1 : -1;
       return;
@@ -280,9 +343,15 @@ export class BattleSimulation {
     unit.action = 'attack';
     if (targetX !== unit.x) unit.facing = targetX > unit.x ? 1 : -1;
     if (unit.cooldown > 0) return;
-    const banners = this.units.filter(u => u.team === unit.team && unitRole(u.kind) === 'banner' && u.id !== unit.id && Math.abs(u.x - unit.x) <= 110).length;
+    const banners = this.units.filter(u => u.team === unit.team && unitRole(u.kind) === 'banner' && u.kind !== 'modernDroneOperator' && u.id !== unit.id && Math.abs(u.x - unit.x) <= 110).length;
     unit.cooldown = def.period / ((1 + Math.min(2, banners) * (unit.team === 'ally' && this.upgrades.includes('standard') ? .24 : .16))
       * (unit.team === 'ally' ? talentMultiplier(this.talents.attackSpeed) : 1));
+    if (unit.kind === 'modernDroneOperator') {
+      this.droneStrikes.push({ id: this.nextDroneId++, sourceId: unit.id, targetId: target?.id, team: unit.team,
+        startX: unit.x, targetX, progress: 0 });
+      this.event('drone-launch', targetX, unit.team, undefined, unit.id, target?.id);
+      return;
+    }
     if (['industrialRifle', 'industrialCarbine', 'industrialHowitzer'].includes(unit.kind)) {
       const previous = this.industrialHeat.get(unit.id);
       const shots = (previous && this.elapsed - previous.lastShot < 12 ? previous.shots : 0) + 1;

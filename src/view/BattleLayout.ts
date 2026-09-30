@@ -8,9 +8,10 @@ export function battlefieldLayout(width: number, height: number, insets: BattleI
   const combatLift = Math.min(96, Math.max(32, height * .08), Math.max(0, dockBaseline - insets.top) * .22);
   const baseline = dockBaseline - combatLift;
   const room = Math.max(40, baseline - insets.top);
+  const compactLandscape = width > height && width <= 1000 && height <= 500;
   // Reserve the unscaled health-bar offset above the 176px anchored sprite.
-  const unitScale = Math.min(width < 650 ? .36 : .62, (room - 9) / 176);
-  const towerSize = Math.max(36, Math.min(width < 650 ? 116 : 210, width * .3, room * .9));
+  const unitScale = Math.min(width < 650 ? .36 : compactLandscape ? .38 : .62, (room - 9) / 176);
+  const towerSize = Math.max(36, Math.min(width < 650 ? 116 : compactLandscape ? 132 : 210, width * .3, room * .9));
   const margin = towerSize * .5 + 10;
   return { baseline, combatLift, unitScale, towerSize, left: Math.max(insets.left + 6, margin), right: width - Math.max(insets.right + 6, margin) };
 }

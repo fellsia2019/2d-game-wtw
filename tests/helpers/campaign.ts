@@ -12,6 +12,7 @@ export const CAMPAIGN_PLANS = {
   renaissance: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '02' }],
   industrial: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '02' }],
   'world-wars': [{ tier: 10, order: '02' }, { tier: 16, order: '02' }, { tier: 22, order: '02', incomeUpgrades: 4 }, { tier: 28, order: '02', incomeUpgrades: 4 }],
+  modern: [{ tier: 8, order: '02' }, { tier: 12, order: '02' }, { tier: 17, order: '02' }, { tier: 20, order: '002' }],
   'high-medieval': [{ tier: 8, order: '02' }, { tier: 16, order: '02' }, { tier: 22, order: '02' }, { tier: 25, order: '02' }],
   medieval: [{ tier: 7, order: '02' }, { tier: 11, order: '02' }, { tier: 16, order: '02' }, { tier: 18, order: '002' }],
   antique: [{ tier: 3, order: '012' }, { tier: 6, order: '02' }, { tier: 9, order: '002' }, { tier: 12, order: '002' }]

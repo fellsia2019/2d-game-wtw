@@ -7,6 +7,7 @@ export const descriptions = { shield: 'Держит фронт и поглоща
 export const rewardIcons: Record<string, string> = { supply: '◈', wagon: '✦', banner: '⚑', arrows: '➶', bandages: '✚', contract: '◇', pikes: '↟', workshop: '⚒' };
 
 export const unitRole: Record<string, string> = {
+ modernShield:'shield',modernAntiTank:'spear',modernMarksman:'archer',modernMedic:'medic',modernRecon:'raider',modernGrenadier:'thrower',modernDroneOperator:'banner',modernArtillery:'siege',modernCommander:'shield',
  worldWarsShield:'shield',worldWarsAssault:'spear',worldWarsSniper:'archer',worldWarsMedic:'medic',worldWarsJeep:'raider',worldWarsGrenadier:'thrower',worldWarsRadio:'banner',worldWarsArmoredCar:'siege',worldWarsCommander:'siege',
  industrialShield:'shield',industrialBayonet:'spear',industrialRifle:'archer',industrialMedic:'medic',industrialCarbine:'raider',industrialDemolition:'thrower',industrialMechanic:'banner',industrialHowitzer:'siege',industrialBaron:'shield',
  renaissanceCuirassier:'shield',renaissancePikeman:'spear',renaissanceMusket:'archer',renaissanceSurgeon:'medic',renaissanceDragoon:'raider',renaissanceGrenadier:'thrower',renaissanceCaptain:'banner',renaissanceCannon:'siege',renaissanceGeneral:'shield',
@@ -19,7 +20,7 @@ export const unitRole: Record<string, string> = {
  stoneHunter:'raider',stoneBone:'bulwark',stoneEnemySlinger:'archer',stoneWolf:'raider',stoneChief:'boss',bronzeEnemySpear:'spear',bronzeRaider:'raider',bronzeEnemyArcher:'archer',bronzeGate:'bulwark',bronzeKing:'boss'
 };
 for (const [kind, role] of Object.entries(unitRole)) unitArt[kind] = kind === 'worldWarsCommander' ? 'world-wars-boss'
- : `${kind.startsWith('worldWars') ? 'world-wars' : kind.startsWith('industrial') ? 'industrial' : kind.startsWith('renaissance') ? 'renaissance' : kind.startsWith('high') ? 'high-medieval' : kind.startsWith('medieval') ? 'medieval' : kind.startsWith('antique') ? 'antique' : kind.startsWith('stone') ? 'stone' : kind.startsWith('iron') ? 'iron' : 'bronze'}-u-${role}`;
+ : `${kind.startsWith('modern') ? 'modern' : kind.startsWith('worldWars') ? 'world-wars' : kind.startsWith('industrial') ? 'industrial' : kind.startsWith('renaissance') ? 'renaissance' : kind.startsWith('high') ? 'high-medieval' : kind.startsWith('medieval') ? 'medieval' : kind.startsWith('antique') ? 'antique' : kind.startsWith('stone') ? 'stone' : kind.startsWith('iron') ? 'iron' : 'bronze'}-u-${role}`;
 export const roleOf = (kind: string) => unitRole[kind] ?? kind;
 export const portrait = (kind: string, enemy = false) => asset(`${enemy ? 'enemy-' : ''}${unitArt[kind] ?? 'stone-u-shield'}`);
 export const eraName = (era: string) => ERA_NAMES[era as EraId] ?? 'Неизвестная эпоха';

@@ -75,12 +75,12 @@
  .modal.result-modal.reward-result{display:grid;grid-template-columns:112px minmax(0,1fr);gap:4px 12px;padding:8px 12px}
  .reward-result .result-header{grid-column:1;grid-row:1;margin:0}
  .modal.reward-result .result-header h2{font-size:22px;line-height:1.1}
- .reward-result .result-summary{grid-column:1;grid-row:2;grid-template-columns:1fr;grid-auto-rows:1fr;gap:4px}
+ .reward-result .result-summary{grid-column:1;grid-row:2;grid-template-columns:1fr 1fr 1fr;grid-auto-rows:1fr;gap:4px}
  .reward-result .result-stat{min-height:38px;padding:2px;gap:1px}
  .reward-result .result-stat-value .ui-icon{width:18px;height:18px}
  .reward-result .result-stat-value{font-size:18px}
  .reward-result .result-choice-title{grid-column:2;grid-row:1;margin:0;align-self:center}
- .reward-result .result-rewards{grid-column:2;grid-row:2;grid-template-columns:1fr;gap:4px}
+ .reward-result .result-rewards{grid-column:2;grid-row:2;grid-template-columns:1fr 1fr 1fr;gap:4px}
  .reward-result .reward-card{grid-template-columns:minmax(0,1fr);padding:4px 8px;min-height:38px}
  .reward-result .reward-card .reward-effect{line-height:1.1}
  .reward-result .take-reward{display:none}

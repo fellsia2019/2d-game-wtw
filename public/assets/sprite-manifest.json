@@ -84,7 +84,8 @@
     "high-medieval",
     "renaissance",
     "industrial",
-    "world-wars"
+    "world-wars",
+    "modern"
   ],
   "standardFrames": {
     "first": 16,
@@ -163,6 +164,14 @@
     "enemy-medieval-u-siege-sheet.png",
     "enemy-medieval-u-spear-sheet.png",
     "enemy-medieval-u-thrower-sheet.png",
+    "enemy-modern-u-archer-sheet.png",
+    "enemy-modern-u-banner-sheet.png",
+    "enemy-modern-u-medic-sheet.png",
+    "enemy-modern-u-raider-sheet.png",
+    "enemy-modern-u-shield-sheet.png",
+    "enemy-modern-u-siege-sheet.png",
+    "enemy-modern-u-spear-sheet.png",
+    "enemy-modern-u-thrower-sheet.png",
     "enemy-renaissance-u-archer-sheet.png",
     "enemy-renaissance-u-banner-sheet.png",
     "enemy-renaissance-u-medic-sheet.png",
@@ -224,6 +233,14 @@
     "medieval-u-siege-sheet.png",
     "medieval-u-spear-sheet.png",
     "medieval-u-thrower-sheet.png",
+    "modern-u-archer-sheet.png",
+    "modern-u-banner-sheet.png",
+    "modern-u-medic-sheet.png",
+    "modern-u-raider-sheet.png",
+    "modern-u-shield-sheet.png",
+    "modern-u-siege-sheet.png",
+    "modern-u-spear-sheet.png",
+    "modern-u-thrower-sheet.png",
     "renaissance-u-archer-sheet.png",
     "renaissance-u-banner-sheet.png",
     "renaissance-u-medic-sheet.png",
@@ -328,6 +345,16 @@
       "banner": 16,
       "siege": 16,
       "boss": 16
+    },
+    "modern": {
+      "shield": 16,
+      "spear": 16,
+      "archer": 16,
+      "medic": 16,
+      "raider": 16,
+      "thrower": 16,
+      "banner": 16,
+      "siege": 16
     }
   }
 }

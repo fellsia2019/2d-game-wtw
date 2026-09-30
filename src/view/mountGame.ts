@@ -6,9 +6,11 @@ import { BattleScene } from './BattleScene';
 import { BattleSound } from './Sound';
 import { GameUI } from '../ui/GameUI';
 import { recruitSlot } from '../ui/shortcuts';
+import { mountOrientationGuard } from '../ui/orientation';
 import '../ui/game.css';
 import '../ui/fullscreen.css';
 import '../ui/results.css';
+import '../ui/mobile-spacing.css';
 
 export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void = () => {}): () => void {
   const ui = new GameUI(root, app);
@@ -33,6 +35,7 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
   const game = new Phaser.Game({ type: Phaser.AUTO, parent: ui.arena, backgroundColor: '#263e48', transparent: false, scene, scale: { mode: Phaser.Scale.RESIZE, width: ui.arena.clientWidth, height: ui.arena.clientHeight }, render: { antialias: true, roundPixels: false }, audio: { noAudio: true }, banner: false });
   const unsubscribe = app.subscribe(next => { state = next; ui.update(next); sound.sync(next); });
   ui.update(state); sound.sync(state);
+  const orientation = mountOrientationGuard(root, app);
   const goBack = () => {
     if (ui.closePanel()) return;
     if (state.phase === 'battle') { if (state.paused) app.togglePause(); return; }
@@ -65,6 +68,12 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
       case 'battle-speed': app.setBattleSpeed(Number(button.dataset.speed)); break;
       case 'reward': app.chooseReward(button.dataset.reward as UpgradeId); break;
       case 'pause': app.togglePause(); break;
+      case 'resume-battle':
+        if (state.phase === 'battle' && state.paused) {
+          ui.openPanel(null);
+          app.togglePause();
+        }
+        break;
       case 'main-menu': ui.openPanel(null); app.returnToMenu(); break;
       case 'mute':
         if (state.muted) { app.toggleMute(); void sound.unlock(true); }
@@ -78,7 +87,7 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
       case 'roster': ui.toggleRoster(button.dataset.kind as HireKind); break;
       case 'begin': if (app.setLoadout(ui.getDraftRoster())) app.beginRun(); break;
       case 'contract': app.chooseContract(button.dataset.contract!); break;
-      case 'retry': app.retryBattle(true); break;
+      case 'retry': ui.openPanel(null); app.retryBattle(true); break;
       case 'restore-result': app.restoreBattleResult(); break;
       case 'ad-gold': void app.requestRewardedAd('battle-gold-double'); break;
       case 'ad-speed': void app.requestRewardedAd('battle-speed-double'); break;
@@ -106,8 +115,7 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
     }
   };
   const key = (event: KeyboardEvent) => {
-    if (loading) return;
-    if (state.advertising.busy) return;
+    if (loading || state.advertising.busy || orientation.blocked()) return;
     if (event.repeat || event.ctrlKey || event.altKey || event.metaKey || event.isComposing
       || (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])'))) return;
     if (event.key === 'Escape') {
@@ -148,5 +156,5 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
   };
   const observer = new ResizeObserver(resize); ui.layoutElements.forEach(element => observer.observe(element));
   window.visualViewport?.addEventListener('resize', resize);
-  return () => { root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); ui.destroy(); sound.destroy(); game.destroy(true); root.replaceChildren(); };
+  return () => { orientation.destroy(); root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); ui.destroy(); sound.destroy(); game.destroy(true); root.replaceChildren(); };
 }

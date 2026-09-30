@@ -99,7 +99,7 @@ export class GameDirector implements GameApp {
       enemyFortressHp: sim?.enemyFortressHp ?? this.report?.enemyFortressHp ?? 100,
       allyFortressMaxHp: sim?.allyFortressMaxHp ?? baseHealth(this.talentProgress.baseLevel ?? 0),
       fortressMaxHp: 100, allyCount: sim?.allyCount ?? 0,
-      units: sim?.units.map(u => ({ ...u })) ?? [], events: sim?.events.map(e => ({ ...e })) ?? [], cards,
+      units: sim?.units.map(u => ({ ...u })) ?? [], droneStrikes: sim?.droneStrikes.map(strike => ({ ...strike })) ?? [], events: sim?.events.map(e => ({ ...e })) ?? [], cards,
       roster: [...this.roster], unlockedUnits: this.unlockedUnits(),
       doctrines: DOCTRINES.map(d => ({ ...d })), selectedDoctrine: this.doctrine,
       contracts: this.contracts.map(c => ({ ...c, roster: [...c.roster] })), selectedContract: this.selectedContract?.id ?? null, contractRisk: this.contractRisk,
@@ -154,14 +154,14 @@ export class GameDirector implements GameApp {
   }
 
   buyTalent(id: TalentId): boolean {
-    if (this.adBusy) return false;
-    if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase) || !Object.hasOwn(this.talentProgress.levels, id)) return false;
+    if (this.adBusy || !this.canBuyTalents() || !Object.hasOwn(this.talentProgress.levels, id)) return false;
     const level = this.talentProgress.levels[id];
     const cost = talentCost(level);
     if (!Number.isSafeInteger(cost) || this.talentProgress.gold < cost) return false;
     this.talentProgress.levels[id] = level + 1;
     this.talentProgress.gold -= cost;
     this.save.writeTalents(this.talentProgress, this.eraId);
+    this.updateBattleTalents();
     this.emit();
     return true;
   }
@@ -507,25 +507,35 @@ export class GameDirector implements GameApp {
   }
 
   buyGlobalTalent(id: TalentId): boolean {
-    if (this.adBusy) return false;
-    if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase)
+    if (this.adBusy || !this.canBuyTalents()
       || !Object.hasOwn(this.globalTalentProgress.levels, id)) return false;
     const cost = globalTalentCost();
     if (!Number.isSafeInteger(cost) || this.globalTalentProgress.points < cost) return false;
     this.globalTalentProgress.points -= cost;
     this.globalTalentProgress.levels[id]++;
     this.save.writeGlobalTalents(this.globalTalentProgress);
+    this.updateBattleTalents();
     this.emit();
     return true;
   }
 
   buyBaseHealth(): boolean {
-    if (this.adBusy) return false;
-    if (!['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase)) return false;
+    if (this.adBusy || !this.canBuyTalents()) return false;
     const level = this.talentProgress.baseLevel ?? 0, cost = baseHealthCost(level);
     if (!Number.isSafeInteger(baseHealth(level + 1)) || this.talentProgress.gold < cost) return false;
     this.talentProgress.gold -= cost; this.talentProgress.baseLevel = level + 1;
-    this.save.writeTalents(this.talentProgress, this.eraId); this.emit(); return true;
+    this.save.writeTalents(this.talentProgress, this.eraId); this.updateBattleTalents(); this.emit(); return true;
+  }
+
+  private canBuyTalents(): boolean {
+    return this.phase === 'battle' ? this.paused
+      : ['menu', 'preparation', 'contract', 'reward', 'victory', 'defeat'].includes(this.phase);
+  }
+
+  private updateBattleTalents(): void {
+    if (this.phase === 'battle' && this.simulation) this.simulation.updateTalents(
+      combinedTalents(this.talentProgress.levels, this.globalTalentProgress.levels),
+      baseHealth(this.talentProgress.baseLevel ?? 0));
   }
 
   private awardEraTransition(): void {

@@ -13,6 +13,8 @@ const cases = [
   ['short portrait', 320, 480, { top: 186, bottom: 196, left: 8, right: 8 }],
   ['portrait safe areas', 390, 844, { top: 288, bottom: 350, left: 10, right: 10 }],
   ['compact landscape', 568, 320, { top: 134, bottom: 86, left: 8, right: 8 }],
+  ['SE landscape', 667, 375, { top: 134, bottom: 90, left: 8, right: 8 }],
+  ['wide phone landscape', 932, 430, { top: 134, bottom: 90, left: 47, right: 47 }],
   ['landscape safe areas', 844, 390, { top: 134, bottom: 108, left: 47, right: 47 }],
 ];
 for (const [name, width, height, insets] of cases) {
@@ -24,9 +26,13 @@ for (const [name, width, height, insets] of cases) {
   assert(m.baseline + 12 < dockTop, `${name}: tower overlaps recruitment dock`);
   assert(m.left - m.towerSize / 2 >= 0 && m.right + m.towerSize / 2 <= width, `${name}: tower outside viewport`);
   assert(m.right > m.left, `${name}: battlefield has no width`);
+  if (width > height && width <= 1000 && height <= 500) {
+    assert(m.unitScale <= .38, `${name}: compact units are too large`);
+    assert(m.towerSize <= 132, `${name}: compact towers are too large`);
+  }
   if (name === 'compact portrait') assert(m.baseline - insets.top >= 90, '320×568 must reserve at least 90px for combat');
   if (name === 'short portrait') assert(m.baseline - insets.top >= 65, '320×480 must keep combat visible');
   if (name === 'compact landscape') assert(m.baseline - insets.top >= 70, '568×320 must reserve at least 70px for combat');
   console.log(`${name}: ${width}×${height}, clear field ${Math.round(m.baseline - insets.top)}px, unit scale ${m.unitScale.toFixed(3)}`);
 }
-console.log('7 viewport geometry checks passed. DOM/CSS rendering still requires browser QA.');
+console.log(`${cases.length} viewport geometry checks passed. DOM/CSS rendering still requires browser QA.`);

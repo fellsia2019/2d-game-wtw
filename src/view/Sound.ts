@@ -101,6 +101,8 @@ export class BattleSound {
     this.lastEffect = ctx.currentTime;
     switch (event.type) {
       case 'attack': this.tone(210, 65, .12, .18, 'triangle'); this.tone(950, 280, .055, .06, 'square'); break;
+      case 'drone-launch': this.tone(360, 670, .28, .07, 'sawtooth'); break;
+      case 'drone-explode': this.tone(115, 40, .4, .2, 'sawtooth'); this.tone(540, 90, .16, .1, 'triangle'); break;
       case 'block': this.tone(840, 480, .16, .12, 'triangle'); this.tone(1280, 670, .11, .065, 'sine'); break;
       case 'heal': this.tone(659, 880, .25, .13, 'sine'); this.tone(988, 1175, .3, .09, 'sine', .1); break;
       case 'spawn': this.tone(294, 440, .16, .12); break;

@@ -1,0 +1,174 @@
+{
+  "era": "modern",
+  "name": "Современность",
+  "status": "approved",
+  "gameIntegrated": true,
+  "modelCount": 8,
+  "totalUniqueModels": 8,
+  "palettes": [
+    "ally",
+    "enemy"
+  ],
+  "frameWidth": 320,
+  "frameHeight": 192,
+  "origin": [
+    160,
+    176
+  ],
+  "gameScaleMultiplier": 1.15,
+  "models": [
+    {
+      "role": "shield",
+      "name": "Щитовик спецгруппы",
+      "description": "Защитник",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-shield.svg",
+        "sheet": "modern-u-shield-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-shield.svg",
+        "sheet": "enemy-modern-u-shield-sheet.png"
+      }
+    },
+    {
+      "role": "spear",
+      "name": "Противотанкист",
+      "description": "Против брони",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-spear.svg",
+        "sheet": "modern-u-spear-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-spear.svg",
+        "sheet": "enemy-modern-u-spear-sheet.png"
+      }
+    },
+    {
+      "role": "archer",
+      "name": "Марксман",
+      "description": "Дальний бой",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-archer.svg",
+        "sheet": "modern-u-archer-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-archer.svg",
+        "sheet": "enemy-modern-u-archer-sheet.png"
+      }
+    },
+    {
+      "role": "medic",
+      "name": "Боевой медик",
+      "description": "Лечение",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-medic.svg",
+        "sheet": "modern-u-medic-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-medic.svg",
+        "sheet": "enemy-modern-u-medic-sheet.png"
+      }
+    },
+    {
+      "role": "raider",
+      "name": "Оператор разведки",
+      "description": "Быстрый прорыв",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-raider.svg",
+        "sheet": "modern-u-raider-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-raider.svg",
+        "sheet": "enemy-modern-u-raider-sheet.png"
+      }
+    },
+    {
+      "role": "thrower",
+      "name": "Реактивный гранатомётчик",
+      "description": "Урон по группе",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-thrower.svg",
+        "sheet": "modern-u-thrower-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-thrower.svg",
+        "sheet": "enemy-modern-u-thrower-sheet.png"
+      }
+    },
+    {
+      "role": "banner",
+      "name": "Оператор дронов",
+      "description": "Удар дроном по цели",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-banner.svg",
+        "sheet": "modern-u-banner-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-banner.svg",
+        "sheet": "enemy-modern-u-banner-sheet.png"
+      }
+    },
+    {
+      "role": "siege",
+      "name": "Артиллерийский расчёт",
+      "description": "Осада",
+      "frames": 16,
+      "ally": {
+        "portrait": "modern-u-siege.svg",
+        "sheet": "modern-u-siege-sheet.png"
+      },
+      "enemy": {
+        "portrait": "enemy-modern-u-siege.svg",
+        "sheet": "enemy-modern-u-siege-sheet.png"
+      }
+    }
+  ],
+  "sheets": [
+    "modern-u-shield-sheet.png",
+    "modern-u-spear-sheet.png",
+    "modern-u-archer-sheet.png",
+    "modern-u-medic-sheet.png",
+    "modern-u-raider-sheet.png",
+    "modern-u-thrower-sheet.png",
+    "modern-u-banner-sheet.png",
+    "modern-u-siege-sheet.png",
+    "enemy-modern-u-shield-sheet.png",
+    "enemy-modern-u-spear-sheet.png",
+    "enemy-modern-u-archer-sheet.png",
+    "enemy-modern-u-medic-sheet.png",
+    "enemy-modern-u-raider-sheet.png",
+    "enemy-modern-u-thrower-sheet.png",
+    "enemy-modern-u-banner-sheet.png",
+    "enemy-modern-u-siege-sheet.png"
+  ],
+  "droneStrike": {
+    "role": "banner",
+    "effect": "enemyDamage",
+    "sequence": [
+      "launch",
+      "flyToEnemy",
+      "explode",
+      "reload"
+    ],
+    "allyBuff": false,
+    "implementation": "gameplay"
+  },
+  "scenery": [
+    "arena-modern.svg",
+    "modern-tower-ally.svg",
+    "modern-tower-enemy.svg",
+    "era-cards/modern.png"
+  ],
+  "boss": {
+    "kind": "modernCommander",
+    "reusesRole": "shield",
+    "scale": 1.5
+  }
+}

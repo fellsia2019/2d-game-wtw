@@ -56,7 +56,7 @@ it('unlocks after Industrial, preserves its own wallet, and registers eight role
   const save=profile();
   save.writeTalents({gold:830,levels:{damage:2,health:3,supply:1,attackSpeed:2},baseLevel:8},'industrial');
   expect(nextEra('industrial')).toBe('world-wars');
-  expect(nextEra('world-wars')).toBeUndefined();
+  expect(nextEra('world-wars')).toBe('modern');
   expect(save.loadEraProgress().unlocked['world-wars']).toBe(true);
   expect(save.loadTalents('world-wars').gold).toBe(0);
   expect(save.loadTalents('industrial').gold).toBe(830);
@@ -68,7 +68,7 @@ it('unlocks after Industrial, preserves its own wallet, and registers eight role
   expect(unitRole('worldWarsCommander')).toBe('siege');
   expect(approved.status).toBe('approved');
   expect(approved.sheets).toHaveLength(17);
-  expect(manifest.eras.at(-1)).toBe('world-wars');
+  expect(manifest.eras.at(-2)).toBe('world-wars');
   expect(approved.sheets.every(sheet=>manifest.sheets.includes(sheet))).toBe(true);
   expect(manifest.eraFrameCounts['world-wars'].boss).toBe(16);
   expect(new GameDirector(profile(3)).selectEra('world-wars')).toBe(false);
