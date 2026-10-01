@@ -1,0 +1,25 @@
+.loading-screen{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;box-sizing:border-box;padding:28px;background:radial-gradient(ellipse at 50% 40%,#294044 0,#13272c 48%,#0c191f 100%);color:#efe9d5;text-align:center;transition:opacity .22s ease}
+.loading-screen::before{content:"";position:absolute;inset:18px;border:1px solid #e0bd761c;pointer-events:none}
+.loading-card{width:min(100%,480px);position:relative}
+.loading-emblem{width:72px;height:86px;display:grid;place-items:center;margin:0 auto 26px;background:linear-gradient(135deg,#4b5240,#243739);clip-path:polygon(0 0,100% 0,100% 76%,50% 100%,0 76%);color:#e0bd76;font-size:46px;padding-bottom:8px;box-sizing:border-box}
+.loading-emblem span{filter:drop-shadow(0 0 12px #e0bd7640)}
+.loading-kicker{color:#a4b3a3;font-size:16px;letter-spacing:6px;margin:0 0 12px}
+.loading-card h1{font:700 clamp(32px,6vw,46px) "Segoe UI",Arial,sans-serif;letter-spacing:-1px;margin:0}
+.loading-divider{display:flex;align-items:center;justify-content:center;gap:14px;margin:22px 0 30px;color:#e0bd76;font-size:10px}
+.loading-divider i{width:52px;height:1px;background:linear-gradient(90deg,transparent,#e0bd7670)}
+.loading-divider i:last-child{transform:rotate(180deg)}
+.loading-caption{font-size:20px;line-height:1.5;color:#d4dfd3;min-height:30px;margin:0 0 18px}
+.loading-track{box-sizing:border-box;height:24px;padding:4px;border:1px solid #e0bd7660;background:#0b191f;border-radius:20px;overflow:hidden}
+.loading-fill{position:relative;width:0;height:100%;border-radius:12px;background:linear-gradient(90deg,#c99943,#f1cd78,#ffe9ae);box-shadow:0 0 16px #e0bd7650;overflow:hidden}
+.loading-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,#fff7 50%,transparent 80%);transform:translateX(-100%);animation:loading-shine 2s ease-in-out infinite}
+.loading-meta{display:flex;justify-content:space-between;margin-top:12px;color:#dfc995;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.loading-dots{letter-spacing:6px;font-size:8px;align-self:center;animation:loading-breathe 2s ease-in-out infinite}
+.loading-screen.is-complete{opacity:0;pointer-events:none}
+.loading-screen.has-error .loading-fill{background:#b57360}.loading-screen.has-error .loading-fill::after,.loading-screen.has-error .loading-dots{animation:none}
+@keyframes loading-shine{to{transform:translateX(100%)}}
+@keyframes loading-breathe{50%{opacity:.35}}
+@media(max-height:460px){.loading-emblem{width:48px;height:58px;font-size:30px;margin-bottom:12px}.loading-divider{margin:12px 0 16px}.loading-screen{padding:20px}}
+@media(prefers-reduced-motion:reduce){.loading-fill::after,.loading-dots{animation:none}.loading-fill,.loading-screen{transition:none}}
+
+
+.loading-screen.is-finishing .loading-fill{transition:width .25s ease-out}

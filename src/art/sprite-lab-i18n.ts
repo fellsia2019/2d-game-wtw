@@ -40,7 +40,7 @@ const entries: [string, string][] = [
   ['Закрыть', 'Close'], ['Ассет недоступен', 'Asset unavailable'], ['ПРОТИВНИК', 'ENEMY'], ['СОЮЗНИК', 'ALLY'], ['PNG-атлас', 'PNG atlas'],
   ['опора', 'baseline'], ['босс', 'boss'], ['кадров', 'frames'], ['противник', 'enemy'], ['союзник', 'ally'], ['загрузка', 'loading'],
   ['контакт', 'contact'], ['амортизация', 'compression'], ['пронос стопы', 'passing'], ['отталкивание', 'push-off'], ['шаг', 'step'],
-  ['стойка', 'idle'], ['готовность', 'ready'],
+  ['стойка', 'idle'], ['готовность', 'ready'], ['лечение', 'healing'],
   ['подготовка запуска', 'launch preparation'], ['взлёт', 'takeoff'], ['удаление от оператора', 'moving from operator'], ['полёт к цели', 'flight to target'], ['удар у цели', 'impact at target'], ['новый дрон', 'new drone'],
   ['радиосигнал', 'radio signal'], ['работа инструментом', 'tool work'], ['сигнал рогом', 'horn signal'], ['командный жест', 'command gesture'], ['подъём и опускание знамени', 'raising and lowering banner'],
   ['прицеливание', 'aiming'], ['натяжение', 'drawing'], ['выстрел', 'shot'], ['сопровождение', 'follow-through'], ['перезарядка', 'reload'], ['полный цикл действия / перезарядки', 'full action / reload cycle'], ['атака', 'attack'],

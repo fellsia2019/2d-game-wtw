@@ -7,30 +7,27 @@ import { BattleSound } from './Sound';
 import { GameUI } from '../ui/GameUI';
 import { recruitSlot } from '../ui/shortcuts';
 import { mountOrientationGuard } from '../ui/orientation';
-import { translate } from '../i18n';
+import { LoadingScreen } from '../ui/LoadingScreen';
 import '../ui/game.css';
 import '../ui/fullscreen.css';
 import '../ui/results.css';
 import '../ui/mobile-spacing.css';
 
-export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void = () => {}): () => void {
+export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void = () => {}, loader = new LoadingScreen()): () => void {
   const ui = new GameUI(root, app);
   const gameSurface = root.querySelector<HTMLElement>('main.game-shell')!;
   gameSurface.inert = true;
   let loading = true;
-  const overlay = document.createElement('div');
-  overlay.className = 'boot-overlay';
-  overlay.setAttribute('role', 'status');
-  overlay.textContent = translate('Загрузка игры…');
-  root.append(overlay);
+  root.append(loader.element);
   const sound = new BattleSound({ onStatus: status => ui.setAudioStatus(status) });
   let state: GameState = app.getState();
   const scene = new BattleScene(() => state, event => sound.play(event), loaded => {
-    if (!loaded) { overlay.textContent = translate('Не удалось загрузить ресурсы игры. Обновите страницу.'); return; }
-    loading = false;
-    gameSurface.inert = false;
-    overlay.remove();
-    onReady();
+    if (!loaded) { loader.fail(); return; }
+    loader.finish(() => {
+      loading = false;
+      gameSurface.inert = false;
+      onReady();
+    });
   });
   scene.setInsets(ui.battleInsets());
   const game = new Phaser.Game({ type: Phaser.AUTO, parent: ui.arena, backgroundColor: '#263e48', transparent: false, scene, scale: { mode: Phaser.Scale.RESIZE, width: ui.arena.clientWidth, height: ui.arena.clientHeight }, render: { antialias: true, roundPixels: false }, audio: { noAudio: true }, banner: false });
@@ -157,5 +154,5 @@ export function mountGame(root: HTMLElement, app: GameApp, onReady: () => void =
   };
   const observer = new ResizeObserver(resize); ui.layoutElements.forEach(element => observer.observe(element));
   window.visualViewport?.addEventListener('resize', resize);
-  return () => { orientation.destroy(); root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); ui.destroy(); sound.destroy(); game.destroy(true); root.replaceChildren(); };
+  return () => { loader.destroy(); orientation.destroy(); root.removeEventListener('contextmenu', contextmenu); window.removeEventListener('blur', blur); window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', visibility); unsubscribe(); observer.disconnect(); window.visualViewport?.removeEventListener('resize', resize); root.removeEventListener('change', change); root.removeEventListener('click', click); window.removeEventListener('keydown', key); ui.destroy(); sound.destroy(); game.destroy(true); root.replaceChildren(); };
 }

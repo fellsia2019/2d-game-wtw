@@ -119,6 +119,10 @@ const pairs: [string, string][] = [
   ['Реклама: золото за бой ×2 · ещё +', 'Ad: double battle gold · extra +'],
   ['Темп ×2 доступен', 'Speed ×2 unlocked'], ['Бонус золота получен', 'Gold bonus claimed'],
   ['Ожидание рекламы…', 'Waiting for ad…'],
+  ['Получить ещё золото', 'Get extra gold'], ['Реклама недоступна', 'Ad unavailable'],
+  ['Награда подтверждена', 'Reward confirmed'],
+  ['Посмотри рекламу · золото за бой ×2', 'Watch an ad · double battle gold'],
+  ['Бонус за просмотр · золото за бой ×2', 'Ad reward · double battle gold'],
   ['Обе армии, припасы и таймеры движутся вдвое быстрее.', 'Both armies, supplies, and timers run twice as fast.'],
   ['Реклама сейчас недоступна. Можно продолжить без неё.', 'Ads are unavailable. You can continue without one.'],
   ['ДЕРЕВО ТАЛАНТОВ', 'TALENT TREE'], ['Глобальные таланты', 'Global Talents'], ['Таланты эпохи', 'Era Talents'],
@@ -227,6 +231,7 @@ export function translate(text: string): string {
     .replace(/(\d+) (?:победа|победы|побед)(?![А-Яа-яЁё])/g, (_match, count: string) => `${count} ${count === '1' ? 'victory' : 'victories'}`)
     .replace(/(\d+) (?:походов|похода|поход)(?![А-Яа-яЁё])/g, (_match, count: string) => `${count} ${count === '1' ? 'campaign' : 'campaigns'}`)
     .replace(/(\d+) золота/g, '$1 gold')
+    .replace(/(\d+) очков/g, (_match, count: string) => `${count} ${count === '1' ? 'point' : 'points'}`)
     .replace(/(\d+) очк\. эпох/g, '$1 era points')
     .replace(/(\d+) с(?=$|\s)/g, '$1 s')
     .replace(/\/ сек/g, '/ sec')

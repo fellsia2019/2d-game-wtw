@@ -189,6 +189,11 @@ export class GameUI {
     const gold = state.report?.goldEarned ?? 0;
     if (!speed && gold <= 0) return '';
     const disabled = ad.busy || (!(ad.pendingGold && !speed) && (state.platform.sdk !== 'available' || !state.platform.online));
+    if (!speed && !done) {
+      const heading = ad.busy ? 'Ожидание рекламы…' : ad.pendingGold ? 'Получить подтверждённый бонус' : disabled ? 'Реклама недоступна' : 'Получить ещё золото';
+      const detail = ad.pendingGold ? 'Награда подтверждена' : disabled && !ad.busy ? 'Бонус за просмотр · золото за бой ×2' : 'Посмотри рекламу · золото за бой ×2';
+      return `<div class="advertising-offer"><button class="ad-gold-button" data-action="ad-gold" ${disabled ? 'disabled' : ''}><span class="ad-video-icon" aria-hidden="true">${ad.pendingGold ? uiIcon('check') : '<svg viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="4" stroke="currentColor" stroke-width="1.8"/><path d="m10 8 6 4-6 4z" fill="currentColor"/></svg>'}</span><span class="ad-gold-copy"><b>${heading}</b><span>${detail}</span></span><span class="ad-gold-amount">${uiIcon('gold')} +${gold}</span><span class="ad-gold-arrow" aria-hidden="true">→</span></button>${ad.message ? `<p role="status">${esc(ad.message)}</p>` : ''}</div>`;
+    }
     const label = !speed && ad.pendingGold ? 'Получить подтверждённый бонус' : speed ? 'Реклама: темп этого боя ×2' : `Реклама: золото за бой ×2 · ещё +${gold}`;
     return `<div class="advertising-offer">${done ? `<p>${speed ? 'Темп ×2 доступен' : 'Бонус золота получен'}</p>` : `<button class="secondary" data-action="${speed ? 'ad-speed' : 'ad-gold'}" ${disabled ? 'disabled' : ''}>${ad.busy ? 'Ожидание рекламы…' : label}</button>`}${speed ? '<small>Обе армии, припасы и таймеры движутся вдвое быстрее.</small>' : ''}${ad.message ? `<p role="status">${esc(ad.message)}</p>` : !done && disabled ? '<small>Реклама сейчас недоступна. Можно продолжить без неё.</small>' : ''}</div>`;
   }

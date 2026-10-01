@@ -123,3 +123,6 @@ html[lang="en"] .roster-card.locked:disabled::after{content:"Locked"}
 .menu-hero[style]{background:linear-gradient(120deg,var(--era-main),#203b3a);border-color:var(--era-accent)}.menu-hero[style] .menu-art{background:radial-gradient(ellipse at 50% 80%,var(--era-main),transparent 70%)}.menu-hero[style] .hero-era-tag{color:var(--era-accent);border-color:var(--era-accent);background:#10232a66}.menu-hero[style] .menu-hero-copy h2 em{color:var(--era-accent)}.menu-hero[style] .hero-play{color:#20312b;border-color:var(--era-accent);background:linear-gradient(180deg,var(--era-accent),var(--era-accent));box-shadow:0 4px 0 var(--era-main),0 7px 16px #0003}.menu-hero[style] .hero-play.hero-new-run{color:var(--era-accent);background:#10232a66;border-color:var(--era-accent);box-shadow:none}.era-track .era-choice[style]{border-color:var(--era-accent)}.era-track .era-choice[style]:disabled{border-color:#9b7873}.era-track .era-choice[style] .era-number{color:var(--era-accent)}.era-track .era-choice[style].is-complete{border-color:#e4c17b}.era-track .era-choice[style].selected{border-color:#a5edbb}
 
 .era-track.swiper,.era-track .swiper-wrapper,.era-track .swiper-slide{box-sizing:border-box}
+
+html[lang="en"] .doctrine.selected::after{content:"Selected ✓"}
+html[lang="en"] .roster-card.locked::after{content:"Locked"}

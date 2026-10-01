@@ -59,3 +59,16 @@ it('keeps the published sprite lab free of mixed-language unit labels', () => {
   setLocale('ru');
   vi.unstubAllGlobals();
 });
+
+it('translates global talent prices and healing frame captions without fallback text', () => {
+  vi.stubGlobal('document', { documentElement: { lang: '' } });
+  setLocale('en');
+  expect(translate('Купить Урон, уровень 1, цена 1 очков')).toBe('Buy Damage, level 1, cost 1 point');
+  expect(translate('Купить Урон, уровень 2, цена 5 очков')).toBe('Buy Damage, level 2, cost 5 points');
+  expect(translateLab('10 · лечение')).toBe('10 · healing');
+  expect(translateLab('15 · лечение')).toBe('15 · healing');
+  setLocale('ru');
+  expect(translate('Купить Урон, уровень 1, цена 1 очков')).toBe('Купить Урон, уровень 1, цена 1 очков');
+  expect(translateLab('10 · лечение')).toBe('10 · лечение');
+  vi.unstubAllGlobals();
+});
