@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "category": "strategy",
+  "orientation": "landscape",
+  "languages": ["ru", "en"],
+  "ru": {
+    "title": "Знамёна эпох",
+    "shortDescription": "Собери отряд и пройди сражения десяти эпох.",
+    "seo": "Стратегия с короткими сражениями: подбери бойцов, укрепляй базу и побеждай боссов десяти эпох. Испытай свою тактику!",
+    "about": "Возглавь отряды десяти эпох — от Каменного века до Современности. Выбери тактику и четыре карты бойцов, накопи припасы и прорви оборону вражеской крепости. Защитники, стрелки, лекари и осадные бойцы помогают строить разные отряды. В каждой эпохе тебя ждут четыре сражения и босс в финале. Между победами выбирай усиления, открывай бойцов и развивай таланты за заработанное золото. После поражения укрепи базу и попробуй новую стратегию. Пройденные эпохи доступны для повторных походов.",
+    "howToPlay": "Выбери эпоху, тактику и четыре карты отряда. Во время боя нажимай на карты, чтобы призывать бойцов за припасы. На компьютере работают клавиши 1–4. Припасы поступают автоматически; кнопка «Доход» увеличивает их приток. Бойцы сами идут к врагу и сражаются. Цель — разрушить вражескую крепость и защитить свою. После первых трёх побед выбирай усиление похода. Золото трать на таланты и здоровье базы. После поражения можно усилиться и повторить бой. Пауза — кнопкой или Escape на ПК; музыка и звуки переключаются отдельно. На телефоне играй горизонтально.",
+    "keywords": "стратегия, тактика, войско, крепость, эпохи, отряд, боссы"
+  },
+  "en": {
+    "title": "Banners of Ages",
+    "shortDescription": "Build your squad and battle through ten ages.",
+    "seo": "A battle strategy across ten ages: choose your squad, recruit troops, strengthen your base and defeat each age's boss. Find your winning tactic!",
+    "about": "Lead armies through ten ages, from the Stone Age to the Modern Age. Choose a tactic and four unit cards, gather supplies and break through the enemy fortress. Defenders, ranged fighters, medics and siege crews offer different squad combinations. Each age has four battles and a boss in the final encounter. Between victories, pick campaign bonuses, unlock troops and buy talents with earned gold. After defeat, strengthen your base and try a new strategy. Completed ages remain available for repeat campaigns.",
+    "howToPlay": "Choose an age, a tactic and four unit cards. During battle, tap the cards to recruit troops using supplies, or press 1–4 on a computer. Supplies arrive automatically; Income increases their flow. Your troops move and fight on their own. Destroy the enemy fortress while protecting yours. Pick a campaign bonus after each of the first three victories. Spend gold on talents and base health. After defeat, improve your squad and retry. Pause with the button or Escape on a computer. Music and sound effects have separate switches. On a phone, play in landscape orientation.",
+    "keywords": "strategy, tactics, army, fortress, ages, squad, bosses"
+  },
+  "moderatorComment": "Десять эпох по четыре боя. При обновлении страницы текущий незавершённый бой начинается заново; заработанное золото, постоянные открытия и поход сохраняются. Поворот экрана бой не перезапускает. Добровольная реклама: темп текущего боя ×2 в подготовке и дополнительное золото результата. Можно продолжить без рекламы. В публичной сборке внутренний Debug отсутствует. Языки RU/EN определяются через SDK. Облако поддерживает выбор одного целого профиля при конфликте, без сложения золота. Ориентация альбомная."
+}

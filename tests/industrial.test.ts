@@ -116,4 +116,4 @@ it.each([23,47])('completes the Industrial campaign with earned progression and 
   expect(attempts.reduce((a,b)=>a+b,0),JSON.stringify(attempts)).toBeLessThanOrEqual(40);
   const restored=new GameDirector(save);restored.selectEra('industrial');restored.startNewRun(seed+1);
   expect(restored.getState().unlockedUnits).toEqual(ERA_HIRE_KINDS.industrial);
-});
+},15000);

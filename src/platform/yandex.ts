@@ -1,5 +1,6 @@
 import type { RewardedPlacement, RewardedProvider } from '../core/advertising';
 import type { CloudPlayer } from './cloud';
+import { bounded } from './cloud';
 import { portalLocale, setLocale } from '../i18n';
 // Local development can run without the SDK; release builds load the host SDK.
 interface Advertising {
@@ -25,22 +26,28 @@ export class YandexAdapter implements RewardedProvider {
   private language: string | null = null;
   constructor(private onExternalPause: (paused: boolean, source: 'platform' | 'advertisement') => void) {}
 
-  async initialize(): Promise<boolean> {
+  async initialize(milliseconds = 8000): Promise<boolean> {
     try {
-      let global = (window as Window & { YaGames?: YandexGlobal }).YaGames;
-      if (!global && import.meta.env.PROD) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = '/sdk.js';
-          script.async = true;
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Yandex SDK unavailable'));
-          document.head.append(script);
-        });
-        global = (window as Window & { YaGames?: YandexGlobal }).YaGames;
-      }
-      if (!global) return false;
-      this.sdk = await global.init();
+      // Commit SDK state only within the startup deadline. A late init must not
+      // switch the language or attach callbacks after the local game has opened.
+      const sdk = await bounded((async () => {
+        let global = (window as Window & { YaGames?: YandexGlobal }).YaGames;
+        if (!global && import.meta.env.PROD) {
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = '/sdk.js';
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Yandex SDK unavailable'));
+            document.head.append(script);
+          });
+          global = (window as Window & { YaGames?: YandexGlobal }).YaGames;
+        }
+        if (!global) return null;
+        return global.init();
+      })(), milliseconds);
+      if (!sdk) return false;
+      this.sdk = sdk;
       this.language = this.sdk.environment.i18n.lang;
       setLocale(portalLocale(this.language));
       this.sdk.on('game_api_pause', () => this.onExternalPause(true, 'platform'));

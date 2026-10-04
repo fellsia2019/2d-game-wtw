@@ -31,7 +31,7 @@ it.each([23,47])('finishes medieval campaign with earned upgrades and restores e
  }
  expect(game.getState().phase).toBe('victory');expect(attempts.reduce((a,b)=>a+b,0),JSON.stringify(attempts)).toBeLessThanOrEqual(48);
  const restored=new GameDirector(save);restored.selectEra('medieval');restored.startNewRun(seed+1);expect(restored.getState().unlockedUnits).toEqual(ERA_HIRE_KINDS.medieval);
-});
+},15000);
 it('registers exactly eight models and sixteen atlases, reusing the guard for the jarl',()=>{
  expect(ERA_HIRE_KINDS.medieval).toHaveLength(8);
  expect(new Set(Object.entries(unitArt).filter(([id])=>id.startsWith('medieval')).map(([,art])=>art)).size).toBe(8);

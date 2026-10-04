@@ -21,7 +21,7 @@ function head(role, c, bob = 0) {
  if (role === 'shield') hair = path('M74 49q-3-27 23-30 24 1 25 29l-17-7-20 7-5 12z', c.metal) + line('M77 41q19-15 41-3', c.lightMetal, 3) + circle(98, 23, 3, c.brass);
  if (role === 'spear') hair = path('M73 40q9-24 28-22 18 2 19 21z', c.shade) + path('M67 40q28-7 62 0l2 7q-38 8-64 0z', c.coat) + line('M77 35h39', c.brass, 2);
  if (role === 'archer') hair = path('M71 41q5-22 27-22 23 0 28 23z', c.coat) + path('M67 43h67l-8 7H71z', c.shade) + circle(91, 29, 3, c.brass);
- if (role === 'medic') hair = path('M74 42q6-22 23-22 19 0 24 23z', c.white) + path('M69 43h58l-6 8H75z', c.white) + path('M94 23h7v6h6v7h-6v6h-7v-6h-6v-7h6z', '#b95d52', 'none');
+ if (role === 'medic') hair = path('M74 42q6-22 23-22 19 0 24 23z', c.white) + path('M69 43h58l-6 8H75z', c.white) + path('M98 24l7 9-7 9-7-9z', '#398b87', 'none');
  if (role === 'raider') hair = path('M76 38q2-20 21-21 18 1 22 22l-16-6-21 7z', c.leather) + line('M79 39l40 4', c.brass, 3);
  if (role === 'thrower') hair = path('M76 42q-4-23 21-27 25 2 24 28l-17-7-19 11z', c.darkMetal) + path('M75 42h47l-4 6H77z', c.brass);
  if (role === 'banner') hair = path('M74 40q2-23 22-23 21 1 25 25z', c.leather) + path('M68 40h62l-5 8H72z', c.coat) + ellipse(96, 38, 13, 5, c.lightMetal) + ellipse(96, 38, 8, 3, c.darkMetal);
@@ -54,7 +54,7 @@ function torso(role, c, bob) {
  if (!medic && !steel) body += line('M97 102v28', c.trim, 2) + [106,117,128].map(y=>circle(101,y,2,c.brass)).join('');
  body += line('M73 127h48', c.leather, 5) + circle(98, 127, 4, c.brass);
  if (steel) body += path('M80 83l15-6 17 7 5 34-19 14-21-13z', c.metal) + path('M85 87l11-4 12 4 4 24-15 11-14-8z', c.darkMetal) + line('M96 84v33', c.lightMetal, 2) + [91,106].map(x => circle(x, 96, 2, c.brass)).join('');
- if (medic) body += path('M76 95l18 15 22-13 8 45-29 19-26-17z', c.white) + path('M89 113h7v6h6v7h-6v6h-7v-6h-6v-7h6z', '#bc534a', 'none') + path('M62 117h22v26H62z', c.leather) + line('M67 124h12', c.brass, 2);
+ if (medic) body += path('M76 95l18 15 22-13 8 45-29 19-26-17z', c.white) + path('M93 113l8 10-8 10-8-10z', '#398b87', 'none') + path('M62 117h22v26H62z', c.leather) + line('M67 124h12', c.brass, 2);
  if (role === 'archer' || role === 'spear') body += line('M79 82l35 38', c.leather, 6) + path('M70 109h15v27H70z', c.canvas);
  if (role === 'thrower') body += path('M65 105h25v33H65z', c.leather) + line('M68 113h18M68 120h18', c.brass, 2);
  if (role === 'raider') body += line('M77 86l39 39', c.leather, 7) + line('M79 86l37 39', c.brass, 2) + path('M75 118h17v18H75zM104 121h16v16h-16z', c.leather) + line('M78 123h11M107 126h10', c.brass, 2);
@@ -82,7 +82,7 @@ function person(role, c, frame) {
   art += circle(105+thrust,105+lift,5,c.skin) + circle(139+thrust,104+lift,5,c.skin);
  } else if (role === 'medic') {
   const extend = attack ? [0,5,13,13,7,1][k] : 0;
-  art += hands(71,113,142+extend,109) + path(`M${137+extend} 103h16v13h-16z`, c.white) + line(`M${141+extend} 109h8M${145+extend} 105v9`,'#bf6154',2);
+  art += hands(71,113,142+extend,109) + path(`M${137+extend} 103h16v13h-16z`, c.white) + path(`M${145+extend} 105l4 4-4 4-4-4z`, '#398b87', 'none');
   if (attack && k>=2 && k<=4) art += circle(149+extend,109,9+(k-2)*4,'none',c.trim,2)+line(`M${164+extend} 83v10M${159+extend} 88h10`,c.white,2);
  } else if (role === 'thrower') {
   const hx = attack ? [131,139,148,156,118,130][k] : 131, hy = attack ? [91,78,61,46,96,91][k] : 91;

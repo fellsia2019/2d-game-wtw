@@ -22,7 +22,7 @@ const platform = new YandexAdapter((paused, source) => {
   if (app) app.setExternalPause(paused, source); else pendingPauses.set(source, paused);
 });
 let available = false;
-try { available = await bounded(platform.initialize()); } catch { /* SDK unavailable */ }
+try { available = await platform.initialize(); } catch { /* SDK unavailable */ }
 if (available) { setLocale(portalLocale(platform.getLanguage() ?? '')); loader.refreshLanguage(); }
 let player = null;
 if (available) { try { player = await bounded(platform.getCloudPlayer()); } catch { /* local fallback */ } }

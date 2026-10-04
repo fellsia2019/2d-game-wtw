@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { YandexAdapter } from '../src/platform/yandex';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 function setup() {
   const events = new Map<string, () => void>();
@@ -63,6 +63,26 @@ it('remains playable locally without an SDK', async () => {
   const adapter = new YandexAdapter(vi.fn());
   expect(await adapter.initialize()).toBe(false);
   adapter.markGameReady(); adapter.setGameplay(true);
+  expect(await adapter.showIntermissionAd('victory')).toBe(false);
+});
+
+it('ignores initialization after the startup deadline without switching the open game language', async () => {
+  vi.useFakeTimers();
+  const { adapter, sdk, html, features, events } = setup();
+  html.lang = 'ru';
+  let finish!: (value: typeof sdk) => void;
+  (window as unknown as { YaGames: { init: () => Promise<typeof sdk> } }).YaGames.init =
+    () => new Promise(resolve => { finish = resolve; });
+  adapter.markGameReady(); adapter.setGameplay(true);
+  const result = adapter.initialize(100);
+  await vi.advanceTimersByTimeAsync(100);
+  expect(await result).toBe(false);
+  finish(sdk);
+  await vi.advanceTimersByTimeAsync(1);
+  expect(html.lang).toBe('ru');
+  expect(events.size).toBe(0);
+  expect(features.LoadingAPI.ready).not.toHaveBeenCalled();
+  expect(features.GameplayAPI.start).not.toHaveBeenCalled();
   expect(await adapter.showIntermissionAd('victory')).toBe(false);
 });
 

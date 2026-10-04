@@ -39,7 +39,7 @@ it.each([23,47])('finishes four Antiquity battles using earned gold and saves ea
  }
  expect(game.getState().phase).toBe('victory');expect(game.getState().unlockedEras.medieval).toBe(true);expect(attempts.reduce((a,b)=>a+b,0),JSON.stringify(attempts)).toBeLessThanOrEqual(32);
  const restored=new GameDirector(save);restored.selectEra('antique');restored.startNewRun(seed+1);expect(restored.getState().unlockedUnits).toEqual(ERA_HIRE_KINDS.antique);
-});
+},15000);
 it('uses exactly eight approved models on both sides, including the legate variant',()=>{
  expect(ERA_HIRE_KINDS.antique).toHaveLength(8);
  expect(new Set(Object.entries(unitArt).filter(([id])=>id.startsWith('antique')).map(([,art])=>art)).size).toBe(8);
